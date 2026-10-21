@@ -18,6 +18,10 @@
 
 ## 数据和许可
 
-边界与坐标来自阿里云 DataV：https://datav.aliyun.com/portal/school/atlas/area_selector 。当前包含 370 个可标记地区；直辖市和港澳按整体记录，台湾按全省整体记录，详见网页中的数据说明。
+边界与坐标来自阿里云 DataV：https://datav.aliyun.com/portal/school/atlas/area_selector 。当前包含 391 个可标记地区；直辖市和港澳按整体记录，台湾细分为 22 个县市（含澎湖、金门、连江），详见网页中的数据说明。
+
+台湾县市边界采用 2025-03-18 官方数据的网页简化版本，来源及授权见 [台湾县市数据说明](assets/TAIWAN-DATA-SOURCES.md)。支持简繁体名称搜索，点击地图下方“台湾县市”可快速放大。
+
+旧版台湾整体足迹会显示待整理提示；用户选择对应县市后，原日期和记忆完整保留，已有县市记录不会被覆盖。未整理的旧记录仍可导出。
 
 D3 许可见 `assets/D3-LICENSE.txt`。
