@@ -1,5 +1,6 @@
 {
-  "generatedAt": "2026-10-22T09:19:40.485Z",
+  "generatedAt": "2026-10-22T10:22:45.254Z",
+  "scopeNote": "县区细化仅中国大陆（含海南）；台湾22县市，香港和澳门各按整体记录。",
   "deduplicated": [
     {
       "adcode": "350112",
@@ -2195,19 +2196,37 @@
       "url": "https://geo.datav.aliyun.com/areas_v3/bound/810000_full.json",
       "file": "810000_full.json",
       "sha256": "69ae74ef15e964508e6619763affbbff669295e23db0ab487350b7a060aa2bc9",
-      "bytes": 132725
+      "bytes": 132725,
+      "usage": "仅保留原细分来源追溯及向旧级别恢复的父子映射，不再用于现地图绘制"
     },
     {
       "url": "https://geo.datav.aliyun.com/areas_v3/bound/820000_full.json",
       "file": "820000_full.json",
       "sha256": "54a6c69e0007640b25d45b44357037fb40bce2e0e36e7a9026ebcbdfa7cfb19a",
-      "bytes": 13423
+      "bytes": 13423,
+      "usage": "仅保留原细分来源追溯及向旧级别恢复的父子映射，不再用于现地图绘制"
     },
     {
       "url": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/town-2025-03-18.geojson",
       "file": "town-2025-03-18.geojson",
       "sha256": "2897bc4f85e2f8c38a88a0f71eaeeeed27f3a13233f42fe9900a981de7a53c82",
-      "bytes": 345906
+      "bytes": 345906,
+      "usage": "仅保留原细分来源追溯及向旧级别恢复的父子映射，不再用于现地图绘制"
     }
-  ]
+  ],
+  "restoredSources": [
+    {
+      "file": "assets/taiwan-counties.json",
+      "sha256": "c6a20ed47b6c5c8c54b5e97143455b5911faad354d5d80add8aaea74c3102f1f",
+      "bytes": 73911,
+      "usage": "台湾22县市几何、名称和原ID"
+    },
+    {
+      "file": "assets/cities.json",
+      "sha256": "6f9c4160514bac4a9e593d35182838fc2f641e81fa0cd6be47bd0ce17fba9def",
+      "bytes": 3296038,
+      "usage": "香港、澳门原整体几何与ID"
+    }
+  ],
+  "reversalMap": "region-level-reversal-map.json"
 }

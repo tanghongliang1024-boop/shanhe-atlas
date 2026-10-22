@@ -1,7 +1,7 @@
 {
   "version": 1,
   "generatedAt": "2026-10-22",
-  "rule": "迁移至有来源证实的政府驻地区；多中心仅按用户明确选择；未核实项保留，不猜测。",
+  "rule": "大陆旧地市迁至已核实政府驻地区；台湾保留22县市ID，港澳保留整体ID；未核实项保留，不猜测。",
   "mappings": {
     "110000": {
       "targetId": "110112",
@@ -853,64 +853,269 @@
       "unchanged": true,
       "note": "旧记录本身就是县级单位，保留原地区ID。"
     },
-    "tw-10008": {
-      "targetId": "tw-10008010",
-      "source": "https://www.nantou.gov.tw/big5/bureau/content.php?cid=3464&dptid=376480000",
-      "sourceType": "official-publication",
-      "sourcePublisher": "政府或公共机构网站",
+    "810000": {
+      "targetId": "810000",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/810000.json",
       "verified": true,
-      "address": "南投县南投市中兴路660号",
+      "address": null,
+      "sourceName": "香港特别行政区",
+      "targetName": "香港特别行政区",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "820000": {
+      "targetId": "820000",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/820000.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "澳门特别行政区",
+      "targetName": "澳门特别行政区",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-09007": {
+      "targetId": "tw-09007",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "连江县",
+      "targetName": "连江县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10002": {
+      "targetId": "tw-10002",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "宜兰县",
+      "targetName": "宜兰县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10007": {
+      "targetId": "tw-10007",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "彰化县",
+      "targetName": "彰化县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10008": {
+      "targetId": "tw-10008",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
       "sourceName": "南投县",
-      "targetName": "南投市",
-      "verifiedAt": "2026-10-22"
+      "targetName": "南投县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10009": {
+      "targetId": "tw-10009",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "云林县",
+      "targetName": "云林县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
     },
     "tw-10013": {
-      "targetId": "tw-10013010",
-      "source": "https://ws.hl.gov.tw/Download.ashx?n=MTEx5bm0M%2BaciDE15pel6IezMTfml6XoiInovqbjgIwyMDIy5Y2X5bO25rCR5peP6KuW5aOHLeWOn%2BS9j%2BawkeaXj%2BWcn%2BWcsOWcqOWxj%2BadseOAjea0u%2BWLlS5wZGY%3D&u=LzAwMS9VcGxvYWQvNDIyL3JlbGZpbGUvMTA2NzkvOTMxNTEvMjIxZTY5ZDAtOThjYy00OGFkLTg0ZDEtNWQ4MDA4MTBkY2JiLnBkZg%3D%3D",
-      "sourceType": "official-publication",
-      "sourcePublisher": "政府或公共机构网站",
+      "targetId": "tw-10013",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
       "verified": true,
-      "address": "屏东县屏东市自由路527号",
+      "address": null,
       "sourceName": "屏东县",
-      "targetName": "屏东市",
-      "verifiedAt": "2026-10-22"
+      "targetName": "屏东县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10017": {
+      "targetId": "tw-10017",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "基隆市",
+      "targetName": "基隆市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
     },
     "tw-63000": {
-      "targetId": "tw-63000020",
-      "source": "https://www.gov.taipei/cp.aspx?n=8E989D7C8B359DF3&s=C5C52F5B391356DB",
-      "sourceType": "official-publication",
-      "sourcePublisher": "政府或公共机构网站",
+      "targetId": "tw-63000",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
       "verified": true,
-      "address": "台北市信义区市府路1号",
+      "address": null,
       "sourceName": "台北市",
-      "targetName": "信义区",
-      "verifiedAt": "2026-10-22"
-    },
-    "tw-64000": {
-      "targetId": "tw-64000080",
-      "source": "https://khhr.kcg.gov.tw/",
-      "sourceType": "official-publication",
-      "sourcePublisher": "政府或公共机构网站",
-      "verified": true,
-      "address": "高雄市苓雅区四维三路2号（四维行政中心）",
-      "sourceName": "高雄市",
-      "targetName": "苓雅区",
+      "targetName": "台北市",
       "verifiedAt": "2026-10-22",
-      "userSelected": true,
-      "note": "该市存在多个市政中心，本次按用户明确选择的行政中心区保存。"
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-65000": {
+      "targetId": "tw-65000",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "新北市",
+      "targetName": "新北市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
     },
     "tw-67000": {
-      "targetId": "tw-67000360",
-      "source": "https://www.tainan.gov.tw/cp.aspx?n=13615&s=5712",
-      "sourceType": "official-publication",
-      "sourcePublisher": "政府或公共机构网站",
+      "targetId": "tw-67000",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
       "verified": true,
-      "address": "台南市安平区永华路二段6号（永华市政中心）",
+      "address": null,
       "sourceName": "台南市",
-      "targetName": "安平区",
+      "targetName": "台南市",
       "verifiedAt": "2026-10-22",
-      "userSelected": true,
-      "note": "该市存在多个市政中心，本次按用户明确选择的行政中心区保存。"
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-68000": {
+      "targetId": "tw-68000",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "桃园市",
+      "targetName": "桃园市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10020": {
+      "targetId": "tw-10020",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "嘉义市",
+      "targetName": "嘉义市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10010": {
+      "targetId": "tw-10010",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "嘉义县",
+      "targetName": "嘉义县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-09020": {
+      "targetId": "tw-09020",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "金门县",
+      "targetName": "金门县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-64000": {
+      "targetId": "tw-64000",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "高雄市",
+      "targetName": "高雄市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10014": {
+      "targetId": "tw-10014",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "台东县",
+      "targetName": "台东县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10015": {
+      "targetId": "tw-10015",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "花莲县",
+      "targetName": "花莲县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10016": {
+      "targetId": "tw-10016",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "澎湖县",
+      "targetName": "澎湖县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10018": {
+      "targetId": "tw-10018",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "新竹市",
+      "targetName": "新竹市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-66000": {
+      "targetId": "tw-66000",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "台中市",
+      "targetName": "台中市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10005": {
+      "targetId": "tw-10005",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "苗栗县",
+      "targetName": "苗栗县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
+    },
+    "tw-10004": {
+      "targetId": "tw-10004",
+      "source": "https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson",
+      "verified": true,
+      "address": null,
+      "sourceName": "新竹县",
+      "targetName": "新竹县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "按用户要求保留旧版地区层级和ID，不向下细分迁移。"
     }
   },
   "unresolved": [
@@ -2310,16 +2515,6 @@
       "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
     },
     {
-      "sourceId": "810000",
-      "name": "香港特别行政区",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "820000",
-      "name": "澳门特别行政区",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
       "sourceId": "650100",
       "name": "乌鲁木齐市",
       "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
@@ -2387,91 +2582,6 @@
     {
       "sourceId": "654300",
       "name": "阿勒泰地区",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-09007",
-      "name": "连江县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10002",
-      "name": "宜兰县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10007",
-      "name": "彰化县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10009",
-      "name": "云林县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10017",
-      "name": "基隆市",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-65000",
-      "name": "新北市",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-68000",
-      "name": "桃园市",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10020",
-      "name": "嘉义市",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10010",
-      "name": "嘉义县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-09020",
-      "name": "金门县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10014",
-      "name": "台东县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10015",
-      "name": "花莲县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10016",
-      "name": "澎湖县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10018",
-      "name": "新竹市",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-66000",
-      "name": "台中市",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10005",
-      "name": "苗栗县",
-      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
-    },
-    {
-      "sourceId": "tw-10004",
-      "name": "新竹县",
       "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
     }
   ]

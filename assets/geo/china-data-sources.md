@@ -1,36 +1,40 @@
-# 中国县区地图数据说明
+# 中国地图数据说明
 
-整理日期：2026-10-22。此应用使用分级边界快照展示旅行记录；数据发布日期、行政层级与边界精度均按来源说明。
+整理日期：2026-10-22。按用户更正，**县区细化仅适用于中国大陆（含海南）**；台湾恢复上一版 22 个县市，香港、澳门分别恢复为一个整体记录单位。世界地图数据另行维护。
 
 ## 来源与署名
 
-大陆及港澳边界沿用原应用的阿里云 DataV GeoAtlas 数据，公开下载入口为 [DataV 地理小工具](https://datav.aliyun.com/portal/school/atlas/area_selector)，接口为 `https://geo.datav.aliyun.com/areas_v3/bound/<行政区划代码>_full.json`。本次按省、地级市读取县区边界。原始边界版权归原权利人所有；未将其重新声明为 MIT、CC 或公共领域数据。[阿里云区域热力层文档](https://help.aliyun.com/zh/datav/datav-7-0/user-guide/choropleth-layers-of-v3-x)介绍下载 GeoJSON、提取到区县以及保存至自己的服务器的用法。数据服务没有在响应中给出统一边界生效日期，下载日期不代表行政区划生效日期。
+大陆及港澳边界沿用原应用的阿里云 DataV GeoAtlas 数据，公开下载入口为 [DataV 地理小工具](https://datav.aliyun.com/portal/school/atlas/area_selector)，接口为 `https://geo.datav.aliyun.com/areas_v3/bound/<行政区划代码>_full.json`。大陆按省、地级市读取县区边界；港澳复用旧版 `assets/cities.json` 的整体边界。原始边界版权归原权利人所有；未将其重新声明为 MIT、CC 或公共领域数据。[阿里云区域热力层文档](https://help.aliyun.com/zh/datav/datav-7-0/user-guide/choropleth-layers-of-v3-x)介绍下载 GeoJSON、提取到区县以及保存至自己的服务器的用法。响应没有给出统一边界生效日期，下载日期不代表行政区划生效日期。
 
-台湾乡镇市区原始资料由 **內政部國土測繪中心** 提供：[鄉鎮市區界線（TWD97經緯度）](https://data.gov.tw/dataset/7441)，依[政府資料開放授權條款－第1版](https://data.gov.tw/license)使用。边界简化及 GeoJSON 转换使用 [plotdb/pdmaptw v2.4.0](https://github.com/plotdb/pdmaptw/tree/v2.4.0) 的 [town-2025-03-18.geojson](https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/town-2025-03-18.geojson)。山河足迹进一步转换字段、显示字形、坐标精度和绘图环方向。資料來源：內政部國土測繪中心；本应用是加工成果，提供机关未替本应用背书。
+台湾边界直接复用上一版 `assets/taiwan-counties.json` 的 22 个县市、名称及 `tw-` 五位代码。原始提供者为 **內政部國土測繪中心**：[直轄市、縣市界線（TWD97 經緯度）](https://data.gov.tw/dataset/7442)，版本 `COUNTY_MOI_1140318`，依[政府資料開放授權條款－第1版](https://data.gov.tw/license)使用。简化与 GeoJSON 转换来自 [plotdb/pdmaptw v2.4.0](https://github.com/plotdb/pdmaptw/tree/v2.4.0) 的 [county-2025-03-18.geojson](https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/county-2025-03-18.geojson)。資料來源：內政部國土測繪中心；本应用进一步适配字段、显示字形、精度和绘图环方向，提供机关未替本应用背书。原版说明保留在 `assets/TAIWAN-DATA-SOURCES.md`。
 
-下载 URL、原始响应 SHA-256、字节数记录在 `china-source-manifest.json`。原始下载缓存位于发布目录之外。
+先前 368 个台湾乡镇市区来源为同一项目的 [town-2025-03-18.geojson](https://github.com/plotdb/pdmaptw/releases/download/v2.4.0/town-2025-03-18.geojson)，原始资料为[鄉鎮市區界線](https://data.gov.tw/dataset/7441)。该细分数据现在仅用于旧存档父子关系追溯及离岛去重，不再作为可记录的地图单位。香港 18 区和澳门 8 分区来源也仅保留作向旧层级恢复的依据。
 
-## 覆盖与真实层级
+下载 URL、原始响应 SHA-256、字节数及旧版本地数据文件哈希记录在 `china-source-manifest.json`。原始下载缓存位于发布目录之外。
 
-34 个省级包共 3,241 个可记录单位，其中台湾为 368 个乡镇市区，香港为 18 区，澳门为 8 个来源分区（其中含填海区域），其余来自 DataV 县级边界。澳门分区不宣称为县级行政建制。台湾条目的 `levelNote` 为“乡镇市区”。
+## 覆盖与层级
 
-东莞、中山、儋州、嘉峪关没有作为普通市辖县区展开，保留 `level: "city"` 和“此地级市不设县级下辖单位，按市本级记录”的说明。其余可分出的县、区、县级市采用 `level: "county"`。省直管县级单位本身就是可记录单位，旧记录保留原 ID。
+34 个省级包共 **2,871 个可记录单位**：大陆 2,847 个、台湾 22 个县市、香港 1 个整体、澳门 1 个整体。大陆包含四个按市本级记录的单位：东莞、中山、儋州、嘉峪关，其余采用县、区或县级市粒度。这里的数量是来源快照的应用单位数，不是现行法定区划统计。
 
-两个边界来源对部分离岛存在重复。金门、马祖等离岛仅保留乡镇级图形，去除福建包中重复的金门县总图形及连江、长乐、秀屿的重复离岛图形。处理明细见源文件清单中的 `deduplicated`。
+台湾 `levelNote` 为“县市”，港澳为“特别行政区整体”。应用内部沿用 `level: "city"` 表示这些旧版记录单位；这个字段不宣称特别行政区属于地级市。大陆县级单位采用 `level: "county"`。
 
-DataV 快照可能未反映较新的区划变化，不能把本包单位数当作现行法定区划统计。九江市政府现址的地址来源标注浔阳区，而 DataV 快照在该点仍显示濂溪区；该迁移条目已单独记录差异，政府驻地并非由多边形包含关系推断。
+两个边界来源对部分离岛存在重复。金门、马祖等离岛只在台湾县市包中提供一次，福建包去除重复的金门县总图形及连江、长乐、秀屿的重复离岛图形。原先乡镇边界仅用于识别重复区域，现地图仍按县市整体展示。处理明细见源文件清单中的 `deduplicated`。
+
+DataV 快照可能没有反映近期区划变化。九江市政府现址的地址来源标注浔阳区，而 DataV 快照在该点仍显示濂溪区；迁移条目保留差异说明，政府驻地不由多边形包含关系推断。
 
 ## 文件与 ID
 
-`china-index.json` 保存轻量 Feature 列表（`geometry: null`）和省包清单，搜索无需加载全国几何。点击省份后加载 `china/<provinceCode>.geo.json`。省包的 Feature 属性和索引一致。
+`china-index.json` 保存轻量 Feature 列表（`geometry: null`）和省包清单。点击省份后加载 `china/<provinceCode>.geo.json`，属性与索引一致。34 个省包的文件名保持不变，包括 `china/710000.geo.json`、`china/810000.geo.json`、`china/820000.geo.json`。
 
-大陆及港澳 ID 为字符串形式的六位来源代码；台湾乡镇 ID 为 `tw-` 加八位乡镇代码，`cityCode`/`parentId` 为旧版 `tw-` 加五位县市代码。`center` 是用于小旗显示的区域内部位置，只承担绘图作用，不代表政府地址。
+大陆与港澳 ID 是字符串形式的六位代码；台湾县市 ID 是 `tw-` 加五位县市代码。香港为 `810000`，澳门为 `820000`。`center` 是小旗的区域内部显示位置，不代表政府地址。
 
-## 旧记录迁移
+## 存档转换
 
-`county-migration-map.json` 对已核实的旧 ID 提供 `targetId`、来源 URL、地址、核实日期及必要说明。优先使用政府网站原始资料；少数政府页面只给街道地址的条目，附地图服务原始政府 POI 作为所属区佐证。萍乡使用国资企业原始公开发行文件中的政府驻地文字，并附原始地图 POI。
+`county-migration-map.json` 仅将大陆旧地市 ID 映射到有来源证实的政府驻地区，保留 URL、地址、核实日期及说明。台湾 22 县市与港澳 2 个整体 ID 均为 `unchanged` 的同 ID 映射，原先台北、南投、屏东、高雄、台南向下细分的规则已停止。未核实的大陆旧记录仍在 `unresolved`，保留原记录等待整理。
 
-台南和高雄存在多个市政中心，本次分别采用用户明确选择的安平区和苓雅区，并标记 `userSelected: true`。没有来源证实的旧记录列入 `unresolved`，保留原记录等待用户整理，不按城市几何中心或任意第一个区迁移。
+新增 `region-level-reversal-map.json` 提供 **394 条恢复对应关系**：368 台湾乡镇市区 → 22 县市、18 香港分区 → 香港整体、8 澳门分区 → 澳门整体。条目包含 `targetId`、`targetName`、`parentName`、`sourceName`、`sourceProvince`、`source`、`verified` 与关系说明。
+
+该文件只提供行政父子对应关系，不决定冲突处理。执行存档恢复时必须保存原始备份；同一县市存在多个细分记录或已有县市记录时，不得直接覆盖任何日期或笔记。存档模块负责无损合并、冲突记录和用户后续整理。
 
 ## 重建与验证
 
@@ -42,4 +46,6 @@ node scripts/china-build-migration.cjs
 node scripts/china-validate.cjs
 ```
 
-数据脚本优先使用仓库相邻的 `china-data-cache` 原始缓存，以保持可重复。迁移脚本保留已有人工核实映射。验证检查 ID 唯一性、索引与几何一致、闭合及有限坐标、D3 球面环方向、旗标落点、台湾及港澳数量、离岛重复、迁移目标所属地市，以及本次已存在的 47 个记录 ID 均有核实映射。
+数据脚本优先使用仓库相邻的 `china-data-cache` 原始缓存，直接复用上一版台湾县市和港澳整体输入。重建同时生成恢复对应关系，不会再次将台湾、港澳向下细分。
+
+验证检查 2,871 个 ID 唯一、索引和几何一致、闭合及有限坐标、D3 球面环方向、旗标落点、34 包及恢复后数量、离岛重复、迁移目标、47 个已有记录 ID 的处理，以及 394 条恢复关系全部指向现存父级单位。存档合并和数据库权限由独立测试覆盖。
