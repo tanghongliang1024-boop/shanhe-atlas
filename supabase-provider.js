@@ -16,7 +16,8 @@
     WEAK_PASSWORD: '密码不符合要求，请设置更长、更复杂的密码。',
     AUTH_FAILED: '暂时无法完成账号操作，请检查网络后重试。',
     READ_FAILED: '暂时无法读取云端足迹，请检查网络后重试。',
-    WRITE_FAILED: '云端保存失败，当前输入仍然保留，请重试。'
+    WRITE_FAILED: '云端保存失败，当前输入仍然保留，请重试。',
+    CLIENT_UPDATE_REQUIRED: '请更新山河足迹后再保存，当前版本无法安全保存新版地图记录。'
   };
 
   function problem(code) {
@@ -30,6 +31,7 @@
   function safeError(error, fallback) {
     const code = error?.code;
     if (code === '40001' || code === 'REVISION_CONFLICT' || error?.message === 'REVISION_CONFLICT') return problem('CONFLICT');
+    if (error?.message === 'CLIENT_UPDATE_REQUIRED') return problem('CLIENT_UPDATE_REQUIRED');
     if (Object.hasOwn(MESSAGES, code)) return problem(code);
     if (code === 'invalid_credentials' || code === 'invalid_login_credentials') return problem('INVALID_CREDENTIALS');
     if (code === 'email_not_confirmed') return problem('EMAIL_NOT_CONFIRMED');
@@ -114,7 +116,7 @@
       async write(userId, payload) {
         const token = await requireUser(userId);
         if (!Number.isSafeInteger(payload?.expectedRevision) || payload.expectedRevision < 0) throw problem('INVALID_REVISION');
-        const data = await request(() => client.rpc('shanhe_save_archive', {
+        const data = await request(() => client.rpc('shanhe_save_archive_v2', {
           p_records: payload.records,
           p_expected_revision: payload.expectedRevision
         }).setHeader('Authorization', 'Bearer ' + token), 'WRITE_FAILED');

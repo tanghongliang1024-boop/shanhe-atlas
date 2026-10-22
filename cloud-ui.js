@@ -1,11 +1,12 @@
 (function(root){
   'use strict';
-  root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor}){
+  root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor,regionMigration}){
     const $=s=>document.querySelector(s),config=root.SHANHE_CLOUD_CONFIG||{};
     const dialog=$('#cloud-dialog'),message=$('#cloud-message'),form=$('#cloud-auth-form');
     const INTENT_KEY='shanhe-cloud-transfer-v1';
     let storage;try{storage=root.localStorage;}catch(_){}
-    const guest=root.createGuestArchiveStore({storage});
+    const migrate=(records,occupied={})=>regionMigration?root.ShanheRegionMigration.migrateRecords(records,regionMigration,occupied):{records};
+    const guest=root.createGuestArchiveStore({storage,migrateRecords:migrate});
     let provider,store,user=null,mode='signup',authBusy=false,sessionKnown=false;
     let authSerial=0,sessionGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
     let transferTask=null,transferAttempt=null,transferMessage='',transferError=false;
@@ -16,14 +17,14 @@
     const count=records=>Object.values(records).filter(r=>r?.visited===true).length;
     const localCount=()=>count(getLocalRecords());
     const sameSession=(generation,id)=>generation===sessionGeneration&&id===(user?.id||null);
-    const stale=()=>({ok:false,code:'STALE_REQUEST',message:'当前存档已变化，请重新打开城市详情。'});
+    const stale=()=>({ok:false,code:'STALE_REQUEST',message:'当前存档已变化，请重新打开地区详情。'});
     function publish(){onRecords(state().records);paint();}
     function readIntent(){
       try{
         const raw=storage?.getItem(INTENT_KEY);if(!raw)return null;
         const value=JSON.parse(raw);
         if(value?.version!==1||typeof value.id!=='string'||typeof value.email!=='string'||!value.email||!Number.isSafeInteger(value.snapshot?.revision)||value.snapshot.revision<0)return null;
-        return {...value,email:normalizeEmail(value.email),snapshot:{revision:value.snapshot.revision,records:prepareLocalArchiveImport(value.snapshot.records,{}).records}};
+        return {...value,email:normalizeEmail(value.email),snapshot:{revision:value.snapshot.revision,records:migrate(prepareLocalArchiveImport(value.snapshot.records,{}).records).records}};
       }catch(_){return null;}
     }
     const intentLock=action=>root.navigator?.locks?.request?root.navigator.locks.request('shanhe-cloud-transfer-intent-v1',action):Promise.resolve().then(action);
@@ -53,7 +54,7 @@
       $('#cloud-signed-in').hidden=!signed||mode==='recover';
       $('#cloud-auth-area').hidden=signed&&mode!=='recover';
       $('#cloud-account-email').textContent=user?.email||'已登录';
-      $('#cloud-import-count').textContent=localCount()?`本机有 ${localCount()} 条旧版本足迹。只补充云端没有的城市，同城记录以云端为准。`:'本机没有待导入的旧版本足迹。';
+      $('#cloud-import-count').textContent=localCount()?`本机有 ${localCount()} 条旧版本足迹。已核实的城市记录会定位到政府所在县区；冲突和待核实记录继续保留。`:'本机没有待导入的旧版本足迹。';
       $('#cloud-import').disabled=!signed||s.busy||!!transferTask||!s.ready||!localCount();
       $('#cloud-refresh').disabled=s.busy||!!transferTask;
       $('#cloud-logout').disabled=s.busy||authBusy||!!transferTask;
@@ -129,14 +130,15 @@
       task.promise=(async()=>{
         transferMessage='正在把临时足迹保存到云端…';transferError=false;paint();
         try{
-          const merged=prepareLocalArchiveImport(intent.snapshot.records,s.records);
+          const merged=prepareLocalArchiveImport(migrate(intent.snapshot.records,s.records).records,s.records);
           const result=merged.added?await store.save(merged.records,{expectedRevision:s.revision}):{ok:true};
           if(!sameSession(generation,id)||readIntent()?.id!==intent.id)return;
           if(!result.ok){transferMessage=`${result.message||'转存未成功。'} 临时足迹仍保留，请重试。`;transferError=true;return;}
+          if(merged.conflicts?.length){transferMessage=`可合并的足迹已存入云端。${merged.conflicts.length} 条同地区记录与云端内容不同，临时草稿仍完整保留，请整理后再转存。`;transferError=true;return;}
           const cleanup=await finishIntent(intent,generation,id);
           if(!sameSession(generation,id))return;
           if(cleanup.code==='STALE_REQUEST')return;
-          transferMessage=cleanup.ok?`临时足迹已存入云端。同城记录保留云端版本。`:
+          transferMessage=cleanup.ok?'临时足迹已存入云端。':
             cleanup.code==='CONFLICT'?'临时足迹已存入云端；本机还有新的编辑，已为你保留，可继续转存。':cleanup.message||'云端已保存，本机草稿仍保留。请重试清理。';
           transferError=!cleanup.ok&&cleanup.code!=='CONFLICT';
           if(cleanup.ok)notify?.('临时足迹已保存到云端');
@@ -218,8 +220,8 @@
     $('#cloud-import').onclick=async()=>{
       const s=state(),generation=sessionGeneration,id=user?.id;if(!id||!s.ready||s.busy||transferTask)return;
       try{
-        const merged=prepareLocalArchiveImport(getLocalRecords(),s.records);
-        if(!merged.added){say('这些城市已经在云端，无需重复导入。原本机备份仍保留。');return;}
+        const merged=prepareLocalArchiveImport(migrate(getLocalRecords(),s.records).records,s.records);
+        if(!merged.added){say('这些地区已经在云端，无需重复导入。原本机备份仍保留。');return;}
         const result=await store.save(merged.records,{expectedRevision:s.revision});if(!sameSession(generation,id))return;
         say(result.ok?`已存入云端 ${merged.added} 条足迹，保留 ${merged.skipped} 条已有云端记录。本机备份未改动。`:result.message,!result.ok);
       }catch(_){if(sameSession(generation,id))say('本机旧足迹格式有误，请先导出备份。',true);}
@@ -238,7 +240,7 @@
       try{
         const client=root.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storageKey:'shanhe-cloud-auth-v1'}});
         provider=createSupabaseArchiveProvider(client,{url:config.url,publishableKey:config.publishableKey});
-        store=createCloudArchiveStore({transport:provider.transport,onChange:changed});
+        store=createCloudArchiveStore({transport:provider.transport,onChange:changed,migrateRecords:migrate});
         provider.onAuthStateChange((event,session)=>{setTimeout(()=>{applySession(session.user,event).catch(()=>{say('读取云端存档失败，请重试。',true);paint();});},0);});
         const initial=await provider.getSession();if(!sessionKnown)await applySession(initial.user,'INITIAL_SESSION');paint();
       }catch(_){say('云端连接失败。仍可先记录临时足迹，稍后再试。',true);paint();}
@@ -249,7 +251,7 @@
       else if(!user){await guest.refresh();if(!user)publish();}
     });
     root.addEventListener('storage',async event=>{
-      if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
+      if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===root.SHANHE_LEGACY_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
       if(event.key===INTENT_KEY){transferAttempt=null;paint();if(user&&!hasOpenEditor())await transferPending();}
       if(event.key==='shanhe-atlas-v1')paint();
     });

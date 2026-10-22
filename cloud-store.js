@@ -1,9 +1,10 @@
 (function (root) {
   'use strict';
 
-  const CITY_ID = /^(?:\d{6}|tw-\d{5})$/;
+  const CITY_ID = /^(?:\d{6}|tw-(?:\d{5}|\d{8})|world:[A-Z]{3}(?::[A-Za-z0-9][A-Za-z0-9._-]{0,63})?)$/;
   const RECORD_FIELDS = new Set(['visited', 'date', 'note', 'updatedAt']);
-  const MAX_RECORDS = 450;
+  const MAX_RECORDS = 10000;
+  const MAX_BYTES = 16777216;
 
   function failure(code, message) {
     return { ok: false, code, message };
@@ -59,19 +60,19 @@
   function validateRecords(input) {
     const descriptors = dataProperties(input);
     const keys = Object.keys(descriptors);
-    if (keys.length > MAX_RECORDS) throw problem('INVALID_RECORDS', '足迹记录不能超过 450 条。');
+    if (keys.length > MAX_RECORDS) throw problem('INVALID_RECORDS', '足迹记录不能超过 10000 条。');
     const result = {};
     for (const id of keys) {
-      if (!CITY_ID.test(id)) throw problem('INVALID_RECORDS', '足迹中包含无效的城市编号。');
+      if (!CITY_ID.test(id)) throw problem('INVALID_RECORDS', '足迹中包含无效的地区编号。');
       const properties = dataProperties(descriptors[id].value);
       if (Object.keys(properties).some(key => !RECORD_FIELDS.has(key))) {
-        throw problem('INVALID_RECORDS', '城市足迹中包含不支持的字段。');
+        throw problem('INVALID_RECORDS', '地区足迹中包含不支持的字段。');
       }
       const visited = properties.visited?.value;
       const date = properties.date?.value;
       const note = properties.note?.value;
       if (visited !== true || (date !== '' && !validDate(date)) || typeof note !== 'string' || note.length > 600) {
-        throw problem('INVALID_RECORDS', '请检查足迹状态、首次到访日期和不超过 600 字的城市记忆。');
+        throw problem('INVALID_RECORDS', '请检查足迹状态、首次到访日期和不超过 600 字的旅行记忆。');
       }
       const record = { visited: true, date, note };
       if (Object.hasOwn(properties, 'updatedAt')) {
@@ -80,6 +81,9 @@
         record.updatedAt = timestamp;
       }
       result[id] = record;
+    }
+    if (new TextEncoder().encode(JSON.stringify(result)).length > MAX_BYTES) {
+      throw problem('INVALID_RECORDS', '这份足迹超过存档容量，请先导出备份。');
     }
     return result;
   }
@@ -111,32 +115,37 @@
     const cloud = validateRecords(cloudRecords);
     const merged = copyRecords(cloud);
     let added = 0, skipped = 0;
+    const conflicts = [];
     for (const [id, record] of Object.entries(local)) {
-      if (Object.hasOwn(cloud, id)) skipped++;
+      if (Object.hasOwn(cloud, id)) {
+        skipped++;
+        if (['visited', 'date', 'note', 'updatedAt'].some(field => record[field] !== cloud[id][field])) conflicts.push(id);
+      }
       else { merged[id] = { ...record }; added++; }
     }
     // The combined archive must also fit the same server-facing constraints.
-    return { records: validateRecords(merged), added, skipped };
+    return { records: validateRecords(merged), added, skipped, conflicts };
   }
 
   function transportFailure(error, fallbackCode) {
     if (error?.code === 'CONFLICT' || error?.code === 'REVISION_CONFLICT' || error?.status === 409 || error?.statusCode === 409) {
       return failure('CONFLICT', '云端足迹已在其他位置更新。请保留当前输入，刷新云端存档后重新编辑。');
     }
-    const code = ['AUTH_REQUIRED', 'UNAUTHORIZED', 'FORBIDDEN', 'INVALID_RESPONSE'].includes(error?.code)
+    const code = ['AUTH_REQUIRED', 'UNAUTHORIZED', 'FORBIDDEN', 'INVALID_RESPONSE', 'CLIENT_UPDATE_REQUIRED'].includes(error?.code)
       ? error.code : fallbackCode;
     const defaults = {
       AUTH_REQUIRED: '请先登录，再保存云端足迹。',
       UNAUTHORIZED: '登录状态已失效，请重新登录。',
       FORBIDDEN: '当前账号没有访问这份存档的权限。',
       INVALID_RESPONSE: '云端返回的数据无效，当前记录未被替换。',
+      CLIENT_UPDATE_REQUIRED: '请更新山河足迹后再保存，当前版本无法安全保存新版地图记录。',
       READ_FAILED: '暂时无法读取云端足迹，请检查网络后重试。',
       WRITE_FAILED: '云端保存失败，当前输入仍然保留，请重试。'
     };
     return failure(code, defaults[code]);
   }
 
-  function createCloudArchiveStore({ transport, onChange, onStatus } = {}) {
+  function createCloudArchiveStore({ transport, onChange, onStatus, migrateRecords } = {}) {
     if (!transport || typeof transport.read !== 'function' || typeof transport.write !== 'function') {
       throw new TypeError('A cloud archive transport with read and write methods is required.');
     }
@@ -180,6 +189,7 @@
         const response = await transport.read(userId);
         if (epoch !== requestEpoch || state.userId !== userId) return stale();
         const snapshot = validateSnapshot(response);
+        if (typeof migrateRecords === 'function') snapshot.records = validateRecords(migrateRecords(snapshot.records).records);
         state = { ...state, ...snapshot, ready: true, busy: false, status: 'ready', error: null };
         operation = null;
         notify();
@@ -245,7 +255,8 @@
 
   root.createCloudArchiveStore = createCloudArchiveStore;
   root.prepareLocalArchiveImport = prepareLocalArchiveImport;
+  root.validateShanheRecords = validateRecords;
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { createCloudArchiveStore, prepareLocalArchiveImport };
+    module.exports = { createCloudArchiveStore, prepareLocalArchiveImport, validateRecords, REGION_ID: CITY_ID, MAX_RECORDS, MAX_BYTES };
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -1,7 +1,8 @@
 (function (root) {
   'use strict';
 
-  const KEY = 'shanhe-atlas-guest-v1';
+  const KEY = 'shanhe-atlas-guest-v2';
+  const LEGACY_KEY = 'shanhe-atlas-guest-v1';
   const LOCK = 'shanhe-guest-archive-v1';
   const merge = root.prepareLocalArchiveImport || (typeof require === 'function' ? require('./cloud-store.js').prepareLocalArchiveImport : null);
   const copy = records => merge({}, records).records;
@@ -33,11 +34,13 @@
     }
     function read() {
       if (storageError || !storage || typeof storage.getItem !== 'function') throw new Error('Storage unavailable');
-      const raw = storage.getItem(KEY);
+      let raw = storage.getItem(KEY), version = 2;
+      if (raw === null) { raw = storage.getItem(LEGACY_KEY); version = 1; }
       if (raw === null) return { records: {}, revision: 0 };
       const value = JSON.parse(raw);
-      if (!value || value.version !== 1 || !revisionValid(value.revision)) throw new Error('Invalid guest archive');
-      return { records: copy(value.records), revision: value.revision };
+      if (!value || value.version !== version || !revisionValid(value.revision)) throw new Error('Invalid guest archive');
+      const records = copy(value.records);
+      return { records: options.migrateRecords ? copy(options.migrateRecords(records).records) : records, revision: value.revision };
     }
     function load() {
       try {
@@ -60,7 +63,9 @@
     }
     function write(records, revision) {
       if (!revisionValid(revision) || revision === Number.MAX_SAFE_INTEGER) throw new Error('Revision exhausted');
-      const next = { version: 1, revision: revision + 1, records };
+      // The original v1 key is retained as a backup. Old pages cannot overwrite
+      // this v2 key; failed quota writes leave both versions untouched.
+      const next = { version: 2, revision: revision + 1, records };
       const serialized = JSON.stringify(next);
       storage.setItem(KEY, serialized);
       if (storage.getItem(KEY) !== serialized) throw new Error('Storage did not retain the archive');
@@ -69,11 +74,11 @@
       return { ok: true, guest: true };
     }
     async function save(next, context) {
-      if (!context || !revisionValid(context.expectedRevision)) return error(fail('INVALID_REVISION', '请重新打开城市详情后保存。'));
+      if (!context || !revisionValid(context.expectedRevision)) return error(fail('INVALID_REVISION', '请重新打开地区详情后保存。'));
       const expectedRevision = context.expectedRevision;
       let records;
       try { records = copy(next); }
-      catch (_) { return error(fail('INVALID_RECORDS', '请检查城市足迹、首次到访日期和不超过 600 字的城市记忆。')); }
+      catch (_) { return error(fail('INVALID_RECORDS', '请检查地区足迹、首次到访日期和不超过 600 字的旅行记忆。')); }
       return locked(() => {
         let latest;
         try { latest = read(); }
@@ -105,6 +110,7 @@
   }
 
   root.SHANHE_GUEST_STORAGE_KEY = KEY;
+  root.SHANHE_LEGACY_GUEST_STORAGE_KEY = LEGACY_KEY;
   root.createGuestArchiveStore = createGuestArchiveStore;
-  if (typeof module !== 'undefined' && module.exports) module.exports = { createGuestArchiveStore, SHANHE_GUEST_STORAGE_KEY: KEY };
+  if (typeof module !== 'undefined' && module.exports) module.exports = { createGuestArchiveStore, SHANHE_GUEST_STORAGE_KEY: KEY, SHANHE_LEGACY_GUEST_STORAGE_KEY: LEGACY_KEY };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
