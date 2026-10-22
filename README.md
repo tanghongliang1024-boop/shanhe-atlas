@@ -2,7 +2,7 @@
 
 适配手机和桌面的旅行地图：在去过的地区插旗或着色，填写首次到访日期与旅行笔记，查看足迹并导出 CSV。无需注册即可开始记录，需要云端保存、换设备继续时再用邮箱注册或登录。
 
-[网页版](https://tanghongliang1024-boop.github.io/shanhe-atlas/) · [Android 2.0.2 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.0.2) · [中国数据说明](assets/geo/china-data-sources.md) · [世界数据说明](assets/geo/world-data-sources.md)
+[网页版](https://tanghongliang1024-boop.github.io/shanhe-atlas/) · [Android 2.1.0 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.1.0) · [中国数据说明](assets/geo/china-data-sources.md) · [世界数据说明](assets/geo/world-data-sources.md)
 
 **2.0.1 更新（2026-10-22）：县区细化仅限中国大陆（含海南）。台湾恢复上一版的 22 个县市，香港和澳门恢复整体标记。** 旧台湾乡镇与港澳分区足迹会回到所属县市或整体单位；日期、笔记和更新时间保持原样。多个记录对应同一地区时单独保留冲突记录，不覆盖内容。
 
@@ -10,13 +10,15 @@
 
 ## 地图覆盖
 
-本版本共有 **3,745 个可标记区域**，采用分级加载：世界总览进入国家，中国进入省份后按当地记录层级显示，已细化的海外目的地显示州、省或相应层级。
+**2.1.0 更新：** 海外主要国家采用“省州边界＋城市足迹”。首次到访日期、笔记、旗子、搜索、时间线和 CSV 导出均使用城市名。城市选择与数据来源见[海外城市说明](assets/geo/world-cities-sources.md)。
+
+世界总览进入国家，中国进入省份后按当地记录层级显示。25 个主要海外目的地保留州省地块，每个有居民城市的区域通常提供 1～2 个代表城市或主要居民点，足迹按城市分别记录。点击地块选择城市，或直接点击城市圆点；地图较密时可放大查看名称。
 
 | 范围 | 当前数据 |
 | --- | --- |
 | 世界总览 | 258 个国家及地区边界要素；这个数字不是主权国家数量 |
 | 中国 | 2,871 个可记录单位：大陆（含海南）2,847 个，台湾 22 个县市，香港和澳门各 1 个 |
-| 25 个海外目的地 | 共 645 个州、省、大区等细分要素；部分来源还单列岛屿 |
+| 25 个海外目的地 | 保留 645 个州、省、大区等边界要素，城市作为独立足迹；新加坡五个分区共用一个城市记录，无人离岛不添加虚构城市 |
 | 其他国家及地区 | 暂按整体标记 |
 
 首批细化美国、加拿大、日本、韩国、泰国、越南、马来西亚、新加坡、印度尼西亚、菲律宾、柬埔寨、老挝、缅甸、文莱、澳大利亚、新西兰、英国、法国、德国、意大利、西班牙、俄罗斯、印度、巴西和南非。各地层级并不完全相同，逐项数量与处理方式见[世界数据说明](assets/geo/world-data-sources.md)。
@@ -37,17 +39,19 @@
 
 ## 旧足迹如何保留
 
+海外旧省州足迹按已核实的首府城市归档，原日期、笔记和更新时间完整保留。云端在事务中先备份当前存档再迁移，不覆盖用户迁移前的最新整理。目标城市已有足迹、多条旧分区对应同一城市或首府不能唯一核实时，旧记录单独保留，可在“我的足迹”中整理；不会自动合并或丢弃。云端首府迁移只执行一次，当前城市存档读取时不重复迁移。
+
 大陆（含海南）已核实政府驻地区的旧地市记录会定位到对应县区，首次到访日期和笔记原样保留。目的县区已经有记录时，两份记录都保留，等待整理；尚未核实的旧记录继续显示，不按城市中心点猜测归属。
 
 数据库迁移会在同一事务中保存完整原始存档及迁移说明，再更新记录键和版本。重复执行同一迁移不会再次搬移数据。台湾和港澳回迁沿用完整备份、保留字段与幂等规则；发布步骤和备份规则见[世界与县区存档升级说明](supabase/WORLD-MIGRATION.md)。
 
-新版游客草稿使用独立的 v3 存储，优先读取 v3，再读取旧 v2、v1；首次成功保存才写入 v3，旧 v2/v1 的原始数据保留。更早的本机足迹可在登录后的“我的存档”中主动导入，原本机备份不会被清除。导入只能读取当前域名、当前浏览器或 App 内的数据，原 Sites 网址与 GitHub Pages 的本机记录不会自动互通。
+新版游客草稿使用独立的 v4 存储，优先读取 v4，再读取旧 v3、v2、v1；首次成功保存才写入 v4，旧版本原始数据保留。海外首府转换只在旧草稿首次升级时执行；当前 v4 存档不重复转换，避免删除城市后被旧省州记录再次生成。更早的本机足迹可在登录后的“我的存档”中主动导入，原本机备份不会被清除。导入只能读取当前域名、当前浏览器或 App 内的数据，原 Sites 网址与 GitHub Pages 的本机记录不会自动互通。
 
 ## Android 安装与升级
 
-Android 2.0.2 APK 通过 [android-v2.0.2 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.0.2)提供。已安装旧版时，请直接安装同签名的新版 APK 覆盖升级，**不要先卸载**，以保留 App 内的临时足迹和登录状态。若系统提示签名不一致而不能覆盖，请先保留现有 App 和数据，核对下载来源。
+Android 2.1.0 APK 通过 [android-v2.1.0 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.1.0)提供。已安装旧版时，请直接安装同签名的新版 APK 覆盖升级，**不要先卸载**，以保留 App 内的临时足迹和登录状态。若系统提示签名不一致而不能覆盖，请先保留现有 App 和数据，核对下载来源。
 
-本轮数据库升级后，Android 1.0、2.0 和缓存的旧网页将被拒绝写入云端，避免旧客户端重新写回已恢复的乡镇或分区层级。请升级所有使用中的设备；旧网页需要重新加载新版资源。云端账号与存档继续沿用原账号。
+2.0.1 的层级恢复已停用 Android 1.0、2.0 的旧保存入口。2.1.0 继续使用现有 v3 云端接口；2.0.1/2.0.2 不能正确显示新城市名称，请覆盖升级所有使用中的设备，网页重新打开即可加载新版。云端账号与存档继续沿用原账号。
 
 ## 部署与验证
 
@@ -64,6 +68,7 @@ Android 2.0.2 APK 通过 [android-v2.0.2 发布页](https://github.com/tanghongl
 - 中国大陆及港澳使用[阿里云 DataV GeoAtlas](https://datav.aliyun.com/portal/school/atlas/area_selector)。原始边界版权归原权利人所有，没有将其重新声明为开源许可或公共领域数据。
 - 台湾县市资料来自[內政部國土測繪中心](https://data.gov.tw/dataset/7442)，依据[政府資料開放授權條款－第 1 版](https://data.gov.tw/license)，使用 [plotdb/pdmaptw v2.4.0](https://github.com/plotdb/pdmaptw/tree/v2.4.0) 的 2025-03-18 简化边界并进一步加工。
 - 世界及大部分州省边界来自 [Natural Earth](https://www.naturalearthdata.com/)，其地图数据为 [public domain](https://www.naturalearthdata.com/about/terms-of-use/)。Made with Natural Earth.
+- 海外城市点主要来自 Natural Earth 的 Populated Places，缺口由 [GeoNames](https://www.geonames.org/)补充；具体固定版本、许可、行政归属例外和首府依据见[海外城市说明](assets/geo/world-cities-sources.md)。
 - 印度尼西亚 38 省使用 [denyherianto 的地图数据](https://github.com/denyherianto/indonesia-geojson-topojson-maps-with-38-provinces)，按 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)提供。
 - 柬埔寨、老挝及缅甸的补充边界包含 © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright) 数据，部分经 [geoBoundaries](https://www.geoboundaries.org/)发布。相关地图数据库衍生文件与汇总索引按 [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/)提供；私人旅行记录不属于分发的地图数据库。
 

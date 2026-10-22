@@ -11,34 +11,60 @@
   function trail(feature){const p=feature.properties;return [...new Set([p.country,p.province,p.city].filter(Boolean))].join(' · ');}
   function matches(feature,query,country='all',province='all'){
     const p=feature.properties;
-    return (country==='all'||countryOf(feature)===country)&&(province==='all'||String(p.provinceCode)===province)&&(!query||text([displayName(feature),p.name,p.country,p.province,p.city,...(p.aliases||[])].join(' ')).includes(text(query)));
+    return (country==='all'||countryOf(feature)===country)&&(province==='all'||String(p.provinceCode)===province||p.regionIds?.includes(String(province))===true)&&(!query||text([displayName(feature),p.name,p.country,p.province,p.city,...(p.aliases||[])].join(' ')).includes(text(query)));
   }
-  function catalog(chinaIndex,worldIndex,legacy=[],reversal){
+  function catalog(chinaIndex,worldIndex,legacy=[],reversal,worldCities){
     const countries=new Map(worldIndex.countries.map(p=>[p.countryCode,p]));
     const detail=new Set(worldIndex.detailCountries);
-    const entries=[...chinaIndex.features,...worldIndex.regions.map(properties=>({type:'Feature',geometry:null,properties})),...worldIndex.countries.filter(p=>countryOf({properties:p})!=='CHN'&&!detail.has(p.countryCode)).map(properties=>({type:'Feature',geometry:null,properties}))];
+    const regionsById=new Map();
+    for(const properties of worldIndex.regions){const key=String(properties.adcode);if(regionsById.has(key))throw Error('Duplicate region identifier: '+key);regionsById.set(key,{type:'Feature',geometry:null,properties});}
+    const citiesByRegion=new Map(worldIndex.regions.map(p=>[String(p.adcode),[]]));
+    const cityFeatures=(worldCities?.cities||[]).map(properties=>{
+      const parent=regionsById.get(String(properties.parentRegionId));
+      if(!parent||properties.level!=='city'||countryOf({properties})!==countryOf(parent))throw Error('Invalid city parent: '+properties.adcode);
+      if(!String(properties.adcode).startsWith('world:'+countryOf(parent)+':city-'))throw Error('Invalid city identifier: '+properties.adcode);
+      const p=parent.properties,regionIds=[...new Set([id(parent),...(properties.regionIds||[])].map(String))];
+      const parents=regionIds.map(key=>regionsById.get(key));
+      if(parents.some(f=>!f||countryOf(f)!==countryOf(parent)))throw Error('Invalid shared city parent: '+properties.adcode);
+      const feature={type:'Feature',geometry:null,properties:{...properties,province:p.name,provinceCode:id(parent),parentRegionId:id(parent),regionIds,aliases:[...new Set([...(properties.aliases||[]),...parents.flatMap(f=>[...(f.properties.aliases||[]),f.properties.name])])].filter(Boolean)}};
+      for(const key of regionIds)citiesByRegion.get(key).push(feature);
+      return feature;
+    });
+    const entries=[...chinaIndex.features,...(worldCities?cityFeatures:regionsById.values()),...worldIndex.countries.filter(p=>countryOf({properties:p})!=='CHN'&&!detail.has(p.countryCode)).map(properties=>({type:'Feature',geometry:null,properties}))];
     const byId=new Map();
     for(const feature of entries){if(byId.has(id(feature)))throw Error('Duplicate region identifier: '+id(feature));byId.set(id(feature),feature);}
     const legacyById=new Map(legacy.filter(f=>!byId.has(id(f))).map(f=>[id(f),{...f,properties:{...f.properties,country:'中国',countryCode:'CHN',level:'legacy'}}]));
+    if(worldCities)for(const [key,feature] of regionsById){
+      legacyById.set(key,{...feature,properties:{...feature.properties,province:feature.properties.name,provinceCode:key,level:'legacy',legacyKind:'world-region',parentRegionId:key,levelNote:'旧版省州足迹，待补充实际到访城市；原记录完整保留'}});
+    }
     for(const [source,item] of Object.entries(reversal?.mappings||{})){
       const parent=byId.get(item.targetId);
       if(item.verified!==true||!parent||byId.has(source))continue;
       const p=parent.properties;
       legacyById.set(source,{type:'Feature',geometry:null,properties:{adcode:source,name:item.sourceName||source,country:'中国',countryCode:'CHN',province:p.province,provinceCode:p.provinceCode,city:p.name,level:'legacy',reversalTarget:item.targetId,levelNote:'已恢复'+p.name+'整体标记；这条旧分区记录单独保留，可查看或导出'}});
     }
-    return {features:entries,byId,legacyById,countries};
+    return {features:entries,byId,legacyById,countries,regionsById,citiesByRegion};
+  }
+  function regionVisited(feature,visits){const key=id(feature);return visits.some(f=>id(f)===key||f.properties.parentRegionId===key||f.properties.regionIds?.includes(key));}
+  function moveLegacyRegionRecord(records,from,to,model){
+    from=String(from);to=String(to);
+    const source=model.legacyById.get(from),destination=model.byId.get(to);
+    if(!Object.prototype.hasOwnProperty.call(records,from)||records[from]?.visited!==true||source?.properties.legacyKind!=='world-region')throw Error('原省州足迹不存在或不是待补充城市的旧记录');
+    if(destination?.properties.level!=='city'||!(destination.properties.parentRegionId===from||destination.properties.regionIds?.includes(from))||countryOf(destination)!==countryOf(source))throw Error('请选择该省州内的城市');
+    if(Object.prototype.hasOwnProperty.call(records,to))throw Error('所选城市已有记录，请先保留并处理已有记录');
+    const next={...records,[to]:records[from]};delete next[from];return next;
   }
   function recordsWithFeatures(records,model){
     return Object.keys(records).filter(key=>records[key]?.visited===true).map(key=>model.byId.get(key)||model.legacyById.get(key)||{type:'Feature',geometry:null,properties:{adcode:key,name:'待整理地区 '+key,country:'',countryCode:key.startsWith('world:')?key.split(':')[1]:'CHN',province:'旧版足迹',level:'legacy'}});
   }
   function groupMarkers(visits,scope,countryFeatures,provinceFeatures){
-    if(scope.kind==='province'||scope.kind==='country')return visits.filter(f=>scope.kind==='province'?countryOf(f)==='CHN'&&String(f.properties.provinceCode)===scope.code:countryOf(f)===scope.code).map(f=>({...f,count:1,target:'record'}));
+    if(scope.kind==='province'||scope.kind==='country')return visits.filter(f=>scope.kind==='province'?countryOf(f)==='CHN'&&String(f.properties.provinceCode)===scope.code:countryOf(f)===scope.code).map(f=>({...f,count:1,target:f.properties.legacyKind==='world-region'?'legacy-region':'record'}));
     const groups=new Map();
     for(const f of visits){const key=scope.kind==='china'?String(f.properties.provinceCode):countryOf(f);if(scope.kind==='china'&&countryOf(f)!=='CHN')continue;groups.set(key,(groups.get(key)||0)+1);}
     const shapes=scope.kind==='china'?provinceFeatures:countryFeatures.filter(f=>!['TWN','HKG','MAC'].includes(f.properties.countryCode));
     return shapes.filter(f=>groups.has(scope.kind==='china'?id(f):countryOf(f))).map(f=>({...f,count:groups.get(scope.kind==='china'?id(f):countryOf(f)),target:scope.kind==='china'?'province':'country'}));
   }
-  const api=Object.freeze({text,id,countryOf,displayName,trail,matches,catalog,recordsWithFeatures,groupMarkers});
+  const api=Object.freeze({text,id,countryOf,displayName,trail,matches,catalog,regionVisited,moveLegacyRegionRecord,recordsWithFeatures,groupMarkers});
   root.ShanheRegions=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

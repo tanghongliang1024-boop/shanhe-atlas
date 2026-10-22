@@ -1,12 +1,15 @@
 (function(root){
   'use strict';
-  root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor,regionMigration}){
+  root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor,regionMigration,cityMigration}){
     const $=s=>document.querySelector(s),config=root.SHANHE_CLOUD_CONFIG||{};
     const dialog=$('#cloud-dialog'),message=$('#cloud-message'),form=$('#cloud-auth-form');
     const INTENT_KEY='shanhe-cloud-transfer-v1';
     let storage;try{storage=root.localStorage;}catch(_){}
     const migrate=(records,occupied={})=>regionMigration?root.ShanheRegionMigration.migrateRecords(records,regionMigration,occupied):{records};
-    const guest=root.createGuestArchiveStore({storage,migrateRecords:migrate});
+    const migrateLegacy=(records,occupied={})=>{const base=migrate(records,occupied);return cityMigration?root.ShanheRegionMigration.migrateRecords(base.records,cityMigration,occupied):base;};
+    // Remote archives were converted once on the server. Repeating capital
+    // conversion here would revive a deleted city from a retained conflict.
+    const guest=root.createGuestArchiveStore({storage,migrateRecords:migrate,migrateLegacyRecords:migrateLegacy});
     let provider,store,user=null,mode='signup',authBusy=false,sessionKnown=false;
     let authSerial=0,sessionGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
     let transferTask=null,transferAttempt=null,transferMessage='',transferError=false;
@@ -220,7 +223,7 @@
     $('#cloud-import').onclick=async()=>{
       const s=state(),generation=sessionGeneration,id=user?.id;if(!id||!s.ready||s.busy||transferTask)return;
       try{
-        const merged=prepareLocalArchiveImport(migrate(getLocalRecords(),s.records).records,s.records);
+        const merged=prepareLocalArchiveImport(migrateLegacy(getLocalRecords(),s.records).records,s.records);
         if(!merged.added){say('这些地区已经在云端，无需重复导入。原本机备份仍保留。');return;}
         const result=await store.save(merged.records,{expectedRevision:s.revision});if(!sameSession(generation,id))return;
         say(result.ok?`已存入云端 ${merged.added} 条足迹，保留 ${merged.skipped} 条已有云端记录。本机备份未改动。`:result.message,!result.ok);
@@ -251,7 +254,7 @@
       else if(!user){await guest.refresh();if(!user)publish();}
     });
     root.addEventListener('storage',async event=>{
-      if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===root.SHANHE_LEGACY_GUEST_STORAGE_KEY||event.key===root.SHANHE_OLDER_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
+      if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===root.SHANHE_PREVIOUS_GUEST_STORAGE_KEY||event.key===root.SHANHE_LEGACY_GUEST_STORAGE_KEY||event.key===root.SHANHE_OLDER_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
       if(event.key===INTENT_KEY){transferAttempt=null;paint();if(user&&!hasOpenEditor())await transferPending();}
       if(event.key==='shanhe-atlas-v1')paint();
     });

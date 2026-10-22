@@ -1,7 +1,8 @@
 (function (root) {
   'use strict';
 
-  const KEY = 'shanhe-atlas-guest-v3';
+  const KEY = 'shanhe-atlas-guest-v4';
+  const PREVIOUS_KEY = 'shanhe-atlas-guest-v3';
   const LEGACY_KEY = 'shanhe-atlas-guest-v2';
   const OLDER_KEY = 'shanhe-atlas-guest-v1';
   const LOCK = 'shanhe-guest-archive-v1';
@@ -35,14 +36,18 @@
     }
     function read() {
       if (storageError || !storage || typeof storage.getItem !== 'function') throw new Error('Storage unavailable');
-      let raw = storage.getItem(KEY), version = 3;
+      let raw = storage.getItem(KEY), version = 4;
+      if (raw === null) { raw = storage.getItem(PREVIOUS_KEY); version = 3; }
       if (raw === null) { raw = storage.getItem(LEGACY_KEY); version = 2; }
       if (raw === null) { raw = storage.getItem(OLDER_KEY); version = 1; }
       if (raw === null) return { records: {}, revision: 0 };
       const value = JSON.parse(raw);
       if (!value || value.version !== version || !revisionValid(value.revision)) throw new Error('Invalid guest archive');
       const records = copy(value.records);
-      return { records: options.migrateRecords ? copy(options.migrateRecords(records).records) : records, revision: value.revision };
+      // Capital conversion belongs only to the first read of a pre-city archive.
+      // Current archives retain unresolved old regions even after a city is removed.
+      const migrate = version === 4 ? options.migrateRecords : (options.migrateLegacyRecords || options.migrateRecords);
+      return { records: migrate ? copy(migrate(records).records) : records, revision: value.revision };
     }
     function load() {
       try {
@@ -65,9 +70,9 @@
     }
     function write(records, revision) {
       if (!revisionValid(revision) || revision === Number.MAX_SAFE_INTEGER) throw new Error('Revision exhausted');
-      // Both original v1/v2 keys remain byte-for-byte backups. Old Android 2.0
-      // and cached pages cannot overwrite this v3 fork after level restoration.
-      const next = { version: 3, revision: revision + 1, records };
+      // Original v1/v2/v3 keys remain byte-for-byte backups. Cached pages and
+      // older Android versions cannot overwrite this city-record archive.
+      const next = { version: 4, revision: revision + 1, records };
       const serialized = JSON.stringify(next);
       storage.setItem(KEY, serialized);
       if (storage.getItem(KEY) !== serialized) throw new Error('Storage did not retain the archive');
@@ -112,8 +117,9 @@
   }
 
   root.SHANHE_GUEST_STORAGE_KEY = KEY;
+  root.SHANHE_PREVIOUS_GUEST_STORAGE_KEY = PREVIOUS_KEY;
   root.SHANHE_LEGACY_GUEST_STORAGE_KEY = LEGACY_KEY;
   root.SHANHE_OLDER_GUEST_STORAGE_KEY = OLDER_KEY;
   root.createGuestArchiveStore = createGuestArchiveStore;
-  if (typeof module !== 'undefined' && module.exports) module.exports = { createGuestArchiveStore, SHANHE_GUEST_STORAGE_KEY: KEY, SHANHE_LEGACY_GUEST_STORAGE_KEY: LEGACY_KEY, SHANHE_OLDER_GUEST_STORAGE_KEY: OLDER_KEY };
+  if (typeof module !== 'undefined' && module.exports) module.exports = { createGuestArchiveStore, SHANHE_GUEST_STORAGE_KEY: KEY, SHANHE_PREVIOUS_GUEST_STORAGE_KEY: PREVIOUS_KEY, SHANHE_LEGACY_GUEST_STORAGE_KEY: LEGACY_KEY, SHANHE_OLDER_GUEST_STORAGE_KEY: OLDER_KEY };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
