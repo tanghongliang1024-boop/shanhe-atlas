@@ -1,14 +1,16 @@
 # 海外代表城市数据与首府迁移依据
 
-2026-10-22 整理。本数据为 25 国、644 个当前可选州省地块提供旅行地点；城市构建不改动边界、中国大陆县区、台湾 22 县市或港澳数据。`world-cities.json` 包含 **1088 个唯一城市或城镇**：保留旧版 1006 个可选地点的全部字段，新增 82 个旅游城镇；原 IN-AR 下的 Itanagar 原始地点转存 `legacyCities`，供历史记录详情识别。637 个地块提供 1～5 个地点，另外 7 个来源单列的离岛地块有明确无城市例外。新加坡五个地块共用一个城市记录。
+2026-10-22 整理。`world-cities.json` 包含 **1319 个唯一城市或城镇**：完整保留上一版 1088 个可选地点的 ID 和全部字段，本版新增 231 个欧洲及相关国家、属地的真实居民点。原 IN-AR 下的 Itanagar 继续仅存于 `legacyCities`，供历史记录详情识别。城市构建不改动边界、中国大陆县区、台湾 22 县市或港澳数据。
 
-这些是用于旅行足迹的代表地点，不是完整城市名录、人口排名、实时行政首府名录或精确行政边界判定。不同来源年代不一；城市经纬度保留来源位置，未将城市点移动到简化地块内。当前有 6 个已注明的显示边界例外：马穆楚、白马市、世宗、山打根、科隆镇和阳东镇。城市所属来自来源信息与已有地图的空间关联；海岸线和岛屿概略化会使真实城市点落在显示边界外。
+原有 25 国、644 个州省地块保持不变，其中 637 个地块提供 1～5 个地点，7 个来源单列的离岛地块有明确无城市例外；新加坡五个地块共用一个城市记录。新覆盖的 45 个国家或地图单元和 6 个补充属地直接提供国家级城市入口，不为城市创建虚构的省州。欧洲范围内原有 6 国已经超过 5 城，完整保持原名录。
+
+这些是用于旅行足迹的代表地点，不是完整城市名录、人口排名、实时行政首府名录或精确行政边界判定。不同来源年代不一；城市经纬度保留来源位置，未将城市点移动到简化地块内。当前有 28 个已注明的显示边界例外，包括此前 6 个和本次 22 个海岸、小岛、微型国家或分隔城市点。城市所属来自来源信息与已有地图的空间关联；海岸线和岛屿概略化会使真实城市点落在显示边界外。逐项说明保存在城市的 `spatialException` 和验收报告中。
 
 ## 来源与许可
 
 ### Natural Earth
 
-Made with Natural Earth. 作者及贡献者包括 Tom Patterson、Nathaniel Vaughn Kelso 等。991 个当前可选地点使用 Natural Earth 城市点及稳定 `NE_ID`。
+Made with Natural Earth. 作者及贡献者包括 Tom Patterson、Nathaniel Vaughn Kelso 等。1154 个当前可选地点使用 Natural Earth 城市点及稳定 `NE_ID`。
 
 - [Populated Places，1:10m](https://www.naturalearthdata.com/downloads/10m-cultural-vectors/10m-populated-places/)：涵盖首都、许多一级行政驻地及重要城市和城镇。其重要性等级服务于地图显示，人口字段可能包含都会区，不能直接当作市辖区人口排名。
 - [固定版本 GeoJSON](https://raw.githubusercontent.com/nvkelso/natural-earth-vector/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_10m_populated_places.geojson)，提交 `ca96624a56bd078437bca8184e78163e5039ad19`。
@@ -19,7 +21,7 @@ Made with Natural Earth. 作者及贡献者包括 Tom Patterson、Nathaniel Vaug
 
 ### GeoNames
 
-© [GeoNames](https://www.geonames.org/about.html)，采用 [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)。97 个当前可选补充地点使用其 WGS84 坐标、英文名称及别名。
+© [GeoNames](https://www.geonames.org/about.html)，采用 [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/)。165 个当前可选补充地点使用其 WGS84 坐标、英文名称及别名。
 
 - [下载说明与字段定义](https://download.geonames.org/export/dump/readme.txt)。本次从 `cities1000.zip`、`AU.zip`、`LA.zip` 提取所需记录，保留为 `scripts/world-cities-geonames-20261022.json` 固定快照。
 - 快照保存原始下载 URL、SHA-256、GeoNames ID、名称、别名、坐标、地点类型、人口及来源修改日期。正式重建读取快照，避免每日下载更新改变稳定产物。
@@ -37,7 +39,7 @@ Made with Natural Earth. 作者及贡献者包括 Tom Patterson、Nathaniel Vaug
 
 同一个 GeoNames ID 或同名且邻近的跨来源地点归为同一城市；不会仅因两个市中心相近而合并不同城市。城市 ID 使用 `world:<ISO3>:city-<NE_ID>`，GeoNames 补充点使用 `world:<ISO3>:city-gn<GeoNamesID>`，不依赖数组顺序。
 
-`parentRegionId` 和 `provinceCode` 为既有完整州省 ID，`province` 为州省中文名，`country` / `countryCode` 为国家名称及代码，`center` 为 `[经度, 纬度]`，`level` 为 `city`。`aliases` 保留来源英文及当地别名。`placeType` 区分普通城市/城镇与明确村落，`capitalOf` 仅用于下述已核实迁移首府。新增旅游地点带有 `tourism: true`、`tourismSource` 和 `tourismSourceName`；此标签仅表示本次扩充条目，未打标签的旧城市也可能是知名旅行目的地。
+`parentRegionId` 和 `provinceCode` 在已细分国家中为完整州省 ID，`province` 为州省中文名；无州省细分的国家中，父 ID 为 `world:<ISO3>`，`province` 为国家名称。`country` / `countryCode` 为国家名称及代码，`center` 为 `[经度, 纬度]`，`level` 为 `city`。`aliases` 保留来源英文及当地别名。`placeType` 区分普通城市/城镇与明确村落，`capitalOf` 仅用于下述已核实迁移首府。新增旅游地点带有 `tourism: true`、`tourismSource` 和 `tourismSourceName`；此标签表示扩充条目，未打标签的旧城市也可能是知名旅行目的地。顶层 `countryCoverage` 明列本版欧洲覆盖范围、数量、最低要求和单城例外原因。
 
 新加坡的同一记录带有全部五个 `regionIds`，用一个城市档案关联五个地块。新加坡是城市国家，五区是社区发展理事会分区：[外交部说明](https://www.mfa.gov.sg/about-singapore/)、[五区说明](https://www.cdc.gov.sg/about-us/five-districts/)。
 
@@ -53,7 +55,7 @@ Made with Natural Earth. 作者及贡献者包括 Tom Patterson、Nathaniel Vaug
 
 ## 旅游城市扩充与官方依据
 
-此次在 21 国新增 82 个真实城镇，原有新加坡、文莱、柬埔寨和老挝的主要旅行地点保持原样。一般旅游州省可有 2～4 城，本版最多 5 城。选择参考国家或地方官方旅游机构、旅游局及市政府资料；不复制旅游文章正文、照片或商标。旅游网页仅核验地点身份和旅行代表性，坐标仍来自上文许可明确的 Natural Earth / GeoNames。
+上一版在 21 国新增的 82 个真实城镇在本版原样保留，原有新加坡、文莱、柬埔寨和老挝的主要旅行地点也保持原样。一般旅游州省可有 2～4 城，本版最多 5 城。选择参考国家或地方官方旅游机构、旅游局及市政府资料；不复制旅游文章正文、照片或商标。旅游网页仅核验地点身份和旅行代表性，坐标仍来自上文许可明确的 Natural Earth / GeoNames。
 
 箱根明确为町；阳东是富国岛上的真实镇区，科隆是布桑加岛上的科隆镇，尼亚加拉瀑布市是城市而非瀑布景点。蒲甘入口使用真实城镇娘乌，未将遗址区伪作城市。Fremantle 的 GeoNames 类型为 PPLX，经该市政府资料核实为城市后显式纳入。上述城镇标签描述居民点身份，不据此声称其所有行政建制截至今天仍相同。
 
@@ -142,6 +144,83 @@ Made with Natural Earth. 作者及贡献者包括 Tom Patterson、Nathaniel Vaug
 | 南非 | 赫曼努斯（镇） / Hermanus | 西开普省 | [South African Tourism](https://www.southafrica.net/gl/en/travel/article/hermanus-western-cape) |
 | 南非 | 斯泰伦博斯 / Stellenbosch | 西开普省 | [South African Tourism](https://www.southafrica.net/za/en/travel/article/stellenbosch-a-town-on-the-scenic-countryside-of-the-western-cape) |
 
+## 欧洲国家覆盖（本版新增）
+
+本次必需范围为 51 个现有国家地图单元：传统欧洲国家、俄罗斯、土耳其、塞浦路斯、亚美尼亚、阿塞拜疆、格鲁吉亚、哈萨克斯坦，以及现有科索沃地图单元。该清单用于应用旅游覆盖，不借此判定国家地位或边界。49 个单元各有至少 5 个城市或城镇；摩纳哥、梵蒂冈各保留 1 个真实城市。格陵兰地理上不属于欧洲，未纳入本次最低数量要求；其他单列地图要素不因本次城市扩充改变边界或归属。
+
+新增 45 个国家地图单元共 217 城，另为 6 个属地补充 14 城，总计 231。德国、西班牙、法国、英国、意大利、俄罗斯原有数量已达要求，原有名录完全不变。小国使用真实居民点；没有把城堡、湖泊、景区或同城街区充作独立城市。摩纳哥官方资料将 Monaco-Ville、Monte-Carlo、Fontvieille 等称为城区，因此不拆分凑数；[官方城市国家说明](https://www.visitmonaco.com/en/explore/activities/routes-and-walks/course/chemin-des-sculptures-rainier-iii)。梵蒂冈按[官方地理说明](https://www.vaticanstate.va/en/state-and-government/general-informations/geography.html)保留城市国家的一个入口。
+
+下表的选择依据主要为国家、地方旅游机构或政府目的地目录，可能覆盖该国的一部分代表目的地，不能视作整张名单的逐城证明。每一城市的身份与点位另由固定 Natural Earth / GeoNames 记录核验，完整来源链接保存在 `sourceUrl`；个别地点的更直接旅游资料保存在 `tourismSource`。白俄罗斯国家旅游门户本次未能读取，明斯克、布列斯特、格罗德诺、维捷布斯克按固定 Natural Earth 城市点选择，涅斯维日另有 UNESCO 官方遗产资料；不把 UNESCO 署名为国家旅游局。不复制这些网页的正文或图片。
+
+| 国家或地图单元 | 城市数 | 本次新增城市或城镇 | 代表性来源 |
+| --- | ---: | --- | --- |
+| 阿尔巴尼亚（ALB） | 5 | 培拉特、吉诺卡斯特、都拉斯、斯库台、地拉那 | [Albania National Tourism Agency](https://akt.gov.al/en/) |
+| 安道尔（AND） | 5 | 安道尔城、奥尔迪诺、埃斯卡尔德斯-恩戈尔达尼、马萨纳、恩坎普 | [Andorra Turisme](https://visitandorra.com/es/actividades/itinerarios-audioguiados/) |
+| 亚美尼亚（ARM） | 5 | 久姆里、埃里温、戈里斯、塞万、迪利然 | [Armenia Tourism Committee](https://armenia.travel/places-to-go/top-cities/) |
+| 奥地利（AUT） | 5 | 格拉茨、林茨、萨尔茨堡、因斯布鲁克、维也纳 | [Austrian National Tourist Office](https://www.austria.info/en-gb/inspiration/cities/) |
+| 阿塞拜疆（AZE） | 5 | 盖贝莱、甘贾、连科兰、巴库、舍基 | [Azerbaijan Tourism Board](https://azerbaijan.travel/regional-maps) |
+| 比利时（BEL） | 5 | 根特、列日、布鲁日、安特卫普、布鲁塞尔 | [VISITFLANDERS](https://www.visitflanders.com/en/flemish-destinations) |
+| 保加利亚（BGR） | 5 | 普罗夫迪夫、大特尔诺沃、瓦尔纳、布尔加斯、索非亚 | [Bulgaria Ministry of Tourism](https://www.tourism.government.bg/en/tourist-information-centers) |
+| 波斯尼亚和黑塞哥维那（BIH） | 5 | 莫斯塔尔、巴尼亚卢卡、萨拉热窝、特雷比涅、亚伊采 | [Mostar Tourist Board](https://exploremostar.ba/en/) |
+| 白俄罗斯（BLR） | 5 | 格罗德诺、维捷布斯克、布列斯特、明斯克、涅斯维日 | [固定 Natural Earth 城市点](https://raw.githubusercontent.com/nvkelso/natural-earth-vector/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_10m_populated_places.geojson)；[UNESCO 涅斯维日](https://whc.unesco.org/en/list/1196) |
+| 瑞士（CHE） | 5 | 卢塞恩、卢加诺、伯尔尼、苏黎世、日内瓦 | [Switzerland Tourism](https://www.myswitzerland.com/en-gb/destinations/holiday-destinations/cities/cities-search/) |
+| 塞浦路斯（CYP） | 5 | 拉纳卡、帕福斯、利马索尔、尼科西亚、阿依纳帕 | [Cyprus Deputy Ministry of Tourism](https://www.visitcyprus.com/useful-info/about-cyprus/) |
+| 捷克（CZE） | 5 | 奥洛穆茨、布尔诺、布拉格、卡罗维发利、捷克克鲁姆洛夫 | [CzechTourism](https://www.visitczechia.com/en-us/things-to-do/places/landmarks/cities) |
+| 德国（DEU） | 31 | 原有名录原样保留 | 见上文原有城市与来源 |
+| 丹麦（DNK） | 5 | 罗斯基勒、欧登塞、奥尔堡、奥胡斯、哥本哈根 | [VisitDenmark](https://www.visitdenmark.com/denmark/destinations) |
+| 西班牙（ESP） | 34 | 原有名录原样保留 | 见上文原有城市与来源 |
+| 爱沙尼亚（EST） | 5 | 纳尔瓦、塔尔图、派尔努、塔林、库雷萨雷 | [Visit Estonia](https://visitestonia.com/en/where-to-go) |
+| 芬兰（FIN） | 5 | 图尔库、奥卢、罗瓦涅米、坦佩雷、赫尔辛基 | [Visit Finland](https://www.visitfinland.com/en/fen-lan-lv-you-mu-di-di/) |
+| 法国（FRA） | 38 | 原有名录原样保留 | 见上文原有城市与来源 |
+| 英国（GBR） | 12 | 原有名录原样保留 | 见上文原有城市与来源 |
+| 格鲁吉亚（GEO） | 5 | 库塔伊西、巴统、第比利斯、西格纳吉、姆茨赫塔 | [Georgian National Tourism Administration](https://georgia.travel/why-georgia-main-cities-towns) |
+| 希腊（GRC） | 5 | 哈尼亚、罗得市、伊拉克利翁、塞萨洛尼基、雅典 | [Greek National Tourism Organisation](https://www.visitgreece.gr/en/islands/Cr%C3%A8te/Chania) |
+| 克罗地亚（HRV） | 5 | 杜布罗夫尼克、斯普利特、扎达尔、普拉、萨格勒布 | [Dubrovnik Tourist Board](https://tzdubrovnik.hr/) |
+| 匈牙利（HUN） | 5 | 埃格尔、佩奇、塞格德、德布勒森、布达佩斯 | [Hungarian Tourism Agency](https://visithungary.com/articles/autumn-in-hungary) |
+| 爱尔兰（IRL） | 5 | 戈尔韦、基尔肯尼、科克、利默里克、都柏林 | [Tourism Ireland](https://www.ireland.com/en-gb/destinations/where-to-go/) |
+| 冰岛（ISL） | 5 | 埃伊尔斯塔济、伊萨菲厄泽、阿克雷里、雷克雅未克、胡萨维克 | [Visit Iceland](https://www.visiticeland.com/icelandic-towns-and-villages/) |
+| 意大利（ITA） | 38 | 原有名录原样保留 | 见上文原有城市与来源 |
+| 哈萨克斯坦（KAZ） | 5 | 突厥斯坦、奇姆肯特、阿斯塔纳、阿拉木图、阿克套 | [Kazakh Tourism](https://www.kazakhstan.travel/en/regions/turkistan-province) |
+| 科索沃（KOS） | 5 | 普里兹伦、普里什蒂纳、佩奇、格尼拉内、贾科维察 | [Ministry of Local Government Administration](https://mapl.rks-gov.net/wp-content/uploads/2018/09/3.Profili-i-komunave-anglisht.pdf) |
+| 列支敦士登（LIE） | 5 | 瓦杜兹、特里森贝格、特里森、沙恩、巴尔策斯 | [Liechtenstein Tourism](https://en.tourismus.li/entdecken/ganzjaehrig/uebersicht/sehenswuerdigkeiten.html) |
+| 立陶宛（LTU） | 5 | 克莱佩达、考纳斯、维尔纽斯、特拉凯、帕兰加 | [Lithuania Travel](https://lithuania.travel/en/mice/general-information/locations/mice-cities) |
+| 卢森堡（LUX） | 5 | 卢森堡市、维安登、阿尔泽特河畔埃施、埃希特纳赫、克莱沃 | [Luxembourg for Tourism](https://www.visitluxembourg.com/tour/luxembourg-river-tour-on-the-banks-of-the-moselle-sauer-and-alzette) |
+| 拉脱维亚（LVA） | 5 | 利耶帕亚、陶格夫匹尔斯、里加、锡古尔达、尤尔马拉 | [Latvia Travel / Investment and Development Agency of Latvia](https://www.latvia.travel/en/cities-latvia) |
+| 摩纳哥（MCO） | 1 | 摩纳哥 | [Monaco Government Tourist and Convention Authority](https://www.visitmonaco.com/en/explore/activities/routes-and-walks/course/chemin-des-sculptures-rainier-iii) |
+| 摩尔多瓦（MDA） | 5 | 伯尔兹、卡胡尔、基希讷乌、索罗卡、奥尔海伊 | [Moldova Travel national tourism platform](https://moldova.travel/en/places-to-visit/) |
+| 北马其顿（MKD） | 5 | 比托拉、斯科普里、斯特鲁加、普里莱普、奥赫里德 | [Agency for Promotion and Support of Tourism of North Macedonia](https://tourismmacedonia.gov.mk/wp-content/uploads/2023/03/NOVA-TURISTICKA-KARTA-APPT.pdf) |
+| 马耳他（MLT） | 5 | 瓦莱塔、斯利马、维多利亚（戈佐岛）、拉巴特、姆迪纳 | [Malta Tourism Authority](https://www.visitmalta.com/en/wtm-in-london/) |
+| 黑山（MNE） | 5 | 波德戈里察、科托尔、新海尔采格、采蒂涅、布德瓦 | [National Tourism Organisation of Montenegro](https://www.montenegro.travel/en/explore-montenegro/nature-and-adventure/panoramic-roads-of-montenegro) |
+| 荷兰（NLD） | 5 | 马斯特里赫特、乌得勒支、鹿特丹、海牙、阿姆斯特丹 | [Netherlands Board of Tourism and Conventions](https://www.holland.com/global/tourism/discover-the-netherlands/visit-the-cities) |
+| 挪威（NOR） | 5 | 斯塔万格、特罗姆瑟、特隆赫姆、卑尔根、奥斯陆 | [Visit Norway / Innovation Norway](https://www.visitnorway.com/places-to-go/) |
+| 波兰（POL） | 5 | 弗罗茨瓦夫、波兹南、格但斯克、克拉科夫、华沙 | [Polish Tourism Organisation](https://www.poland.travel/en/cities/) |
+| 葡萄牙（PRT） | 5 | 科英布拉、波尔图、丰沙尔、里斯本、法鲁 | [Turismo de Portugal](https://www.visitportugal.com/en/sobre-portugal/como-chegar) |
+| 罗马尼亚（ROU） | 5 | 锡比乌、布拉索夫、克卢日-纳波卡、布加勒斯特、锡吉什瓦拉 | [锡比乌市政府旅游](https://turism.sibiu.ro/en/)；[UNESCO 锡吉什瓦拉](https://whc.unesco.org/en/list/902) |
+| 俄罗斯（RUS） | 160 | 原有名录原样保留 | 见上文原有城市与来源 |
+| 圣马力诺（SMR） | 5 | 圣马力诺市、塞拉瓦莱、多马尼亚诺、博尔戈马焦雷、阿夸维瓦 | [San Marino Tourism Board](https://www.visitsanmarino.com/pub1/VisitSM/contenuto/About-San-Marino/I-NOVE-CASTELLI.html) |
+| 塞尔维亚（SRB） | 5 | 苏博蒂察、尼什、诺维萨德、贝尔格莱德、新帕扎尔 | [National Tourism Organisation of Serbia](https://www.serbia.travel/en/cities/) |
+| 斯洛伐克（SVK） | 5 | 班斯卡-比斯特里察、科希策、布拉迪斯拉发、班斯卡-什佳夫尼察、波普拉德 | [Slovakia Travel](https://slovakia.travel/o-slovensku/mesta) |
+| 斯洛文尼亚（SVN） | 5 | 马里博尔、卢布尔雅那、皮兰、科佩尔、布莱德 | [Slovenian Tourist Board](https://www.slovenia.info/en/places-to-go/cities-and-destinations) |
+| 瑞典（SWE） | 5 | 维斯比、乌普萨拉、哥德堡、马尔默、斯德哥尔摩 | [Visit Sweden](https://traveltrade.visitsweden.com/why-sweden/about-sweden/) |
+| 土耳其（TUR） | 5 | 内夫谢希尔、安塔利亚、伊兹密尔、安卡拉、伊斯坦布尔 | [Türkiye Tourism Promotion and Development Agency](https://goturkiye.com/) |
+| 乌克兰（UKR） | 5 | 乌日霍罗德、切尔诺夫策、利沃夫、敖德萨、基辅 | [Uzhhorod City Council Tourism](https://travel.rada-uzhgorod.gov.ua/?p=1564) |
+| 梵蒂冈（VAT） | 1 | 梵蒂冈城 | [Vatican City State](https://www.vaticanstate.va/en/state-and-government/general-informations/geography.html) |
+
+以下 6 个属地作为补充入口，不计入欧洲国家最低五城要求。奥兰旅游机构说明玛丽港是群岛唯一 town；泽西、根西本轮只选主要城市，没有声称岛上不存在其他居民点。直布罗陀采用英国政府确认的实际城市入口。
+
+| 补充属地 | 城市数 | 本次新增城市或城镇 | 代表性来源 |
+| --- | ---: | --- | --- |
+| 奥兰（ALD） | 1 | 玛丽港 | [Visit Åland](https://visitaland.com/en/experience/outdoor/cycle-in-aland/the-aland-archipelago-trail/archipelago-trail-on-the-aland-main-island/) |
+| 法罗群岛（FRO） | 5 | 克拉克斯维克、托尔斯港、韦斯特曼纳、特沃罗伊里、富格拉菲厄泽 | [Visit Faroe Islands](https://visitfaroeislands.com/en/see-do/inspiration-guides/popular-guides/regional-guides/northern-islands) |
+| 根西（GGY） | 1 | 圣彼得港 | [Visit Guernsey](https://www.visitguernsey.com/experiences/st-peter-port/) |
+| 直布罗陀（GIB） | 1 | 直布罗陀 | [UK Cabinet Office](https://www.gov.uk/government/news/government-re-affirms-city-status-of-gibraltar) |
+| 马恩岛（IMN） | 5 | 道格拉斯、拉姆西、埃林港、皮尔、卡斯尔敦 | [Visit Isle of Man](https://www.visitisleofman.com/visitor-information/visitor-information-points/ancestry/1000) |
+| 泽西（JEY） | 1 | 圣赫利尔 | [Visit Jersey](https://www.jersey.com/things-to-do/points-of-interest/listings/st-helier/) |
+
+马耳他拉巴特与戈佐岛维多利亚（也叫 Rabat）是分属两岛的不同居民点，虽有同名别名仍分别保留；[戈佐官方资料](https://visitgozo.com/places/ir-rabat-victoria/)。赫拉克利翁、哈尼亚、罗得城、法鲁、丰沙尔等均采用城市点，不把岛屿或行政区整体作为城市。尼科西亚保留来源中心点并显式注明分隔首都和地图缓冲区例外。法罗小岛、戈佐岛、奥兰等部分真实点位落在简化国家多边形外，保留原坐标并记录空间例外，不人为挪点。
+
+新增国家城市不触发旧国家足迹自动迁移：原 `world:<ISO3>` 记录仍须保留为历史记录，不能默认视为到过首都。本次没有增加首府迁移条目或执行数据库写入。
+
 ## 旧省州记录迁移
 
 `world-city-migration-map.json` 原样保留已发布的 **20 条经过核实的首府关联**，包括新加坡五区到同一城市的五条关联。新西兰大区按议会主要驻地处理。其他未核实的旧省州记录保留待定位；不把代表城市选择或最大人口候选直接当作迁移依据。
@@ -171,6 +250,8 @@ Made with Natural Earth. 作者及贡献者包括 Tom Patterson、Nathaniel Vaug
 
 需要 Python 3 和 Shapely。可运行 `python -m pip install --target scripts/world-deps shapely==2.1.2`，或使用已安装 Shapely 的 Python 环境；然后运行 `python scripts/world-cities-build.py`。
 
-源码应包含 `world-cities-build.py`、`world-cities-curation.json`、`world-cities-geonames-20261022.json` 和生成的 `world-cities-validation.json`，以及地图数据目录原有的 `world-city-migration-map.json`。人工配置中的 `preservedCities` 是公开的旧版 1007 地点元数据快照；正式重建逐字段复用它，避免重新排名改变用户已有城市。不需打包下载缓存或 Python 依赖目录。首次运行会创建缓存目录、下载固定 Natural Earth 文件并核验 SHA-256；正式重建须保留随源码分发的 GeoNames 固定快照。移除快照会启动重新采集流程，不能把此行为当作本版的可重复重建。
+源码应包含 `world-cities-build.py`、`world-cities-curation.json`、新增的 `world-cities-europe-curation.json`、`world-cities-geonames-20261022.json` 和生成的 `world-cities-validation.json`，以及地图数据目录原有的 `world-city-migration-map.json`、世界边界和索引。人工配置中的 `preservedCities` 是公开的上一版 1088 个可选地点与 1 个历史地点的元数据快照；正式重建逐字段复用它，避免重新排名改变用户已有城市。不需打包下载缓存或 Python 依赖目录。首次运行会创建缓存目录、下载固定 Natural Earth 文件并核验 SHA-256；正式重建须保留随源码分发的 GeoNames 固定快照。移除快照会启动重新采集流程，不能把此行为当作本版的可重复重建。
 
-验收覆盖 JSON 可解析、城市 ID 唯一且符合格式、全部中文显示名、父区存在、坐标范围及有限性、每个非空地块 1～5 城、同城去重、所有首府迁移目标真实存在且同国同父区、新加坡多父区关联、6 个明确空间例外，以及既有世界边界和索引逐文件 SHA-256 不变。另外验收 82 个新增地点、旧 1006 个可选地点逐字段保持、1 个旧地点完整转入 `legacyCities`。固定输入重复构建得到相同城市 JSON；迁移 JSON 只读核验，绝不重写。详细数量、来源哈希和逐地块选择见 `scripts/world-cities-validation.json`。
+验收覆盖 JSON 可解析、城市 ID 唯一且符合格式、全部中文显示名、父区存在、坐标范围及有限性、每个非空州省地块 1～5 城、同城去重、所有首府迁移目标真实存在且同国同父区、新加坡多父区关联、28 个明确空间例外，以及既有世界边界和索引逐文件 SHA-256 不变。本版另核验新增 231 个地点、旧 1088 个可选地点逐字段保持、1 个历史地点保持在 `legacyCities`、51 个必须覆盖单元全部达到 5 城或已核实单城例外。固定输入重复构建得到相同城市 JSON；迁移 JSON 只读核验，绝不重写。详细数量、来源哈希和逐地块选择见 `scripts/world-cities-validation.json`。
+
+本版已用无缓存的独立源码副本重新下载固定 Natural Earth 输入完成重建，城市 JSON、验收 JSON 与已发布迁移 JSON 的 SHA-256 均与主目录完全一致；也通过了原目录重复构建验证。
