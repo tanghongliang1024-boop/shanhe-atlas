@@ -117,7 +117,7 @@ function paintNavigation(){
   $('#map-focus-row').hidden=!['province','country'].includes(scope.kind);$('#map-region-focus').innerHTML='<option value="">完整地图</option>'+shapes.map(f=>'<option value="'+esc(R.id(f))+'">'+esc(R.displayName(f))+'</option>').join('');
   $('#map-caption-text').textContent=scope.kind==='world'?'WORLD · MY TRAVEL FOOTPRINTS':scopeName()+' · MY TRAVEL FOOTPRINTS';
 }
-async function jsonFile(path){const response=await fetch(path+'?v=20261022-230-prepare');if(!response.ok)throw Error('无法读取地图资源');return response.json();}
+async function jsonFile(path){const response=await fetch(path+'?v=20261022-230');if(!response.ok)throw Error('无法读取地图资源');return response.json();}
 async function navigate(next){
   const request=++mapRequest;$('#map-loading').hidden=false;$('#map-loading').textContent='正在展开'+(next.kind==='world'?'世界':'地区')+'地图…';
   try{
