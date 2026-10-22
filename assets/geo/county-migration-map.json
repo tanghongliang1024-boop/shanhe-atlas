@@ -1,0 +1,2478 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-22",
+  "rule": "迁移至有来源证实的政府驻地区；多中心仅按用户明确选择；未核实项保留，不猜测。",
+  "mappings": {
+    "110000": {
+      "targetId": "110112",
+      "source": "https://www.beijing.gov.cn/gongkai/zfxxgk/szfbgt/",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "北京市通州区运河东大街57号",
+      "sourceName": "北京市",
+      "targetName": "通州区",
+      "verifiedAt": "2026-10-22"
+    },
+    "120000": {
+      "targetId": "120103",
+      "source": "https://www.tj.gov.cn/zwgk/szfjg/szfbgt/szfbgtjgzn/",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "天津市河西区友谊路30号",
+      "sourceName": "天津市",
+      "targetName": "河西区",
+      "verifiedAt": "2026-10-22"
+    },
+    "140200": {
+      "targetId": "140213",
+      "source": "https://ai.dt.gov.cn/dtszf/xxgkznz/bmgkzn.shtml",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "大同市平城区兴云街2799号",
+      "sourceName": "大同市",
+      "targetName": "平城区",
+      "verifiedAt": "2026-10-22"
+    },
+    "140900": {
+      "targetId": "140902",
+      "source": "https://zwgk.sxxz.gov.cn/xzsrmzf/xxgkzn/",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "忻州市忻府区长征街21号",
+      "sourceName": "忻州市",
+      "targetName": "忻府区",
+      "verifiedAt": "2026-10-22"
+    },
+    "310000": {
+      "targetId": "310101",
+      "source": "https://www.shanghai.gov.cn/kjcx-gqwj2/index.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "上海市黄浦区人民大道200号",
+      "sourceName": "上海市",
+      "targetName": "黄浦区",
+      "verifiedAt": "2026-10-22"
+    },
+    "320100": {
+      "targetId": "320102",
+      "source": "https://jw.nanjing.gov.cn/xwzx/ttxw/15J10L/202604/t20260410_5821720.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "南京市玄武区北京东路41号",
+      "sourceName": "南京市",
+      "targetName": "玄武区",
+      "verifiedAt": "2026-10-22"
+    },
+    "320500": {
+      "targetId": "320508",
+      "source": "https://www.suzhou.gov.cn/szsrmzf/lxwm/wztt.shtml",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "苏州市姑苏区三香路998号",
+      "sourceName": "苏州市",
+      "targetName": "姑苏区",
+      "verifiedAt": "2026-10-22"
+    },
+    "321200": {
+      "targetId": "321202",
+      "source": "https://rsj.taizhou.gov.cn/ztzl/lszt/tzs2022nszsydwgkzp/gsgg/art/2022/art_524288b3908e4aa7aa74f8fff8d53d23.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "泰州市海陵区凤凰东路58号",
+      "sourceName": "泰州市",
+      "targetName": "海陵区",
+      "verifiedAt": "2026-10-22"
+    },
+    "330100": {
+      "targetId": "330102",
+      "source": "https://www.hangzhou.gov.cn/art/2023/11/15/art_1338299_59089734.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "杭州市上城区解放东路18号市民中心A座",
+      "sourceName": "杭州市",
+      "targetName": "上城区",
+      "verifiedAt": "2026-10-22"
+    },
+    "341000": {
+      "targetId": "341002",
+      "source": "https://www.huangshan.gov.cn/zwgk/public/column/6615714?nav=7&type=2",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "黄山市屯溪区天都大道1号市政府大楼",
+      "sourceName": "黄山市",
+      "targetName": "屯溪区",
+      "verifiedAt": "2026-10-22"
+    },
+    "350100": {
+      "targetId": "350102",
+      "source": "https://www.fuzhou.gov.cn/zgfzzt/zjrc/qhyg/202508/t20250812_5060595.htm",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "福州市鼓楼区乌山路96号",
+      "sourceName": "福州市",
+      "targetName": "鼓楼区",
+      "verifiedAt": "2026-10-22"
+    },
+    "350200": {
+      "targetId": "350203",
+      "source": "https://cz.xm.gov.cn/zwxx/czsj/dfzxx/202412/W020241223546337033305.pdf",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "厦门市思明区湖滨北路61号",
+      "sourceName": "厦门市",
+      "targetName": "思明区",
+      "verifiedAt": "2026-10-22"
+    },
+    "350500": {
+      "targetId": "350503",
+      "source": "https://www.quanzhou.gov.cn/zfb/xxgk/zfxxgkzl/zfxxgkndbg/sndbg/202601/t20260130_3263095.htm",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "泉州市丰泽区海星街266号",
+      "sourceName": "泉州市",
+      "targetName": "丰泽区",
+      "verifiedAt": "2026-10-22"
+    },
+    "360100": {
+      "targetId": "360113",
+      "source": "https://www.nc.gov.cn/ncszf/szfxxgkzn/202105/39f707c03fda4d619b47560e2d6baba1.shtml",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "南昌市红谷滩区新府路118号",
+      "sourceName": "南昌市",
+      "targetName": "红谷滩区",
+      "verifiedAt": "2026-10-22"
+    },
+    "360300": {
+      "targetId": "360302",
+      "source": "https://static.cninfo.com.cn/finalpage/2023-09-11/1217821350.pdf",
+      "sourceType": "primary-filing",
+      "sourcePublisher": "原始公开发行文件",
+      "verified": true,
+      "address": "萍乡市安源区玉湖东路6号",
+      "sourceName": "萍乡市",
+      "targetName": "安源区",
+      "verifiedAt": "2026-10-22",
+      "evidenceType": "政府所属企业原始公开发行文件及地图原始POI",
+      "supportingSources": [
+        "https://www.amap.com/place/B0FFGV64XF"
+      ],
+      "note": "公开发行文件第100页明确市人民政府驻安源区玉湖东路。"
+    },
+    "360400": {
+      "targetId": "360403",
+      "source": "https://www.jiujiang.gov.cn/fdzdxxgk/10/jjszfxxgkzn/202002/t20200224_3203767.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "九江市浔阳区八里湖大道166号",
+      "sourceName": "九江市",
+      "targetName": "浔阳区",
+      "verifiedAt": "2026-10-22",
+      "supportingSources": [
+        "https://ditu.amap.com/place/B031800360"
+      ],
+      "note": "官方指南确认八里湖大道166号，高德市政府POI标注浔阳区。当前DataV县界快照在该位置与地址所属区不一致；迁移按核实地址归浔阳，未按几何中心推断。"
+    },
+    "360900": {
+      "targetId": "360902",
+      "source": "https://www.yichun.gov.cn/ycsrmzf/zfxxgkzn/pc/content/1998040654119022592/content_1998040654119022592.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "宜春市袁州区府前路市政大楼",
+      "sourceName": "宜春市",
+      "targetName": "袁州区",
+      "verifiedAt": "2026-10-22",
+      "supportingSources": [
+        "https://map.baidu.com/mobile/webapp/search/search/qt%3Dnse%26ptx%3D12912533.93%26pty%3D3450674.22%26wd%3D%E5%AE%9C%E6%98%A5%E5%B8%82%E6%94%BF%E5%BA%9C%26name%3D%E6%B9%96%E5%8C%97%E6%98%8E%E7%8F%A0%E8%BF%90%E8%BE%93%E9%9B%86%E5%9B%A2%E5%B0%8F%E6%B1%A0%E8%BD%A6%E7%AB%99%26c%3D348%26sc%3D348%26ec%3D348%26isSingle%3Dtrue%26nsetp%3D0%26en%3D1%24%2430c461a7423e96952cb96d95%24%2412912533.93%2C3450674.22%24%24%E6%B9%96%E5%8C%97%E6%98%8E%E7%8F%A0%E8%BF%90%E8%BE%93%E9%9B%86%E5%9B%A2%E5%B0%8F%E6%B1%A0%E8%BD%A6%E7%AB%99%24%24%26version%3D3%26wm%3D1/vt%3Dmap"
+      ],
+      "note": "宜春市官方指南确认市政大楼办公地址；百度地图市人民政府原始POI明确袁州区府前路市政大楼。"
+    },
+    "370200": {
+      "targetId": "370202",
+      "source": "https://zjdc.qingdao.gov.cn/zjdcnew/website/SuggestionView.aspx?guid=20200608-1451-4960-7036-FA163E82836E&viewType=pc",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "青岛市市南区香港中路11号",
+      "sourceName": "青岛市",
+      "targetName": "市南区",
+      "verifiedAt": "2026-10-22"
+    },
+    "370600": {
+      "targetId": "370613",
+      "source": "https://www.yantai.gov.cn/cms_files/jcms1/web1/site/attach/0/cd64da46ee2e4f18848314abb6df9098.pdf",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "烟台市莱山区芙蓉路6号",
+      "sourceName": "烟台市",
+      "targetName": "莱山区",
+      "verifiedAt": "2026-10-22"
+    },
+    "419001": {
+      "targetId": "419001",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/410000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "济源市",
+      "targetName": "济源市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "420100": {
+      "targetId": "420102",
+      "source": "https://www.wuhan.gov.cn/zfbgt/202003/t20200317_976555.shtml",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "武汉市江岸区沿江大道188号",
+      "sourceName": "武汉市",
+      "targetName": "江岸区",
+      "verifiedAt": "2026-10-22"
+    },
+    "420200": {
+      "targetId": "420204",
+      "source": "https://www.huangshi.gov.cn/xxxgk/2020_zc/2020_gfxwj/202105/t20210517_794191.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "黄石市下陆区杭州东路1号",
+      "sourceName": "黄石市",
+      "targetName": "下陆区",
+      "verifiedAt": "2026-10-22"
+    },
+    "429004": {
+      "targetId": "429004",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/420000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "仙桃市",
+      "targetName": "仙桃市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "429005": {
+      "targetId": "429005",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/420000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "潜江市",
+      "targetName": "潜江市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "429006": {
+      "targetId": "429006",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/420000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "天门市",
+      "targetName": "天门市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "429021": {
+      "targetId": "429021",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/420000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "神农架林区",
+      "targetName": "神农架林区",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "430100": {
+      "targetId": "430104",
+      "source": "https://zrzyt.hunan.gov.cn/zrzyt/yiansf/202011/t20201127_13969841.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "长沙市岳麓区岳麓大道218号市政府办公楼",
+      "sourceName": "长沙市",
+      "targetName": "岳麓区",
+      "verifiedAt": "2026-10-22"
+    },
+    "430200": {
+      "targetId": "430211",
+      "source": "https://www.hunan.gov.cn/xxgk/zfxxgknb/szzf_97945/201903/t20190322_5300082.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "株洲市天元区天台路58号",
+      "sourceName": "株洲市",
+      "targetName": "天元区",
+      "verifiedAt": "2026-10-22"
+    },
+    "430800": {
+      "targetId": "430802",
+      "source": "https://zjjsmy.zjj.gov.cn/store/privacy.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "张家界市永定区南庄路2号市人民政府大楼",
+      "sourceName": "张家界市",
+      "targetName": "永定区",
+      "verifiedAt": "2026-10-22"
+    },
+    "440100": {
+      "targetId": "440104",
+      "source": "https://sfj.gz.gov.cn/attachment/7/7530/7530914/9411785.pdf",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "广州市越秀区府前路1号",
+      "sourceName": "广州市",
+      "targetName": "越秀区",
+      "verifiedAt": "2026-10-22"
+    },
+    "440300": {
+      "targetId": "440304",
+      "source": "https://www.sz.gov.cn/szsrmzfmhwzgkml/szsrmzfmhwzgkml/gkzn/content/post_11185352.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "深圳市福田区福中三路市民中心",
+      "sourceName": "深圳市",
+      "targetName": "福田区",
+      "verifiedAt": "2026-10-22"
+    },
+    "440400": {
+      "targetId": "440402",
+      "source": "https://ditu.amap.com/place/B02F400198",
+      "sourceType": "map-poi",
+      "sourcePublisher": "高德地图政府POI",
+      "verified": true,
+      "address": "珠海市香洲区人民东路2号",
+      "sourceName": "珠海市",
+      "targetName": "香洲区",
+      "verifiedAt": "2026-10-22"
+    },
+    "441700": {
+      "targetId": "441702",
+      "source": "https://www.yangjiang.gov.cn/zfxxgkml/yjsrmzfxxw/zfxxgkzn/content/post_694343.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "阳江市江城区东风二路60号",
+      "sourceName": "阳江市",
+      "targetName": "江城区",
+      "verifiedAt": "2026-10-22",
+      "supportingSources": [
+        "https://ditu.amap.com/place/B029600734"
+      ]
+    },
+    "441900": {
+      "targetId": "441900",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/440000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "东莞市",
+      "targetName": "东莞市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "该地级市不设县级下辖单位，保留市本级ID。"
+    },
+    "442000": {
+      "targetId": "442000",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/440000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "中山市",
+      "targetName": "中山市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "该地级市不设县级下辖单位，保留市本级ID。"
+    },
+    "450300": {
+      "targetId": "450312",
+      "source": "https://www.qlgl.gov.cn/list-313-1.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "桂林市临桂区西城中路69号",
+      "sourceName": "桂林市",
+      "targetName": "临桂区",
+      "verifiedAt": "2026-10-22"
+    },
+    "450500": {
+      "targetId": "450502",
+      "source": "https://www.amap.com/place/B030B0061C",
+      "sourceType": "map-poi",
+      "sourcePublisher": "高德地图政府POI",
+      "verified": true,
+      "address": "北海市海城区和平路东二巷2号",
+      "sourceName": "北海市",
+      "targetName": "海城区",
+      "verifiedAt": "2026-10-22",
+      "supportingSources": [
+        "https://gxbh.wenming.cn/qgwmcs/202009/t20200923_6732767.shtml"
+      ]
+    },
+    "460100": {
+      "targetId": "460105",
+      "source": "https://jyj.haikou.gov.cn/hksjyj/zfxxgkzn/xxgk_tt.shtml",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "海口市秀英区长滨路市政府第二办公区",
+      "sourceName": "海口市",
+      "targetName": "秀英区",
+      "verifiedAt": "2026-10-22"
+    },
+    "460200": {
+      "targetId": "460203",
+      "source": "https://rd.sanya.gov.cn/rdsite/zxgg/202608/26afa8968876472799c8653819e395af.shtml",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "三亚市吉阳区新风街257号",
+      "sourceName": "三亚市",
+      "targetName": "吉阳区",
+      "verifiedAt": "2026-10-22"
+    },
+    "460400": {
+      "targetId": "460400",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "儋州市",
+      "targetName": "儋州市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "该地级市不设县级下辖单位，保留市本级ID。"
+    },
+    "469001": {
+      "targetId": "469001",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "五指山市",
+      "targetName": "五指山市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469002": {
+      "targetId": "469002",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "琼海市",
+      "targetName": "琼海市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469005": {
+      "targetId": "469005",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "文昌市",
+      "targetName": "文昌市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469006": {
+      "targetId": "469006",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "万宁市",
+      "targetName": "万宁市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469007": {
+      "targetId": "469007",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "东方市",
+      "targetName": "东方市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469021": {
+      "targetId": "469021",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "定安县",
+      "targetName": "定安县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469022": {
+      "targetId": "469022",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "屯昌县",
+      "targetName": "屯昌县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469023": {
+      "targetId": "469023",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "澄迈县",
+      "targetName": "澄迈县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469024": {
+      "targetId": "469024",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "临高县",
+      "targetName": "临高县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469025": {
+      "targetId": "469025",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "白沙黎族自治县",
+      "targetName": "白沙黎族自治县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469026": {
+      "targetId": "469026",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "昌江黎族自治县",
+      "targetName": "昌江黎族自治县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469027": {
+      "targetId": "469027",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "乐东黎族自治县",
+      "targetName": "乐东黎族自治县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469028": {
+      "targetId": "469028",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "陵水黎族自治县",
+      "targetName": "陵水黎族自治县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469029": {
+      "targetId": "469029",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "保亭黎族苗族自治县",
+      "targetName": "保亭黎族苗族自治县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "469030": {
+      "targetId": "469030",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/460000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "琼中黎族苗族自治县",
+      "targetName": "琼中黎族苗族自治县",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "500000": {
+      "targetId": "500103",
+      "source": "https://www.cq.gov.cn/wzxg/lxwm/",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "重庆市渝中区人民路232号",
+      "sourceName": "重庆市",
+      "targetName": "渝中区",
+      "verifiedAt": "2026-10-22"
+    },
+    "520100": {
+      "targetId": "520115",
+      "source": "https://www.guiyang.gov.cn/zwgk/zdlyxxgk2024/jjgzlfz/kjcx/kjjdycxjs/202512/t20251222_89076038.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "贵阳市观山湖区市级行政中心市政府大楼",
+      "sourceName": "贵阳市",
+      "targetName": "观山湖区",
+      "verifiedAt": "2026-10-22"
+    },
+    "520400": {
+      "targetId": "520402",
+      "source": "https://ditu.amap.com/place/B0355004TI",
+      "sourceType": "map-poi",
+      "sourcePublisher": "高德地图政府POI",
+      "verified": true,
+      "address": "安顺市西秀区市东路",
+      "sourceName": "安顺市",
+      "targetName": "西秀区",
+      "verifiedAt": "2026-10-22"
+    },
+    "522600": {
+      "targetId": "522601",
+      "source": "https://www.qdn.gov.cn/zwgk_5871642/zfxxgk_5871649/fdzdgknr_5871652/tjxx_5871674/tjnj_5871678/202302/P020230223604425034509.pdf",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "黔东南州州府所在地凯里市",
+      "sourceName": "黔东南苗族侗族自治州",
+      "targetName": "凯里市",
+      "verifiedAt": "2026-10-22"
+    },
+    "522700": {
+      "targetId": "522701",
+      "source": "https://www.qiannan.gov.cn/ztzl/qnzzfgb/2022/dlq_5933954/zfbgswj/202302/t20230224_78298024.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "黔南州都匀市环东中路14号",
+      "sourceName": "黔南布依族苗族自治州",
+      "targetName": "都匀市",
+      "verifiedAt": "2026-10-22"
+    },
+    "530100": {
+      "targetId": "530114",
+      "source": "https://ditu.amap.com/place/B03670VNTF",
+      "sourceType": "map-poi",
+      "sourcePublisher": "高德地图政府POI",
+      "verified": true,
+      "address": "昆明市呈贡区锦绣大街1号",
+      "sourceName": "昆明市",
+      "targetName": "呈贡区",
+      "verifiedAt": "2026-10-22",
+      "supportingSources": [
+        "https://zwfw.km.gov.cn/upload/resources/file/2026/01/05/4161566.pdf"
+      ]
+    },
+    "610100": {
+      "targetId": "610112",
+      "source": "https://www.xa.gov.cn/index/gywm/5d501154fd85081f0f92f129.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "西安市未央区凤城八路109号",
+      "sourceName": "西安市",
+      "targetName": "未央区",
+      "verifiedAt": "2026-10-22",
+      "supportingSources": [
+        "https://www.xa.gov.cn/sq/csgk/qxgk/5ed870d865cbd83eb77d324e.html"
+      ]
+    },
+    "610400": {
+      "targetId": "610402",
+      "source": "https://www.amap.com/place/B038E01D15",
+      "sourceType": "map-poi",
+      "sourcePublisher": "高德地图政府POI",
+      "verified": true,
+      "address": "咸阳市秦都区渭阳中路6号",
+      "sourceName": "咸阳市",
+      "targetName": "秦都区",
+      "verifiedAt": "2026-10-22"
+    },
+    "610500": {
+      "targetId": "610502",
+      "source": "https://www.ccgp-shaanxi.gov.cn/freecms/site/shaanxi/ggxx/info/2024/8a69c57b90bbc4910192f4c7615d0830.html",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "渭南市临渭区车雷街69号",
+      "sourceName": "渭南市",
+      "targetName": "临渭区",
+      "verifiedAt": "2026-10-22"
+    },
+    "620200": {
+      "targetId": "620200",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/620000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "嘉峪关市",
+      "targetName": "嘉峪关市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "该地级市不设县级下辖单位，保留市本级ID。"
+    },
+    "659001": {
+      "targetId": "659001",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "石河子市",
+      "targetName": "石河子市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659002": {
+      "targetId": "659002",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "阿拉尔市",
+      "targetName": "阿拉尔市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659003": {
+      "targetId": "659003",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "图木舒克市",
+      "targetName": "图木舒克市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659004": {
+      "targetId": "659004",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "五家渠市",
+      "targetName": "五家渠市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659005": {
+      "targetId": "659005",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "北屯市",
+      "targetName": "北屯市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659006": {
+      "targetId": "659006",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "铁门关市",
+      "targetName": "铁门关市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659007": {
+      "targetId": "659007",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "双河市",
+      "targetName": "双河市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659008": {
+      "targetId": "659008",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "可克达拉市",
+      "targetName": "可克达拉市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659009": {
+      "targetId": "659009",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "昆玉市",
+      "targetName": "昆玉市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "659010": {
+      "targetId": "659010",
+      "source": "https://geo.datav.aliyun.com/areas_v3/bound/650000_full.json",
+      "verified": true,
+      "address": null,
+      "sourceName": "胡杨河市",
+      "targetName": "胡杨河市",
+      "verifiedAt": "2026-10-22",
+      "unchanged": true,
+      "note": "旧记录本身就是县级单位，保留原地区ID。"
+    },
+    "tw-10008": {
+      "targetId": "tw-10008010",
+      "source": "https://www.nantou.gov.tw/big5/bureau/content.php?cid=3464&dptid=376480000",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "南投县南投市中兴路660号",
+      "sourceName": "南投县",
+      "targetName": "南投市",
+      "verifiedAt": "2026-10-22"
+    },
+    "tw-10013": {
+      "targetId": "tw-10013010",
+      "source": "https://ws.hl.gov.tw/Download.ashx?n=MTEx5bm0M%2BaciDE15pel6IezMTfml6XoiInovqbjgIwyMDIy5Y2X5bO25rCR5peP6KuW5aOHLeWOn%2BS9j%2BawkeaXj%2BWcn%2BWcsOWcqOWxj%2BadseOAjea0u%2BWLlS5wZGY%3D&u=LzAwMS9VcGxvYWQvNDIyL3JlbGZpbGUvMTA2NzkvOTMxNTEvMjIxZTY5ZDAtOThjYy00OGFkLTg0ZDEtNWQ4MDA4MTBkY2JiLnBkZg%3D%3D",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "屏东县屏东市自由路527号",
+      "sourceName": "屏东县",
+      "targetName": "屏东市",
+      "verifiedAt": "2026-10-22"
+    },
+    "tw-63000": {
+      "targetId": "tw-63000020",
+      "source": "https://www.gov.taipei/cp.aspx?n=8E989D7C8B359DF3&s=C5C52F5B391356DB",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "台北市信义区市府路1号",
+      "sourceName": "台北市",
+      "targetName": "信义区",
+      "verifiedAt": "2026-10-22"
+    },
+    "tw-64000": {
+      "targetId": "tw-64000080",
+      "source": "https://khhr.kcg.gov.tw/",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "高雄市苓雅区四维三路2号（四维行政中心）",
+      "sourceName": "高雄市",
+      "targetName": "苓雅区",
+      "verifiedAt": "2026-10-22",
+      "userSelected": true,
+      "note": "该市存在多个市政中心，本次按用户明确选择的行政中心区保存。"
+    },
+    "tw-67000": {
+      "targetId": "tw-67000360",
+      "source": "https://www.tainan.gov.tw/cp.aspx?n=13615&s=5712",
+      "sourceType": "official-publication",
+      "sourcePublisher": "政府或公共机构网站",
+      "verified": true,
+      "address": "台南市安平区永华路二段6号（永华市政中心）",
+      "sourceName": "台南市",
+      "targetName": "安平区",
+      "verifiedAt": "2026-10-22",
+      "userSelected": true,
+      "note": "该市存在多个市政中心，本次按用户明确选择的行政中心区保存。"
+    }
+  },
+  "unresolved": [
+    {
+      "sourceId": "130100",
+      "name": "石家庄市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "130200",
+      "name": "唐山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "130300",
+      "name": "秦皇岛市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "130400",
+      "name": "邯郸市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "130500",
+      "name": "邢台市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "130600",
+      "name": "保定市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "130700",
+      "name": "张家口市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "130800",
+      "name": "承德市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "130900",
+      "name": "沧州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "131000",
+      "name": "廊坊市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "131100",
+      "name": "衡水市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "140100",
+      "name": "太原市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "140300",
+      "name": "阳泉市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "140400",
+      "name": "长治市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "140500",
+      "name": "晋城市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "140600",
+      "name": "朔州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "140700",
+      "name": "晋中市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "140800",
+      "name": "运城市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "141000",
+      "name": "临汾市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "141100",
+      "name": "吕梁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150100",
+      "name": "呼和浩特市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150200",
+      "name": "包头市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150300",
+      "name": "乌海市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150400",
+      "name": "赤峰市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150500",
+      "name": "通辽市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150600",
+      "name": "鄂尔多斯市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150700",
+      "name": "呼伦贝尔市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150800",
+      "name": "巴彦淖尔市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "150900",
+      "name": "乌兰察布市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "152200",
+      "name": "兴安盟",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "152500",
+      "name": "锡林郭勒盟",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "152900",
+      "name": "阿拉善盟",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210100",
+      "name": "沈阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210200",
+      "name": "大连市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210300",
+      "name": "鞍山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210400",
+      "name": "抚顺市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210500",
+      "name": "本溪市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210600",
+      "name": "丹东市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210700",
+      "name": "锦州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210800",
+      "name": "营口市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "210900",
+      "name": "阜新市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "211000",
+      "name": "辽阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "211100",
+      "name": "盘锦市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "211200",
+      "name": "铁岭市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "211300",
+      "name": "朝阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "211400",
+      "name": "葫芦岛市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "220100",
+      "name": "长春市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "220200",
+      "name": "吉林市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "220300",
+      "name": "四平市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "220400",
+      "name": "辽源市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "220500",
+      "name": "通化市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "220600",
+      "name": "白山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "220700",
+      "name": "松原市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "220800",
+      "name": "白城市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "222400",
+      "name": "延边朝鲜族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230100",
+      "name": "哈尔滨市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230200",
+      "name": "齐齐哈尔市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230300",
+      "name": "鸡西市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230400",
+      "name": "鹤岗市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230500",
+      "name": "双鸭山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230600",
+      "name": "大庆市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230700",
+      "name": "伊春市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230800",
+      "name": "佳木斯市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "230900",
+      "name": "七台河市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "231000",
+      "name": "牡丹江市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "231100",
+      "name": "黑河市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "231200",
+      "name": "绥化市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "232700",
+      "name": "大兴安岭地区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "320200",
+      "name": "无锡市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "320300",
+      "name": "徐州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "320400",
+      "name": "常州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "320600",
+      "name": "南通市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "320700",
+      "name": "连云港市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "320800",
+      "name": "淮安市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "320900",
+      "name": "盐城市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "321000",
+      "name": "扬州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "321100",
+      "name": "镇江市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "321300",
+      "name": "宿迁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "330200",
+      "name": "宁波市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "330300",
+      "name": "温州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "330400",
+      "name": "嘉兴市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "330500",
+      "name": "湖州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "330600",
+      "name": "绍兴市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "330700",
+      "name": "金华市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "330800",
+      "name": "衢州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "330900",
+      "name": "舟山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "331000",
+      "name": "台州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "331100",
+      "name": "丽水市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "360200",
+      "name": "景德镇市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "360500",
+      "name": "新余市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "360600",
+      "name": "鹰潭市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "360700",
+      "name": "赣州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "360800",
+      "name": "吉安市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "361000",
+      "name": "抚州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "361100",
+      "name": "上饶市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "350300",
+      "name": "莆田市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "350400",
+      "name": "三明市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "350600",
+      "name": "漳州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "350700",
+      "name": "南平市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "350800",
+      "name": "龙岩市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "350900",
+      "name": "宁德市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "340100",
+      "name": "合肥市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "340200",
+      "name": "芜湖市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "340300",
+      "name": "蚌埠市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "340400",
+      "name": "淮南市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "340500",
+      "name": "马鞍山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "340600",
+      "name": "淮北市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "340700",
+      "name": "铜陵市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "340800",
+      "name": "安庆市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "341100",
+      "name": "滁州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "341200",
+      "name": "阜阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "341300",
+      "name": "宿州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "341500",
+      "name": "六安市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "341600",
+      "name": "亳州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "341700",
+      "name": "池州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "341800",
+      "name": "宣城市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "370100",
+      "name": "济南市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "370300",
+      "name": "淄博市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "370400",
+      "name": "枣庄市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "370500",
+      "name": "东营市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "370700",
+      "name": "潍坊市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "370800",
+      "name": "济宁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "370900",
+      "name": "泰安市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "371000",
+      "name": "威海市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "371100",
+      "name": "日照市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "371300",
+      "name": "临沂市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "371400",
+      "name": "德州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "371500",
+      "name": "聊城市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "371600",
+      "name": "滨州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "371700",
+      "name": "菏泽市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410100",
+      "name": "郑州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410200",
+      "name": "开封市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410300",
+      "name": "洛阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410400",
+      "name": "平顶山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410500",
+      "name": "安阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410600",
+      "name": "鹤壁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410700",
+      "name": "新乡市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410800",
+      "name": "焦作市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "410900",
+      "name": "濮阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "411000",
+      "name": "许昌市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "411100",
+      "name": "漯河市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "411200",
+      "name": "三门峡市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "411300",
+      "name": "南阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "411400",
+      "name": "商丘市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "411500",
+      "name": "信阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "411600",
+      "name": "周口市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "411700",
+      "name": "驻马店市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "440200",
+      "name": "韶关市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "440500",
+      "name": "汕头市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "440600",
+      "name": "佛山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "440700",
+      "name": "江门市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "440800",
+      "name": "湛江市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "440900",
+      "name": "茂名市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "441200",
+      "name": "肇庆市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "441300",
+      "name": "惠州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "441400",
+      "name": "梅州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "441500",
+      "name": "汕尾市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "441600",
+      "name": "河源市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "441800",
+      "name": "清远市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "445100",
+      "name": "潮州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "445200",
+      "name": "揭阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "445300",
+      "name": "云浮市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "430300",
+      "name": "湘潭市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "430400",
+      "name": "衡阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "430500",
+      "name": "邵阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "430600",
+      "name": "岳阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "430700",
+      "name": "常德市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "430900",
+      "name": "益阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "431000",
+      "name": "郴州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "431100",
+      "name": "永州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "431200",
+      "name": "怀化市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "431300",
+      "name": "娄底市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "433100",
+      "name": "湘西土家族苗族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "420300",
+      "name": "十堰市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "420500",
+      "name": "宜昌市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "420600",
+      "name": "襄阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "420700",
+      "name": "鄂州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "420800",
+      "name": "荆门市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "420900",
+      "name": "孝感市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "421000",
+      "name": "荆州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "421100",
+      "name": "黄冈市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "421200",
+      "name": "咸宁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "421300",
+      "name": "随州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "422800",
+      "name": "恩施土家族苗族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "450100",
+      "name": "南宁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "450200",
+      "name": "柳州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "450400",
+      "name": "梧州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "450600",
+      "name": "防城港市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "450700",
+      "name": "钦州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "450800",
+      "name": "贵港市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "450900",
+      "name": "玉林市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "451000",
+      "name": "百色市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "451100",
+      "name": "贺州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "451200",
+      "name": "河池市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "451300",
+      "name": "来宾市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "451400",
+      "name": "崇左市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "460300",
+      "name": "三沙市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "530300",
+      "name": "曲靖市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "530400",
+      "name": "玉溪市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "530500",
+      "name": "保山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "530600",
+      "name": "昭通市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "530700",
+      "name": "丽江市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "530800",
+      "name": "普洱市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "530900",
+      "name": "临沧市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "532300",
+      "name": "楚雄彝族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "532500",
+      "name": "红河哈尼族彝族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "532600",
+      "name": "文山壮族苗族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "532800",
+      "name": "西双版纳傣族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "532900",
+      "name": "大理白族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "533100",
+      "name": "德宏傣族景颇族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "533300",
+      "name": "怒江傈僳族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "533400",
+      "name": "迪庆藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "520200",
+      "name": "六盘水市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "520300",
+      "name": "遵义市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "520500",
+      "name": "毕节市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "520600",
+      "name": "铜仁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "522300",
+      "name": "黔西南布依族苗族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "510100",
+      "name": "成都市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "510300",
+      "name": "自贡市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "510400",
+      "name": "攀枝花市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "510500",
+      "name": "泸州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "510600",
+      "name": "德阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "510700",
+      "name": "绵阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "510800",
+      "name": "广元市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "510900",
+      "name": "遂宁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511000",
+      "name": "内江市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511100",
+      "name": "乐山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511300",
+      "name": "南充市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511400",
+      "name": "眉山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511500",
+      "name": "宜宾市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511600",
+      "name": "广安市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511700",
+      "name": "达州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511800",
+      "name": "雅安市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "511900",
+      "name": "巴中市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "512000",
+      "name": "资阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "513200",
+      "name": "阿坝藏族羌族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "513300",
+      "name": "甘孜藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "513400",
+      "name": "凉山彝族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "640100",
+      "name": "银川市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "640200",
+      "name": "石嘴山市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "640300",
+      "name": "吴忠市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "640400",
+      "name": "固原市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "640500",
+      "name": "中卫市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "610200",
+      "name": "铜川市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "610300",
+      "name": "宝鸡市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "610600",
+      "name": "延安市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "610700",
+      "name": "汉中市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "610800",
+      "name": "榆林市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "610900",
+      "name": "安康市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "611000",
+      "name": "商洛市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "630100",
+      "name": "西宁市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "630200",
+      "name": "海东市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "632200",
+      "name": "海北藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "632300",
+      "name": "黄南藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "632500",
+      "name": "海南藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "632600",
+      "name": "果洛藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "632700",
+      "name": "玉树藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "632800",
+      "name": "海西蒙古族藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "620100",
+      "name": "兰州市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "620300",
+      "name": "金昌市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "620400",
+      "name": "白银市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "620500",
+      "name": "天水市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "620600",
+      "name": "武威市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "620700",
+      "name": "张掖市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "620800",
+      "name": "平凉市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "620900",
+      "name": "酒泉市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "621000",
+      "name": "庆阳市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "621100",
+      "name": "定西市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "621200",
+      "name": "陇南市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "622900",
+      "name": "临夏回族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "623000",
+      "name": "甘南藏族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "540100",
+      "name": "拉萨市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "540200",
+      "name": "日喀则市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "540300",
+      "name": "昌都市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "540400",
+      "name": "林芝市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "540500",
+      "name": "山南市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "540600",
+      "name": "那曲市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "542500",
+      "name": "阿里地区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "710000",
+      "name": "台湾省",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "810000",
+      "name": "香港特别行政区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "820000",
+      "name": "澳门特别行政区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "650100",
+      "name": "乌鲁木齐市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "650200",
+      "name": "克拉玛依市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "650400",
+      "name": "吐鲁番市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "650500",
+      "name": "哈密市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "652300",
+      "name": "昌吉回族自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "652700",
+      "name": "博尔塔拉蒙古自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "652800",
+      "name": "巴音郭楞蒙古自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "652900",
+      "name": "阿克苏地区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "653000",
+      "name": "克孜勒苏柯尔克孜自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "653100",
+      "name": "喀什地区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "653200",
+      "name": "和田地区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "654000",
+      "name": "伊犁哈萨克自治州",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "654200",
+      "name": "塔城地区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "654300",
+      "name": "阿勒泰地区",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-09007",
+      "name": "连江县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10002",
+      "name": "宜兰县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10007",
+      "name": "彰化县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10009",
+      "name": "云林县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10017",
+      "name": "基隆市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-65000",
+      "name": "新北市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-68000",
+      "name": "桃园市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10020",
+      "name": "嘉义市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10010",
+      "name": "嘉义县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-09020",
+      "name": "金门县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10014",
+      "name": "台东县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10015",
+      "name": "花莲县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10016",
+      "name": "澎湖县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10018",
+      "name": "新竹市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-66000",
+      "name": "台中市",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10005",
+      "name": "苗栗县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    },
+    {
+      "sourceId": "tw-10004",
+      "name": "新竹县",
+      "reason": "政府驻地区尚未核实，保留原始记录，等待补充映射或用户整理。"
+    }
+  ]
+}
