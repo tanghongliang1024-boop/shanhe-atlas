@@ -2,7 +2,7 @@
 
 手机与桌面均可使用的旅行地图，支持城市插旗、城市着色、首次到访日期、旅行笔记和 CSV 导出。网页托管在 GitHub Pages，邮箱账号与个人云端存档由 Supabase 提供，同一账号可以在手机与电脑继续记录。
 
-**云端版已准备好公开测试，GitHub Pages 部署正在进行中。** 数据库与权限验证已完成，Gmail SMTP 配置已保存并经页面重新加载确认；实际验证邮件送达、确认链接回跳、登录及密码重置仍待完整验收。具体完成项与待办见 [部署状态](supabase/DEPLOYMENT-STATUS.md)。
+**云端版已发布，可在 [山河足迹](https://tanghongliang1024-boop.github.io/shanhe-atlas/) 公开访问测试。** Pages 工作流已成功，发布时 23 个文件均通过 HTTP 与哈希核对，手机注册界面已验证。Gmail SMTP 配置已保存；目前等待用户自行完成真实注册、收取验证邮件和登录，跨设备保存与密码重置等完整流程仍待验收。具体完成项与待办见 [部署状态](supabase/DEPLOYMENT-STATUS.md)。
 
 ## 账号与云端足迹
 
@@ -20,7 +20,7 @@
 
 ## 发布到 GitHub Pages
 
-1. 先按 [Supabase 部署说明](supabase/README.md) 完成数据库、邮箱验证、自定义 SMTP 和 Auth 返回地址配置，并通过 [部署状态](supabase/DEPLOYMENT-STATUS.md) 中的验收项。
+1. 先按 [Supabase 部署说明](supabase/README.md) 完成数据库、邮箱验证、自定义 SMTP 和 Auth 返回地址配置，并核对 [部署状态](supabase/DEPLOYMENT-STATUS.md) 中的配置检查项。
 2. 检查 `cloud-config.js` 只包含目标项目的公开 URL 与 publishable key。当前项目为 `gxaeatehlgepgeuhhmll`；不要把密码或私密密钥写入这个文件。
 3. 将发行包中的文件放到 GitHub 仓库根目录，确保根目录直接包含 `index.html`、`.nojekyll` 和 `assets/`。开发用测试、预览服务和模拟登录工具不属于发行包。
 4. 在 Settings → Pages → Build and deployment 中选择 Deploy from a branch，选择 `main` 分支与 `/(root)` 文件夹并保存。
