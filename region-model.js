@@ -3,10 +3,15 @@
   const text=value=>String(value??'').toLowerCase().replaceAll('臺','台').normalize('NFKC');
   const id=feature=>String(feature.properties.adcode);
   function countryOf(feature){return feature.properties.navigationCountry||feature.properties.countryCode||'CHN';}
+  function displayName(feature){
+    const p=feature.properties,name=String(p.name||''),city=String(p.city||'');
+    const mainland=countryOf(feature)==='CHN'&&/^\d{6}$/.test(String(p.provinceCode))&&Number(p.provinceCode)<710000;
+    return mainland&&p.level==='county'&&city&&city!==name&&!name.startsWith(city)?city+name:name;
+  }
   function trail(feature){const p=feature.properties;return [...new Set([p.country,p.province,p.city].filter(Boolean))].join(' · ');}
   function matches(feature,query,country='all',province='all'){
     const p=feature.properties;
-    return (country==='all'||countryOf(feature)===country)&&(province==='all'||String(p.provinceCode)===province)&&(!query||text([p.name,p.country,p.province,p.city,...(p.aliases||[])].join(' ')).includes(text(query)));
+    return (country==='all'||countryOf(feature)===country)&&(province==='all'||String(p.provinceCode)===province)&&(!query||text([displayName(feature),p.name,p.country,p.province,p.city,...(p.aliases||[])].join(' ')).includes(text(query)));
   }
   function catalog(chinaIndex,worldIndex,legacy=[],reversal){
     const countries=new Map(worldIndex.countries.map(p=>[p.countryCode,p]));
@@ -33,7 +38,7 @@
     const shapes=scope.kind==='china'?provinceFeatures:countryFeatures.filter(f=>!['TWN','HKG','MAC'].includes(f.properties.countryCode));
     return shapes.filter(f=>groups.has(scope.kind==='china'?id(f):countryOf(f))).map(f=>({...f,count:groups.get(scope.kind==='china'?id(f):countryOf(f)),target:scope.kind==='china'?'province':'country'}));
   }
-  const api=Object.freeze({text,id,countryOf,trail,matches,catalog,recordsWithFeatures,groupMarkers});
+  const api=Object.freeze({text,id,countryOf,displayName,trail,matches,catalog,recordsWithFeatures,groupMarkers});
   root.ShanheRegions=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

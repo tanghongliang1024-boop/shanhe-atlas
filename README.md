@@ -2,9 +2,11 @@
 
 适配手机和桌面的旅行地图：在去过的地区插旗或着色，填写首次到访日期与旅行笔记，查看足迹并导出 CSV。无需注册即可开始记录，需要云端保存、换设备继续时再用邮箱注册或登录。
 
-[网页版](https://tanghongliang1024-boop.github.io/shanhe-atlas/) · [Android 2.0.1 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.0.1) · [中国数据说明](assets/geo/china-data-sources.md) · [世界数据说明](assets/geo/world-data-sources.md)
+[网页版](https://tanghongliang1024-boop.github.io/shanhe-atlas/) · [Android 2.0.2 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.0.2) · [中国数据说明](assets/geo/china-data-sources.md) · [世界数据说明](assets/geo/world-data-sources.md)
 
 **2.0.1 更新（2026-10-22）：县区细化仅限中国大陆（含海南）。台湾恢复上一版的 22 个县市，香港和澳门恢复整体标记。** 旧台湾乡镇与港澳分区足迹会回到所属县市或整体单位；日期、笔记和更新时间保持原样。多个记录对应同一地区时单独保留冲突记录，不覆盖内容。
+
+**2.0.2 更新：** 大陆（含海南）的县区名称显示为“所属地市＋县区”，例如“杭州市西湖区”“海口市秀英区”；直辖市使用市名，省直辖县级单位保留原名。地图标签、定位选项、搜索、详情和足迹导出采用一致名称。
 
 ## 地图覆盖
 
@@ -43,7 +45,7 @@
 
 ## Android 安装与升级
 
-Android 2.0.1 APK 通过 [android-v2.0.1 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.0.1)提供。已安装旧版时，请直接安装同签名的新版 APK 覆盖升级，**不要先卸载**，以保留 App 内的临时足迹和登录状态。若系统提示签名不一致而不能覆盖，请先保留现有 App 和数据，核对下载来源。
+Android 2.0.2 APK 通过 [android-v2.0.2 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.0.2)提供。已安装旧版时，请直接安装同签名的新版 APK 覆盖升级，**不要先卸载**，以保留 App 内的临时足迹和登录状态。若系统提示签名不一致而不能覆盖，请先保留现有 App 和数据，核对下载来源。
 
 本轮数据库升级后，Android 1.0、2.0 和缓存的旧网页将被拒绝写入云端，避免旧客户端重新写回已恢复的乡镇或分区层级。请升级所有使用中的设备；旧网页需要重新加载新版资源。云端账号与存档继续沿用原账号。
 
