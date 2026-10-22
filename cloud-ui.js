@@ -251,7 +251,7 @@
       else if(!user){await guest.refresh();if(!user)publish();}
     });
     root.addEventListener('storage',async event=>{
-      if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===root.SHANHE_LEGACY_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
+      if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===root.SHANHE_LEGACY_GUEST_STORAGE_KEY||event.key===root.SHANHE_OLDER_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
       if(event.key===INTENT_KEY){transferAttempt=null;paint();if(user&&!hasOpenEditor())await transferPending();}
       if(event.key==='shanhe-atlas-v1')paint();
     });

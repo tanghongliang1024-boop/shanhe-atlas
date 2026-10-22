@@ -1,8 +1,9 @@
 (function (root) {
   'use strict';
 
-  const KEY = 'shanhe-atlas-guest-v2';
-  const LEGACY_KEY = 'shanhe-atlas-guest-v1';
+  const KEY = 'shanhe-atlas-guest-v3';
+  const LEGACY_KEY = 'shanhe-atlas-guest-v2';
+  const OLDER_KEY = 'shanhe-atlas-guest-v1';
   const LOCK = 'shanhe-guest-archive-v1';
   const merge = root.prepareLocalArchiveImport || (typeof require === 'function' ? require('./cloud-store.js').prepareLocalArchiveImport : null);
   const copy = records => merge({}, records).records;
@@ -34,8 +35,9 @@
     }
     function read() {
       if (storageError || !storage || typeof storage.getItem !== 'function') throw new Error('Storage unavailable');
-      let raw = storage.getItem(KEY), version = 2;
-      if (raw === null) { raw = storage.getItem(LEGACY_KEY); version = 1; }
+      let raw = storage.getItem(KEY), version = 3;
+      if (raw === null) { raw = storage.getItem(LEGACY_KEY); version = 2; }
+      if (raw === null) { raw = storage.getItem(OLDER_KEY); version = 1; }
       if (raw === null) return { records: {}, revision: 0 };
       const value = JSON.parse(raw);
       if (!value || value.version !== version || !revisionValid(value.revision)) throw new Error('Invalid guest archive');
@@ -63,9 +65,9 @@
     }
     function write(records, revision) {
       if (!revisionValid(revision) || revision === Number.MAX_SAFE_INTEGER) throw new Error('Revision exhausted');
-      // The original v1 key is retained as a backup. Old pages cannot overwrite
-      // this v2 key; failed quota writes leave both versions untouched.
-      const next = { version: 2, revision: revision + 1, records };
+      // Both original v1/v2 keys remain byte-for-byte backups. Old Android 2.0
+      // and cached pages cannot overwrite this v3 fork after level restoration.
+      const next = { version: 3, revision: revision + 1, records };
       const serialized = JSON.stringify(next);
       storage.setItem(KEY, serialized);
       if (storage.getItem(KEY) !== serialized) throw new Error('Storage did not retain the archive');
@@ -111,6 +113,7 @@
 
   root.SHANHE_GUEST_STORAGE_KEY = KEY;
   root.SHANHE_LEGACY_GUEST_STORAGE_KEY = LEGACY_KEY;
+  root.SHANHE_OLDER_GUEST_STORAGE_KEY = OLDER_KEY;
   root.createGuestArchiveStore = createGuestArchiveStore;
-  if (typeof module !== 'undefined' && module.exports) module.exports = { createGuestArchiveStore, SHANHE_GUEST_STORAGE_KEY: KEY, SHANHE_LEGACY_GUEST_STORAGE_KEY: LEGACY_KEY };
+  if (typeof module !== 'undefined' && module.exports) module.exports = { createGuestArchiveStore, SHANHE_GUEST_STORAGE_KEY: KEY, SHANHE_LEGACY_GUEST_STORAGE_KEY: LEGACY_KEY, SHANHE_OLDER_GUEST_STORAGE_KEY: OLDER_KEY };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

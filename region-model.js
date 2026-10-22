@@ -8,13 +8,19 @@
     const p=feature.properties;
     return (country==='all'||countryOf(feature)===country)&&(province==='all'||String(p.provinceCode)===province)&&(!query||text([p.name,p.country,p.province,p.city,...(p.aliases||[])].join(' ')).includes(text(query)));
   }
-  function catalog(chinaIndex,worldIndex,legacy=[]){
+  function catalog(chinaIndex,worldIndex,legacy=[],reversal){
     const countries=new Map(worldIndex.countries.map(p=>[p.countryCode,p]));
     const detail=new Set(worldIndex.detailCountries);
     const entries=[...chinaIndex.features,...worldIndex.regions.map(properties=>({type:'Feature',geometry:null,properties})),...worldIndex.countries.filter(p=>countryOf({properties:p})!=='CHN'&&!detail.has(p.countryCode)).map(properties=>({type:'Feature',geometry:null,properties}))];
     const byId=new Map();
     for(const feature of entries){if(byId.has(id(feature)))throw Error('Duplicate region identifier: '+id(feature));byId.set(id(feature),feature);}
     const legacyById=new Map(legacy.filter(f=>!byId.has(id(f))).map(f=>[id(f),{...f,properties:{...f.properties,country:'中国',countryCode:'CHN',level:'legacy'}}]));
+    for(const [source,item] of Object.entries(reversal?.mappings||{})){
+      const parent=byId.get(item.targetId);
+      if(item.verified!==true||!parent||byId.has(source))continue;
+      const p=parent.properties;
+      legacyById.set(source,{type:'Feature',geometry:null,properties:{adcode:source,name:item.sourceName||source,country:'中国',countryCode:'CHN',province:p.province,provinceCode:p.provinceCode,city:p.name,level:'legacy',reversalTarget:item.targetId,levelNote:'已恢复'+p.name+'整体标记；这条旧分区记录单独保留，可查看或导出'}});
+    }
     return {features:entries,byId,legacyById,countries};
   }
   function recordsWithFeatures(records,model){

@@ -2,7 +2,7 @@ const $=s=>document.querySelector(s);
 const icon=id=>'<svg aria-hidden="true"><use href="#i-'+id+'"/></svg>';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const R=ShanheRegions,STORAGE='shanhe-atlas-v1';
-let records={},features=[],provinces=[],world=[],model,chinaIndex,worldIndex,migration;
+let records={},features=[],provinces=[],world=[],model,chinaIndex,worldIndex,migration,reversal;
 let selected=null,mode='flag',currentView='map',scope={kind:'world'},shapes=[];
 let svg,layer,projection,zoom,cityShapes,markers,labels,cloud=null,mapHeight=740;
 let detailContext=null,detailBase={},detailBusy=false,detailOperation=0,listLimit=60,mapRequest=0;
@@ -45,11 +45,11 @@ function renderList(){
   const query=$('#city-search').value.trim(),country=$('#country-filter').value,province=$('#province-filter').value,status=$('#status-filter').value;
   let list=features.filter(f=>R.matches(f,query,country,province)&&(status==='all'||(status==='visited'?visited(f):!visited(f))));
   if(status==='visited')list.push(...visits().filter(f=>f.properties.level==='legacy'&&R.matches(f,query,country,province)));
-  const recommended=['110112','310101','330106','440106','tw-63000030','world:JPN:JP-13','world:USA:US-CA'];
+  const recommended=['110112','310101','330106','440106','tw-63000','world:JPN:JP-13','world:USA:US-CA'];
   if(!query&&country==='all'&&status==='all')list.sort((a,b)=>(recommended.indexOf(R.id(a))<0?999:recommended.indexOf(R.id(a)))-(recommended.indexOf(R.id(b))<0?999:recommended.indexOf(R.id(b))));
   $('#list-heading').textContent=query?'搜索结果':country==='all'?'从这里开始':'探索地区';
   $('#result-count').textContent=list.length+' 个';
-  const rows=list.slice(0,listLimit).map(f=>{const p=f.properties,r=records[p.adcode];return '<button class="city-row" data-city="'+esc(p.adcode)+'"><span class="city-row-icon '+(visited(f)?'done':'')+'">'+icon(visited(f)?'flag':'pin')+'</span><span><span class="city-row-name">'+esc(p.name)+'</span><span class="city-row-meta">'+esc(R.trail(f))+(p.level==='legacy'?' · 旧版待定位':'')+(visited(f)?' · '+esc(dateString(r.date)):'')+'</span></span>'+icon(visited(f)?'check':'arrow')+'</button>';});
+  const rows=list.slice(0,listLimit).map(f=>{const p=f.properties,r=records[p.adcode];return '<button class="city-row" data-city="'+esc(p.adcode)+'"><span class="city-row-icon '+(visited(f)?'done':'')+'">'+icon(visited(f)?'flag':'pin')+'</span><span><span class="city-row-name">'+esc(p.name)+'</span><span class="city-row-meta">'+esc(R.trail(f))+(p.level==='legacy'?(p.reversalTarget?' · 旧分区记录保留':' · 旧版待定位'):'')+(visited(f)?' · '+esc(dateString(r.date)):'')+'</span></span>'+icon(visited(f)?'check':'arrow')+'</button>';});
   $('#city-list').innerHTML=rows.length?rows.join('')+(list.length>listLimit?'<button class="list-more" id="list-more">显示更多地区（剩余 '+(list.length-listLimit)+'）</button>':''):'<div class="empty-results">没有找到这个地区<br>试试地市、县区或国家名称</div>';
   $('#city-list').querySelectorAll('[data-city]').forEach(b=>b.onclick=()=>openCity(b.dataset.city));
   if($('#list-more'))$('#list-more').onclick=()=>{const scroller=$('#city-list'),top=scroller.scrollTop;listLimit+=60;renderList();scroller.scrollTop=top;};
@@ -65,7 +65,7 @@ function openCity(id){
   const p=selected.properties,r=records[id]||{};
   $('#detail-save-status').textContent=cloud.getState().guest?'当前为临时足迹，保存在此浏览器。':'';
   $('#detail-save-status').dataset.error='false';$('#detail-reload-cloud').hidden=true;
-  $('#detail-city').textContent=p.name;$('#detail-province').textContent=R.trail(selected)+(p.levelNote?' · '+p.levelNote:'')+(p.level==='legacy'?' · 旧版足迹，尚未定位到县区':'');
+  $('#detail-city').textContent=p.name;$('#detail-province').textContent=R.trail(selected)+(p.levelNote?' · '+p.levelNote:'')+(p.level==='legacy'&&!p.reversalTarget?' · 旧版足迹，尚未定位到当前地图':'');
   $('#detail-show-map').hidden=p.level==='legacy';$('#detail-visited').checked=true;$('#detail-date').value=r.date||'';$('#detail-note').value=r.note||'';$('#remove-visit').hidden=!r.visited;
   if($('#city-picker').open)$('#city-picker').close();
   $('#city-dialog').showModal();$('#city-dialog').scrollTop=0;
@@ -93,7 +93,7 @@ $('#flag-mode').onclick=()=>setMode('flag');$('#fill-mode').onclick=()=>setMode(
 function scopeName(s=scope){return s.kind==='world'?'世界':s.kind==='china'?'中国':s.kind==='province'?provinces.find(f=>R.id(f)===s.code)?.properties.name:model.countries.get(s.code)?.name;}
 function paintNavigation(){
   $('#map-heading').textContent=scopeName()+'旅行地图';
-  $('#map-description').textContent=scope.kind==='world'?'选择国家继续探索，或搜索你的下一站':scope.kind==='china'?'选择省份，展开县区地图':'点击一个地区，记录第一次到访';
+  $('#map-description').textContent=scope.kind==='world'?'选择国家继续探索，或搜索你的下一站':scope.kind==='china'?'大陆（含海南）按县区，台湾按县市，港澳整体标记':scope.kind==='province'&&scope.code==='710000'?'选择台湾22个县市，记录第一次到访':'点击一个地区，记录第一次到访';
   $('#map-breadcrumb').innerHTML='<button data-scope="world">世界</button>'+(scope.kind==='china'||scope.kind==='province'?'<span>›</span><button data-scope="china">中国</button>':'')+(scope.kind==='province'||scope.kind==='country'?'<span>›</span><strong>'+esc(scopeName())+'</strong>':'');
   $('#map-breadcrumb').querySelectorAll('[data-scope]').forEach(b=>b.onclick=()=>navigate({kind:b.dataset.scope}));
   $('#world-shortcut').classList.toggle('active',scope.kind==='world');$('#china-shortcut').classList.toggle('active',scope.kind==='china'||scope.kind==='province');
@@ -101,7 +101,7 @@ function paintNavigation(){
   $('#map-focus-row').hidden=!['province','country'].includes(scope.kind);$('#map-region-focus').innerHTML='<option value="">完整地图</option>'+shapes.map(f=>'<option value="'+esc(R.id(f))+'">'+esc(f.properties.name)+'</option>').join('');
   $('#map-caption-text').textContent=scope.kind==='world'?'WORLD · MY TRAVEL FOOTPRINTS':scopeName()+' · MY TRAVEL FOOTPRINTS';
 }
-async function jsonFile(path){const response=await fetch(path);if(!response.ok)throw Error('无法读取地图资源');return response.json();}
+async function jsonFile(path){const response=await fetch(path+'?v=20261022-201');if(!response.ok)throw Error('无法读取地图资源');return response.json();}
 async function navigate(next){
   const request=++mapRequest;$('#map-loading').hidden=false;$('#map-loading').textContent='正在展开'+(next.kind==='world'?'世界':'地区')+'地图…';
   try{
@@ -203,7 +203,7 @@ function updateMapOverlays(){
 }
 function renderCollection(){
   const list=visits().sort((a,b)=>(records[R.id(b)].updatedAt||'').localeCompare(records[R.id(a)].updatedAt||''));
-  $('#visited-grid').innerHTML=list.length?list.map(f=>{const p=f.properties,r=records[p.adcode];return '<button class="visited-city" data-city="'+esc(p.adcode)+'">'+icon('flag')+'<h3>'+esc(p.name)+'</h3><p>'+esc(R.trail(f))+'</p>'+(p.level==='legacy'?'<p class="legacy-badge">旧版足迹 · 待定位</p>':'')+'<p>初次到访 · '+esc(dateString(r.date))+'</p>'+(r.note?'<p class="memory">'+esc(r.note)+'</p>':'')+'</button>';}).join(''):'<div class="empty-collection">'+icon('map')+'<h3>你的旅行故事，正要开始。</h3><p>找到去过的地方，插上第一面小旗。</p><button class="button primary" id="start-exploring">去地图记录足迹 '+icon('arrow')+'</button></div>';
+  $('#visited-grid').innerHTML=list.length?list.map(f=>{const p=f.properties,r=records[p.adcode];return '<button class="visited-city" data-city="'+esc(p.adcode)+'">'+icon('flag')+'<h3>'+esc(p.name)+'</h3><p>'+esc(R.trail(f))+'</p>'+(p.level==='legacy'?'<p class="legacy-badge">'+(p.reversalTarget?'旧分区记录 · 内容完整保留':'旧版足迹 · 待定位')+'</p>':'')+'<p>初次到访 · '+esc(dateString(r.date))+'</p>'+(r.note?'<p class="memory">'+esc(r.note)+'</p>':'')+'</button>';}).join(''):'<div class="empty-collection">'+icon('map')+'<h3>你的旅行故事，正要开始。</h3><p>找到去过的地方，插上第一面小旗。</p><button class="button primary" id="start-exploring">去地图记录足迹 '+icon('arrow')+'</button></div>';
   $('#visited-grid').querySelectorAll('[data-city]').forEach(b=>b.onclick=()=>openCity(b.dataset.city));if($('#start-exploring'))$('#start-exploring').onclick=()=>goView('map');
 }
 function renderStats(){
@@ -220,15 +220,16 @@ $('#export-btn').onclick=()=>{
 };
 function showInfo(html){$('#info-body').innerHTML=html;$('#info-dialog').showModal();}
 $('#close-info').onclick=()=>$('#info-dialog').close();
-$('#help-btn').onclick=()=>showInfo('<h2>从一面小旗开始</h2><p>① 无需注册，先选择国家或中国省份，进入详细地图；也可以直接搜索地市、县区或州省名称。</p><p>② 点击地区，填写首次到访日期和旅行记忆，保存足迹。总览上的数字小旗表示该区域的足迹数量。</p><p>③ 足迹临时保存在此浏览器。想长期保存或换设备继续时，点击“保存到云端”，用邮箱注册或登录；注册需两次输入相同密码并验证邮箱。</p><p>登录后的修改直接保存到云端，以成功提示为准。本机与云端同一地区内容不同的草稿会保留，避免覆盖。你也可以导出 CSV 留存。</p><p>旧地市足迹按已核实的政府驻地迁至县区，日期与笔记保持不变。尚未核实或发生冲突的记录继续保留在“我的足迹”中。</p>');
-$('#coverage-btn').onclick=()=>showInfo('<h2>地图数据与范围</h2><p>中国共 '+chinaIndex.features.length+' 个可标记地区，包含大陆县区、台湾乡镇市区、香港18区和澳门堂区；东莞、中山、儋州、嘉峪关保留市本级。</p><p>世界总览包含 '+world.length+' 个国家和地区边界要素，其中 '+worldIndex.detailCountries.length+' 个旅行目的地细分为州、省或当地相应行政/统计地区。其他地区可整体标记。</p><p>Natural Earth · © OpenStreetMap contributors。新加坡采用规划区域，新西兰含部分岛屿；具体范围、版本、许可证与开放数据下载见 <a href="assets/geo/world-data-sources.md" target="_blank" rel="noopener">世界地图数据说明</a>、<a href="assets/geo/china-data-sources.md" target="_blank" rel="noopener">中国地图数据说明</a>。</p><p>边界以各数据源所载版本为准，用于个人旅行记录。旧记录迁移依据见 <a href="assets/geo/county-migration-map.json" target="_blank" rel="noopener">政府驻地迁移来源</a>。</p>');
+$('#help-btn').onclick=()=>showInfo('<h2>从一面小旗开始</h2><p>① 无需注册，先选择国家或中国省份，进入详细地图；也可以直接搜索地市、县区或州省名称。</p><p>② 点击地区，填写首次到访日期和旅行记忆，保存足迹。总览上的数字小旗表示该区域的足迹数量。</p><p>③ 足迹临时保存在此浏览器。想长期保存或换设备继续时，点击“保存到云端”，用邮箱注册或登录；注册需两次输入相同密码并验证邮箱。</p><p>登录后的修改直接保存到云端，以成功提示为准。本机与云端同一地区内容不同的草稿会保留，避免覆盖。你也可以导出 CSV 留存。</p><p>大陆（含海南）的旧地市足迹按已核实的政府驻地迁至县区。台湾恢复22县市，港澳整体标记。旧分区足迹回到所属县市，日期与笔记保持不变；同一县市有多条记录时，其余内容单独保留在“我的足迹”中。</p>');
+$('#coverage-btn').onclick=()=>showInfo('<h2>地图数据与范围</h2><p>中国共 '+chinaIndex.features.length+' 个可标记地区，大陆（含海南）细化到县区，台湾恢复22个县市，香港、澳门各作为整体标记；东莞、中山、儋州、嘉峪关保留市本级。</p><p>世界总览包含 '+world.length+' 个国家和地区边界要素，其中 '+worldIndex.detailCountries.length+' 个旅行目的地细分为州、省或当地相应行政/统计地区。其他地区可整体标记。</p><p>Natural Earth · © OpenStreetMap contributors。新加坡采用规划区域，新西兰含部分岛屿；具体范围、版本、许可证与开放数据下载见 <a href="assets/geo/world-data-sources.md" target="_blank" rel="noopener">世界地图数据说明</a>、<a href="assets/geo/china-data-sources.md" target="_blank" rel="noopener">中国地图数据说明</a>。</p><p>边界以各数据源所载版本为准，用于个人旅行记录。旧记录迁移依据见 <a href="assets/geo/county-migration-map.json" target="_blank" rel="noopener">政府驻地迁移来源</a>。</p>');
 async function init(){
   try{
-    [chinaIndex,worldIndex,migration]=await Promise.all([jsonFile('assets/geo/china-index.json'),jsonFile('assets/geo/world-index.json'),jsonFile('assets/geo/county-migration-map.json')]);
+    [chinaIndex,worldIndex,migration,reversal]=await Promise.all([jsonFile('assets/geo/china-index.json'),jsonFile('assets/geo/world-index.json'),jsonFile('assets/geo/county-migration-map.json'),jsonFile('assets/geo/region-level-reversal-map.json')]);
+    migration={version:1,mappings:{...migration.mappings,...reversal.mappings}};
     const [wg,pg,cg,tg]=await Promise.all([jsonFile('assets/geo/world.geo.json'),jsonFile('assets/provinces.json'),jsonFile('assets/cities.json'),jsonFile('assets/taiwan-counties.json')]);
     world=wg.features;provinces=pg.features.filter(f=>/^\d{6}$/.test(String(f.properties.adcode)));
     if(tg.outline)provinces.find(f=>R.id(f)==='710000').geometry=tg.outline;
-    model=R.catalog(chinaIndex,worldIndex,[...cg.features,...tg.features]);features=model.features;
+    model=R.catalog(chinaIndex,worldIndex,[...cg.features,...tg.features],reversal);features=model.features;
     const countries=worldIndex.countries.filter(p=>!['TWN','HKG','MAC'].includes(p.countryCode)).sort((a,b)=>(a.countryCode==='CHN'?-1:b.countryCode==='CHN'?1:a.name.localeCompare(b.name,'zh-CN')));
     $('#country-filter').innerHTML='<option value="all">全部国家和地区</option>'+countries.map(p=>'<option value="'+p.countryCode+'">'+esc(p.name)+'</option>').join('');
     $('#province-filter').innerHTML='<option value="all">全部省份</option>'+provinces.map(f=>'<option value="'+R.id(f)+'">'+esc(f.properties.name)+'</option>').join('');

@@ -116,7 +116,7 @@
       async write(userId, payload) {
         const token = await requireUser(userId);
         if (!Number.isSafeInteger(payload?.expectedRevision) || payload.expectedRevision < 0) throw problem('INVALID_REVISION');
-        const data = await request(() => client.rpc('shanhe_save_archive_v2', {
+        const data = await request(() => client.rpc('shanhe_save_archive_v3', {
           p_records: payload.records,
           p_expected_revision: payload.expectedRevision
         }).setHeader('Authorization', 'Bearer ' + token), 'WRITE_FAILED');
