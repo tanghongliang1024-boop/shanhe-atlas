@@ -5,7 +5,7 @@ const STORAGE='shanhe-atlas-v1';
 let records={},features=[],provinces=[],selected=null,mode='flag',currentView='map',svg,layer,projection,zoom,cityShapes,markers,labels;
 let storageAvailable=true,cloud=null,detailContext=null,detailBase={},detailBusy=false,detailOperation=0;
 function readLocalRecords(){try{const value=JSON.parse(localStorage.getItem(STORAGE)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{storageAvailable=false;return {};}}
-const legacyTaiwan=createLegacyTaiwanAdapter({getRecords:()=>records,getFeatures:()=>features,getContext:()=>cloud?.context(),canOpen:()=>{const s=cloud?.getState();if(s?.userId&&s.ready)return true;cloud?.open();toast(s?.userId?'请先成功读取云端存档，再整理台湾足迹。':'请先登录并导入本机旧足迹，再整理台湾记录。');return false;},persist,onChange:renderAll,notify:toast});
+const legacyTaiwan=createLegacyTaiwanAdapter({getRecords:()=>records,getFeatures:()=>features,getContext:()=>cloud?.context(),canOpen:()=>{if(cloud?.canEdit())return true;toast('请先成功读取存档，再整理台湾足迹。');return false;},persist,onChange:renderAll,notify:toast});
 const phoneLayout=window.matchMedia('(max-width:850px)');
 let mapTouchActive=false;
 function configurePhoneLayout(){
@@ -22,7 +22,8 @@ phoneLayout.addEventListener('change',configurePhoneLayout);
 configurePhoneLayout();
 let mapResize;
 window.addEventListener('resize',()=>{clearTimeout(mapResize);mapResize=setTimeout(updateMapOverlays,100);});
-records=readLocalRecords();
+// Guest drafts and signed-in archives are selected by the storage controller.
+// The legacy local-only archive is retained exclusively for explicit import.
 const visited=f=>records[f.properties.adcode]?.visited===true;
 const isTaiwan=f=>String(f.properties.provinceCode)==='710000';
 const searchText=s=>String(s??'').toLowerCase().replaceAll('臺','台');
@@ -31,7 +32,7 @@ const dateString=s=>s?s.replaceAll('-','.'):'初见日期待补充';
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').classList.remove('visible'),2800);}
 async function persist(next,context){const result=await cloud.save(next,context);if(!result.ok&&result.code!=='STALE_REQUEST')toast(result.message);return result;}
 function setDetailBusy(busy){detailBusy=busy;$('#city-form').querySelectorAll('button,input,textarea').forEach(el=>el.disabled=busy);}
-function showSaveResult(result){$('#detail-save-status').textContent=result.ok?'已保存到云端。':result.message;$('#detail-save-status').dataset.error=String(!result.ok);$('#detail-reload-cloud').hidden=result.ok||result.code!=='CONFLICT';}
+function showSaveResult(result){$('#detail-save-status').textContent=result.ok?(result.guest?'已临时保存在此浏览器。':'已保存到云端。'):result.message;$('#detail-save-status').dataset.error=String(!result.ok);$('#detail-reload-cloud').hidden=result.ok||result.code!=='CONFLICT';$('#detail-reload-cloud').textContent=cloud.getState().guest?'读取最新临时足迹并重新编辑':'读取最新云端记录并重新编辑';}
 
 function goView(view){currentView=view;document.body.dataset.activeView=view;['map','cities','stats'].forEach(v=>{$('#'+v+'-view').hidden=v!==view;const nav=document.querySelector(`[data-view="${v}"]`);nav.classList.toggle('active',v===view);nav.setAttribute('aria-current',v===view?'page':'false');});if(view==='cities')renderCollection();if(view==='stats')renderStats();if(phoneLayout.matches){window.scrollTo({top:0,behavior:'instant'});setMapTouch(false);}if(view==='map')updateMapOverlays();}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>goView(b.dataset.view));
@@ -43,7 +44,7 @@ if(isDefault){const picks=['110000','310000','510100','330100','530100','440100'
 $('#list-heading').textContent=isDefault?'从这些城市开始':'探索结果';$('#result-count').textContent=`${list.length} 座`;
 $('#city-list').innerHTML=list.length?list.map(f=>{const p=f.properties,r=records[p.adcode];return`<button class="city-row" data-city="${p.adcode}"><span class="city-row-icon ${visited(f)?'done':''}">${icon(visited(f)?'flag':'pin')}</span><span><span class="city-row-name">${esc(p.name)}</span><span class="city-row-meta">${esc(shortName(p.province))}${visited(f)?' · '+esc(dateString(r.date)):' · 等待你的故事'}</span></span>${icon(visited(f)?'check':'arrow')}</button>`;}).join(''):'<div class="empty-results">还没有找到这座城市<br>试试城市名或切换筛选条件</div>';
 $('#city-list').querySelectorAll('[data-city]').forEach(b=>b.onclick=()=>openCity(b.dataset.city));}
-function openCity(id){if(detailBusy)return;if(!cloud?.getState().userId){cloud?.open();toast('请先登录，再记录这座城市的云端足迹。');return;}if(!cloud.getState().ready){cloud.open();toast('请先成功读取云端存档，再编辑城市。');return;}detailContext=cloud?.context();detailBase=structuredClone(records);$('#detail-save-status').textContent='';$('#detail-reload-cloud').hidden=true;selected=features.find(f=>String(f.properties.adcode)===String(id));if(!selected)return;const p=selected.properties,r=records[p.adcode]||{};$('#detail-city').textContent=p.name;$('#detail-province').textContent=p.province;$('#detail-visited').checked=!!r.visited;$('#detail-date').value=r.date||'';$('#detail-note').value=r.note||'';$('#remove-visit').hidden=!r.visited;if($('#city-picker').open)$('#city-picker').close();$('#city-dialog').showModal();$('#city-dialog').scrollTop=0;}
+function openCity(id){if(detailBusy)return;if(!cloud?.canEdit()){toast(cloud?.getState().guest?'暂时无法读取本机足迹，请检查浏览器存储权限后重试。':'请先成功读取云端存档，再编辑城市。');return;}detailContext=cloud.context();detailBase=cloud.getState().records;$('#detail-save-status').textContent=cloud.getState().guest?'当前为临时足迹，保存在此浏览器。':'';$('#detail-reload-cloud').hidden=true;selected=features.find(f=>String(f.properties.adcode)===String(id));if(!selected)return;const p=selected.properties,r=records[p.adcode]||{};$('#detail-city').textContent=p.name;$('#detail-province').textContent=p.province;$('#detail-visited').checked=!!r.visited;$('#detail-date').value=r.date||'';$('#detail-note').value=r.note||'';$('#remove-visit').hidden=!r.visited;if($('#city-picker').open)$('#city-picker').close();$('#city-dialog').showModal();$('#city-dialog').scrollTop=0;}
 $('#close-dialog').onclick=()=>$('#city-dialog').close();
 $('#city-dialog').addEventListener('click',e=>{if(detailBusy)return;if(e.target===$('#city-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
 $('#detail-date').onchange=()=>{if($('#detail-date').value)$('#detail-visited').checked=true;};
@@ -53,8 +54,8 @@ async function saveCity(remove){
   const next=structuredClone(detailBase);
   if(v)next[id]={visited:true,date:$('#detail-date').value,note:$('#detail-note').value.trim(),updatedAt:new Date().toISOString()};else delete next[id];
   const operation=++detailOperation;
-  setDetailBusy(true);$('#detail-save-status').textContent='正在保存到云端…';
-  try{const result=await persist(next,detailContext);if(operation!==detailOperation||result.code==='STALE_REQUEST')return;showSaveResult(result);if(result.ok){$('#city-dialog').close();toast(v?'已将 '+cityName+' 的足迹保存到云端':'已更新云端足迹');}}
+  setDetailBusy(true);$('#detail-save-status').textContent=cloud.getState().guest?'正在临时保存…':'正在保存到云端…';
+  try{const result=await persist(next,detailContext);if(operation!==detailOperation||result.code==='STALE_REQUEST')return;showSaveResult(result);if(result.ok){$('#city-dialog').close();toast(result.guest?(v?'已临时保存 '+cityName+' 的足迹':'已更新本机临时足迹'):(v?'已将 '+cityName+' 的足迹保存到云端':'已更新云端足迹'));}}
   finally{if(operation===detailOperation)setDetailBusy(false);}
 }
 $('#city-form').onsubmit=event=>{event.preventDefault();saveCity(false);};
@@ -97,7 +98,7 @@ function renderAll(){renderSummary();renderList();renderMapState();if(currentVie
 $('#export-btn').onclick=()=>{const list=features.filter(visited),legacyRows=legacyTaiwan.csvRows();if(!list.length&&!legacyRows.length){toast('先标记一座去过的城市，再导出你的足迹吧');return;}const quote=v=>'"'+String(v??'').replaceAll('"','""')+'"';const csv='\ufeff'+[['城市','省级地区','首次到访日期','城市记忆'],...list.map(f=>{const p=f.properties,r=records[p.adcode];return[p.name,p.province,r.date,r.note];}),...legacyRows].map(row=>row.map(quote).join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='山河足迹-'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('足迹已导出，收藏好这份旅行记忆');};
 function showInfo(html){$('#info-body').innerHTML=html;$('#info-dialog').showModal();}
 $('#close-info').onclick=()=>$('#info-dialog').close();
-$('#help-btn').onclick=()=>showInfo('<h2>欢迎来到山河足迹</h2><p>① 在地图上点击城市，或通过“搜索城市”入口查找。</p><p>② 勾选“我去过这座城市”，填写首次到访日期与旅行记忆，然后保存。</p><p>③ 切换“小旗”与“城市着色”，从不同角度回看足迹。城市足迹与旅行统计会同步更新。</p><p>通过邮箱注册并验证后登录，足迹会保存到云端。同一账号可在其他设备读取。保存成功以页面“已保存到云端”提示为准；网络失败时输入仍会保留。</p><p>旧版本机足迹可在“我的存档”中导入，只补充云端没有的城市，原本机备份会保留。也可以导出 CSV 留存。</p>');
+$('#help-btn').onclick=()=>showInfo('<h2>欢迎来到山河足迹</h2><p>① 无需注册，先在地图上点击城市，或通过“搜索城市”入口查找。</p><p>② 勾选“我去过这座城市”，填写首次到访日期与旅行记忆，然后保存。</p><p>③ 切换“小旗”与“城市着色”，从不同角度回看足迹。城市足迹与旅行统计会同步更新。</p><p>未登录时，足迹临时保存在当前浏览器，刷新后仍可继续。清理浏览器数据可能会删除临时足迹。</p><p>想长期保存或换设备继续时，点击“保存到云端”，用邮箱注册或登录。注册时两次输入相同密码，完成邮箱验证后，临时足迹会转存到该账号。同一城市已有云端记录时以云端为准；转存失败会保留临时草稿，供你重试。</p><p>登录后新增或修改足迹会直接保存到云端，成功以页面“已保存到云端”提示为准。旧版本机足迹可在“我的存档”中手动导入，也可以导出 CSV 留存。</p>');
 $('#coverage-btn').onclick=()=>showInfo(`<h2>地图数据与范围</h2><p>边界与坐标来自 <a href="https://datav.aliyun.com/portal/school/atlas/area_selector" target="_blank" rel="noopener">阿里云 DataV 地理数据</a>；台湾县市边界及来源见 <a href="assets/TAIWAN-DATA-SOURCES.md" target="_blank" rel="noopener">台湾县市数据说明</a>。地图数据已随应用打包。</p><p>当前包含 ${features.length} 个可标记地区：地级市、自治州、地区、盟及部分省直辖县级单位；直辖市、香港和澳门按整体标记。台湾细分为 22 个县市（含澎湖、金门、连江），每个县市可独立插旗、着色并记录初次到访日期。该计数是地图可标记地区数量，并非地级市行政数量。</p><p>地图用于个人旅行记录，行政边界以数据源版本为准。城市搜索支持完整名称、部分名称和省级地区名称。</p>`);
 cloud=createShanheCloud({
   getLocalRecords:readLocalRecords,notify:toast,

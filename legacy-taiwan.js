@@ -104,10 +104,10 @@ function createLegacyTaiwanAdapter({getRecords,getFeatures,getContext,canOpen,pe
       const next={...current,[id]:{...record}};
       delete next[legacyId];
       const requestOperation=++operation;
-      busy=true;saveButton.disabled=true;select.disabled=true;status.textContent='正在保存到云端…';
+      busy=true;saveButton.disabled=true;select.disabled=true;status.textContent=context?.userId?'正在保存到云端…':'正在临时保存…';
       let result;
       try{result=await persist(next,context);}
-      catch(_){result={ok:false,message:'云端保存失败，请稍后重试。'};}
+      catch(_){result={ok:false,message:'保存失败，请稍后重试。'};}
       finally{if(requestOperation===operation){busy=false;saveButton.disabled=false;select.disabled=false;}}
       if(requestOperation!==operation||result.code==='STALE_REQUEST')return;
       if(!result.ok){status.textContent=result.message+' 原记录仍然保留。';return;}
@@ -149,7 +149,7 @@ function createLegacyTaiwanAdapter({getRecords,getFeatures,getContext,canOpen,pe
     banner.hidden=!pending;
     if(dialog.open){
       if(!pending)dialog.close();
-      else if(!busy)paintDialog();
+      // Keep the opened form paired with its original snapshot and revision.
     }
   }
 
