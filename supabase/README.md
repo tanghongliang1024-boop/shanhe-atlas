@@ -2,7 +2,7 @@
 
 网页继续托管在 GitHub Pages；Supabase 负责邮箱密码登录和每位用户的独立存档。访客不需要 GitHub 账号。本目录提供可审查的数据库迁移；**保存这些文件不会自动修改任何 Supabase 项目**。
 
-当前项目为 `gxaeatehlgepgeuhhmll`，本轮已应用迁移 `20261022040802_shanhe_private_archives`，实际 RLS/CAS 验证通过，远端 Security/Performance Advisor 均为 0 项。Email provider、注册、邮箱验证及精确的 Site URL/Redirect URL 配置均已确认，匿名登录关闭。Gmail SMTP 配置已保存并经控制台重新加载确认，云端版已准备好公开测试，GitHub Pages 部署正在进行中；实际邮件送达与完整邮箱 Auth 流程仍待验收。详见 [部署状态](DEPLOYMENT-STATUS.md)。下列步骤用于检查和后续维护，不要求在已迁移的项目重复执行 SQL。
+当前项目为 `gxaeatehlgepgeuhhmll`，本轮已应用迁移 `20261022040802_shanhe_private_archives`，实际 RLS/CAS 验证通过，远端 Security/Performance Advisor 均为 0 项。Email provider、注册、邮箱验证及精确的 Site URL/Redirect URL 配置均已确认，匿名登录关闭。Gmail SMTP 配置已保存并经控制台重新加载确认。云端版已通过 GitHub Pages 发布，静态文件与手机注册界面检查通过；目前等待用户自行完成真实注册、邮件验证和登录，实际邮件送达、跨设备保存及完整 Auth 流程仍待验收。详见 [部署状态](DEPLOYMENT-STATUS.md)。下列步骤用于检查和后续维护，不要求在已迁移的项目重复执行 SQL。
 
 ## 1. 先准备邮箱注册与验证
 
