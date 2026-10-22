@@ -20,6 +20,9 @@
     // Mapping chains/cycles make repeated loads non-idempotent. Data publishers
     // must give the final destination directly; self-maps are already current.
     for (const [from, to] of approved) if (to !== from && approved.has(to) && approved.get(to) !== to) invalid();
+    // Stable ordering also covers many-to-one level restorations: move at most
+    // one complete record into an empty parent; retain every other source key.
+    // Dates, notes and timestamps never get combined, deduplicated or replaced.
     for (const from of Object.keys(records).sort()) {
       const to = approved.get(from);
       if (!to) { if (LEGACY_ID.test(from)) unmapped.push(from); continue; }
