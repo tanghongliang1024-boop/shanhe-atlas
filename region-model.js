@@ -37,6 +37,11 @@
     if(worldCities)for(const [key,feature] of regionsById){
       legacyById.set(key,{...feature,properties:{...feature.properties,province:feature.properties.name,provinceCode:key,level:'legacy',legacyKind:'world-region',parentRegionId:key,levelNote:'旧版省州足迹，待补充实际到访城市；原记录完整保留'}});
     }
+    for(const [kind,items] of [['removed-region',worldIndex.legacyRegions||[]],['removed-city',worldCities?.legacyCities||[]]])for(const p of items){
+      const key=String(p.adcode);
+      if(byId.has(key))throw Error('Removed map feature is still selectable: '+key);
+      legacyById.set(key,{type:'Feature',geometry:null,properties:{...p,...(kind==='removed-region'?{province:p.name,provinceCode:key,parentRegionId:key}:{}),center:null,level:'legacy',legacyKind:kind,mapExcluded:true,levelNote:'此地点已从当前地图中移除；旧足迹仍可查看、编辑和导出'}});
+    }
     for(const [source,item] of Object.entries(reversal?.mappings||{})){
       const parent=byId.get(item.targetId);
       if(item.verified!==true||!parent||byId.has(source))continue;
@@ -45,7 +50,7 @@
     }
     return {features:entries,byId,legacyById,countries,regionsById,citiesByRegion};
   }
-  function regionVisited(feature,visits){const key=id(feature);return visits.some(f=>id(f)===key||f.properties.parentRegionId===key||f.properties.regionIds?.includes(key));}
+  function regionVisited(feature,visits){const key=id(feature);return visits.some(f=>!f.properties.mapExcluded&&(id(f)===key||f.properties.parentRegionId===key||f.properties.regionIds?.includes(key)));}
   function moveLegacyRegionRecord(records,from,to,model){
     from=String(from);to=String(to);
     const source=model.legacyById.get(from),destination=model.byId.get(to);
@@ -58,6 +63,7 @@
     return Object.keys(records).filter(key=>records[key]?.visited===true).map(key=>model.byId.get(key)||model.legacyById.get(key)||{type:'Feature',geometry:null,properties:{adcode:key,name:'待整理地区 '+key,country:'',countryCode:key.startsWith('world:')?key.split(':')[1]:'CHN',province:'旧版足迹',level:'legacy'}});
   }
   function groupMarkers(visits,scope,countryFeatures,provinceFeatures){
+    visits=visits.filter(f=>!f.properties.mapExcluded);
     if(scope.kind==='province'||scope.kind==='country')return visits.filter(f=>scope.kind==='province'?countryOf(f)==='CHN'&&String(f.properties.provinceCode)===scope.code:countryOf(f)===scope.code).map(f=>({...f,count:1,target:f.properties.legacyKind==='world-region'?'legacy-region':'record'}));
     const groups=new Map();
     for(const f of visits){const key=scope.kind==='china'?String(f.properties.provinceCode):countryOf(f);if(scope.kind==='china'&&countryOf(f)!=='CHN')continue;groups.set(key,(groups.get(key)||0)+1);}
