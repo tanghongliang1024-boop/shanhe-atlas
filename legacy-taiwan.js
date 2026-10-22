@@ -1,8 +1,8 @@
 // Preserve the old whole-province footprint until its owner assigns it to a county/city.
 // Call render() from renderAll(); append csvRows() to the export's raw data rows.
-function createLegacyTaiwanAdapter({getRecords,getFeatures,persist,onChange,notify}) {
+function createLegacyTaiwanAdapter({getRecords,getFeatures,getContext,canOpen,persist,onChange,notify}) {
   const legacyId='710000';
-  let banner,dialog,select,saveButton,description,dateText,noteText,status;
+  let banner,dialog,select,saveButton,description,dateText,noteText,status,context,base,busy=false,operation=0;
   const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
   const legacyRecord=()=>{
     const value=getRecords()[legacyId];
@@ -30,8 +30,10 @@ function createLegacyTaiwanAdapter({getRecords,getFeatures,persist,onChange,noti
     openButton.style.minHeight='44px';
     openButton.setAttribute('aria-haspopup','dialog');
     openButton.onclick=()=>{
+      if(typeof canOpen==='function'&&!canOpen())return;
+      if(busy)return;
       if(!legacyRecord())return render();
-      status.textContent='';
+      status.textContent='';context=getContext();base=structuredClone(getRecords());
       paintDialog();
       dialog.showModal();
     };
@@ -52,7 +54,7 @@ function createLegacyTaiwanAdapter({getRecords,getFeatures,persist,onChange,noti
     close.type='button';
     close.style.cssText='min-width:44px;min-height:44px;font-size:24px';
     close.setAttribute('aria-label','关闭旧版台湾足迹整理');
-    close.onclick=()=>dialog.close();
+    close.onclick=()=>{if(!busy)dialog.close();};
     top.append(title,close);
     description=element('p','选择这段旧版记录对应的县市，原有日期和记忆将完整保留。其他到访地点可稍后分别添加。');
     description.id='legacy-taiwan-description';
@@ -78,14 +80,16 @@ function createLegacyTaiwanAdapter({getRecords,getFeatures,persist,onChange,noti
     const later=element('button','暂时保留原记录','remove-visit');
     later.type='button';
     later.style.minHeight='44px';
-    later.onclick=()=>dialog.close();
+    later.onclick=()=>{if(!busy)dialog.close();};
     actions.append(saveButton,later);
     form.append(top,description,dateText,noteText,label,select,hint,status,actions);
+    dialog.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
     dialog.append(form);
     document.body.append(dialog);
-    form.onsubmit=event=>{
+    form.onsubmit=async event=>{
       event.preventDefault();
-      const current=getRecords(),record=legacyRecord();
+      if(busy)return;
+      const current=base,record=base?.[legacyId];
       const destination=counties().find(f=>String(f.properties.adcode)===select.value);
       if(!record){dialog.close();render();return;}
       if(!destination){status.textContent='请选择一个县市后再保存。';select.focus();return;}
@@ -99,10 +103,14 @@ function createLegacyTaiwanAdapter({getRecords,getFeatures,persist,onChange,noti
       // The original record is removed only by the same successful storage write.
       const next={...current,[id]:{...record}};
       delete next[legacyId];
-      if(!persist(next)){
-        status.textContent='未能保存，原记录仍然保留。请先导出足迹后重试。';
-        return;
-      }
+      const requestOperation=++operation;
+      busy=true;saveButton.disabled=true;select.disabled=true;status.textContent='正在保存到云端…';
+      let result;
+      try{result=await persist(next,context);}
+      catch(_){result={ok:false,message:'云端保存失败，请稍后重试。'};}
+      finally{if(requestOperation===operation){busy=false;saveButton.disabled=false;select.disabled=false;}}
+      if(requestOperation!==operation||result.code==='STALE_REQUEST')return;
+      if(!result.ok){status.textContent=result.message+' 原记录仍然保留。';return;}
       dialog.close();
       onChange();
       notify('已将原记录归入'+destination.properties.name+'，日期和记忆已保留');
@@ -140,8 +148,8 @@ function createLegacyTaiwanAdapter({getRecords,getFeatures,persist,onChange,noti
     if(!banner)build();
     banner.hidden=!pending;
     if(dialog.open){
-      if(pending)paintDialog();
-      else dialog.close();
+      if(!pending)dialog.close();
+      else if(!busy)paintDialog();
     }
   }
 
@@ -152,5 +160,12 @@ function createLegacyTaiwanAdapter({getRecords,getFeatures,persist,onChange,noti
       :[];
   }
 
-  return {render,csvRows};
+  function discard() {
+    operation++;busy=false;context=null;base=null;
+    if(!dialog)return;
+    if(dialog.open)dialog.close();
+    select.disabled=false;select.value='';saveButton.disabled=false;status.textContent='';
+  }
+
+  return {render,csvRows,discard};
 }
