@@ -76,14 +76,13 @@ function openCity(id){
   $('#detail-city').textContent=R.displayName(selected);$('#detail-province').textContent=R.trail(selected)+(p.levelNote?' · '+p.levelNote:'')+(p.level==='legacy'&&!p.reversalTarget&&!p.mapExcluded&&!isWorldLegacy(selected)&&!isCountryLegacy(selected)?' · 旧版足迹，尚未定位到当前地图':'');
   $('#detail-show-map').hidden=p.level==='legacy'&&!isWorldLegacy(selected)&&!isCountryLegacy(selected);
   $('#legacy-city-choice').hidden=!isWorldLegacy(selected);
-  $('#legacy-city-target').innerHTML='<option value="">保留这条旧记录</option>'+(model.citiesByRegion.get(String(id))||[]).map(f=>'<option value="'+esc(R.id(f))+'"'+(records[R.id(f)]?' disabled':'')+'>'+esc(R.displayName(f))+(records[R.id(f)]?'（已有足迹，内容保留）':'')+'</option>').join('');$('#detail-visited').checked=true;$('#detail-date').value=r.date||'';$('#detail-note').value=r.note||'';$('#remove-visit').hidden=!r.visited;
+  $('#legacy-city-target').innerHTML='<option value="">保留这条旧记录</option>'+(model.citiesByRegion.get(String(id))||[]).map(f=>'<option value="'+esc(R.id(f))+'"'+(records[R.id(f)]?' disabled':'')+'>'+esc(R.displayName(f))+(records[R.id(f)]?'（已有足迹，内容保留）':'')+'</option>').join('');$('#detail-visited').checked=r.visited===true;$('#detail-date').value=r.date||'';$('#detail-note').value=r.note||'';$('#remove-visit').hidden=!r.visited;
   if($('#region-dialog').open)$('#region-dialog').close();
   if($('#city-picker').open)$('#city-picker').close();
   $('#city-dialog').showModal();$('#city-dialog').scrollTop=0;
 }
 $('#close-dialog').onclick=()=>$('#city-dialog').close();
 $('#city-dialog').addEventListener('click',e=>{if(detailBusy)return;if(e.target===$('#city-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
-$('#detail-date').onchange=()=>{if($('#detail-date').value)$('#detail-visited').checked=true;};
 async function saveCity(remove){
   if(!selected||detailBusy)return;
   const id=String(selected.properties.adcode),v=!remove&&$('#detail-visited').checked;
@@ -96,7 +95,7 @@ async function saveCity(remove){
   }else delete next[id];
   const operation=++detailOperation;
   setDetailBusy(true);$('#detail-save-status').textContent=cloud.getState().guest?'正在临时保存…':'正在保存到云端…';
-  try{const result=await persist(next,detailContext);if(operation!==detailOperation||result.code==='STALE_REQUEST')return;showSaveResult(result);if(result.ok){$('#city-dialog').close();toast(result.guest?(v?'已临时保存 '+cityName+' 的足迹':'已更新本机临时足迹'):(v?'已将 '+cityName+' 的足迹保存到云端':'已更新云端足迹'));}}
+  try{const result=await persist(next,detailContext);if(operation!==detailOperation||result.code==='STALE_REQUEST')return;showSaveResult(result);if(result.ok){$('#city-dialog').close();toast(v?(result.guest?'已临时保存 '+cityName+' 的足迹':'已将 '+cityName+' 的足迹保存到云端'):'已将 '+cityName+' 标记为未去过'+(result.guest?'（已临时保存）':'（已保存到云端）'));}}
   finally{if(operation===detailOperation)setDetailBusy(false);}
 }
 $('#city-form').onsubmit=event=>{event.preventDefault();saveCity(false);};
