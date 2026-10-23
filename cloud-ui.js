@@ -10,8 +10,8 @@
     // Remote archives were converted once on the server. Repeating capital
     // conversion here would revive a deleted city from a retained conflict.
     const guest=root.createGuestArchiveStore({storage,migrateRecords:migrate,migrateLegacyRecords:migrateLegacy});
-    let provider,store,user=null,mode='signup',authBusy=false,sessionKnown=false;
-    let authSerial=0,sessionGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
+    let provider,store,user=null,mode='signup',authBusy=false,sessionKnown=false,signupSubmitted=false;
+    let authSerial=0,sessionGeneration=0,dialogGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
     let transferTask=null,transferAttempt=null,transferMessage='',transferError=false;
     const readyConfig=typeof config.url==='string'&&/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.url)&&typeof config.publishableKey==='string'&&config.publishableKey.startsWith('sb_publishable_');
     const state=()=>user&&store?store.getState():guest.getState();
@@ -50,8 +50,8 @@
       const pending=count(temporary.records),matches=intent&&intent.email===normalizeEmail(user?.email);
       const labels={loading:'正在读取云端足迹',ready:'云端存档已读取',saving:'正在保存到云端…',saved:'已保存到云端',conflict:'云端有更新，暂未保存',error:signed?'云端连接需要重试':'本机临时存档需要重试'};
       $('#cloud-banner').dataset.status=s.status;
-      $('#cloud-heading').textContent=signed?(labels[s.status]||'云端存档'):'先去插旗，慢慢收藏山河';
-      $('#cloud-description').textContent=s.error?.message||(signed?'同一邮箱登录，即可在手机和电脑继续记录。':'足迹临时保存在此浏览器。想换设备继续时，再保存到云端。');
+      $('#cloud-heading').textContent=signed?(labels[s.status]||'云端存档'):signupSubmitted?'注册提交成功，请验证邮箱':'先去插旗，慢慢收藏山河';
+      $('#cloud-description').textContent=s.error?.message||(signed?(transferError?transferMessage:'同一邮箱登录，即可在手机和电脑继续记录。'):signupSubmitted?'请到邮箱打开验证链接，再登录。临时足迹仍保留在此浏览器；若已注册，可直接登录。':'足迹临时保存在此浏览器。想换设备继续时，再保存到云端。');
       $('#cloud-account-btn').textContent=signed?'我的存档':'保存到云端';
       $('#cloud-banner-action').textContent=signed?'管理存档':'保存到云端';
       $('#cloud-signed-in').hidden=!signed||mode==='recover';
@@ -91,10 +91,10 @@
       $('#cloud-forgot').hidden=next!=='login';$('#cloud-back-login').hidden=!['reset','recover'].includes(next);
       clearPasswords();say('');paint();
     }
-    function open(){if(!user&&mode!=='recover')setMode('signup');paint();if(!provider)say('云端服务暂时无法连接。你仍可在地图记录，足迹会临时保存在此浏览器。',true);if(!dialog.open)dialog.showModal();}
+    function open(){if(!user&&mode!=='recover')setMode('signup');paint();if(!provider)say('云端服务暂时无法连接。你仍可在地图记录，足迹会临时保存在此浏览器。',true);if(!dialog.open){dialogGeneration++;dialog.showModal();}}
     $('#cloud-account-btn').onclick=open;$('#cloud-banner-action').onclick=open;
     $('#cloud-close').onclick=()=>dialog.close();
-    dialog.addEventListener('close',()=>{clearPasswords();if(mode!=='recover')setMode('signup');});
+    dialog.addEventListener('close',()=>{dialogGeneration++;clearPasswords();if(mode!=='recover')setMode('signup');});
     $('#cloud-login-tab').onclick=()=>{if(!authBusy)setMode('login');};
     $('#cloud-signup-tab').onclick=()=>{if(!authBusy)setMode('signup');};
     $('#cloud-forgot').onclick=()=>{if(!authBusy)setMode('reset');};
@@ -154,6 +154,7 @@
       const changed=(next?.id||null)!==(user?.id||null);
       sessionKnown=true;user=next||null;
       if(changed){
+        signupSubmitted=false;
         sessionGeneration++;recoveryUserId=null;transferTask=null;transferAttempt=null;transferMessage='';transferError=false;
         say('');
         if(mode==='recover'){authSerial++;authBusy=false;setMode('signup');}
@@ -165,7 +166,7 @@
       await sessionLoad;
       if(!sameSession(generation,id))return;
       publish();
-      if(event==='PASSWORD_RECOVERY'&&user){recoveryUserId=user.id;setMode('recover');if(!dialog.open)dialog.showModal();return;}
+      if(event==='PASSWORD_RECOVERY'&&user){recoveryUserId=user.id;setMode('recover');if(!dialog.open){dialogGeneration++;dialog.showModal();}return;}
       await transferPending();
     }
     form.onsubmit=async event=>{
@@ -177,7 +178,9 @@
         confirmation.setCustomValidity('');confirmation.removeAttribute('aria-invalid');
       }
       if(!form.reportValidity())return;
-      authBusy=true;const serial=++authSerial,recoveryGeneration=sessionGeneration,recoveringAccount=recoveryUserId;
+      if(action==='signup')signupSubmitted=false;
+      authBusy=true;const serial=++authSerial,recoveryGeneration=sessionGeneration,recoveringAccount=recoveryUserId,submittedDialogGeneration=dialogGeneration;
+      const closeSignup=notice=>{if(dialog.open&&submittedDialogGeneration===dialogGeneration){dialog.close();notify?.(notice);}};
       say('正在处理…');paint();const redirect=new URL('./',location.href).href;
       try{
         if(action==='reset'){
@@ -195,12 +198,22 @@
           const result=await(action==='signup'?provider.signUp(email,password,redirect):provider.signIn(email,password));
           if(serial!==authSerial)return;
           if(result.user){
-            if(sessionGeneration!==recoveryGeneration&&user?.id!==result.user.id){say('登录账号已变化，临时足迹仍保留。',true);return;}
+            if(sessionGeneration!==recoveryGeneration&&user?.id!==result.user.id)return;
             await applySession(result.user,'SIGNED_IN');
-            if(serial===authSerial&&user?.id===result.user.id)say(transferMessage||(state().ready?'已登录，可以继续记录云端足迹。':'已登录，读取云端存档后可重试转存。'),transferError);
-          }else if(sessionGeneration===recoveryGeneration)say('请到邮箱完成验证，并在此浏览器打开验证链接。临时足迹会保留，验证后转存到这个邮箱的账号；已有账号可切换到登录。');
+            if(serial===authSerial&&user?.id===result.user.id){
+              if(action!=='signup'||submittedDialogGeneration===dialogGeneration)say(transferMessage||(state().ready?'已登录，可以继续记录云端足迹。':'已登录，读取云端存档后可重试转存。'),transferError);
+              if(action==='signup'){
+                closeSignup('注册成功，已登录。'+(transferError?'临时足迹仍保留，请在“我的存档”中重试转存。':!state().ready?'云端存档尚未读取，请稍后重试。':''));
+              }
+            }
+          }else if(sessionGeneration===recoveryGeneration){
+            if(action==='signup'){
+              signupSubmitted=true;
+              closeSignup('注册提交成功，请到邮箱完成验证。临时足迹仍保留。');
+            }else say('请到邮箱完成验证，并在此浏览器打开验证链接。临时足迹会保留，验证后转存到这个邮箱的账号；已有账号可切换到登录。');
+          }
         }
-      }catch(error){if(serial===authSerial&&recoveryGeneration===sessionGeneration)say(authError(error),true);}
+      }catch(error){if(serial===authSerial&&recoveryGeneration===sessionGeneration&&(action!=='signup'||submittedDialogGeneration===dialogGeneration))say(authError(error),true);}
       finally{if(serial===authSerial){authBusy=false;clearPasswords();paint();}}
     };
     $('#cloud-transfer-retry').onclick=async()=>{
