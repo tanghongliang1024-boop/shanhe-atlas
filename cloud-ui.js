@@ -10,7 +10,7 @@
     // Current cloud archives and v4 drafts have already been upgraded. Repeating
     // any region conversion would revive a removed place from a retained conflict.
     const guest=root.createGuestArchiveStore({storage,migrateLegacyRecords:migrateLegacy});
-    let provider,store,user=null,mode='signup',authBusy=false,sessionKnown=false,signupSubmitted=false;
+    let provider,store,user=null,mode='login',authBusy=false,sessionKnown=false,signupSubmitted=false;
     let authSerial=0,sessionGeneration=0,dialogGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
     let transferTask=null,transferAttempt=null,transferMessage='',transferError=false;
     const readyConfig=typeof config.url==='string'&&/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.url)&&typeof config.publishableKey==='string'&&config.publishableKey.startsWith('sb_publishable_');
@@ -91,10 +91,10 @@
       $('#cloud-forgot').hidden=next!=='login';$('#cloud-back-login').hidden=!['reset','recover'].includes(next);
       clearPasswords();say('');paint();
     }
-    function open(){if(!user&&mode!=='recover')setMode('signup');paint();if(!provider)say('云端服务暂时无法连接。你仍可在地图记录，足迹会临时保存在此浏览器。',true);if(!dialog.open){dialogGeneration++;dialog.showModal();}}
+    function open(){if(!user&&mode!=='recover')setMode('login');paint();if(!provider)say('云端服务暂时无法连接。你仍可在地图记录，足迹会临时保存在此浏览器。',true);if(!dialog.open){dialogGeneration++;dialog.showModal();}}
     $('#cloud-account-btn').onclick=open;$('#cloud-banner-action').onclick=open;
     $('#cloud-close').onclick=()=>dialog.close();
-    dialog.addEventListener('close',()=>{dialogGeneration++;clearPasswords();if(mode!=='recover')setMode('signup');});
+    dialog.addEventListener('close',()=>{dialogGeneration++;clearPasswords();if(mode!=='recover')setMode('login');});
     $('#cloud-login-tab').onclick=()=>{if(!authBusy)setMode('login');};
     $('#cloud-signup-tab').onclick=()=>{if(!authBusy)setMode('signup');};
     $('#cloud-forgot').onclick=()=>{if(!authBusy)setMode('reset');};
@@ -157,7 +157,7 @@
         signupSubmitted=false;
         sessionGeneration++;recoveryUserId=null;transferTask=null;transferAttempt=null;transferMessage='';transferError=false;
         say('');
-        if(mode==='recover'){authSerial++;authBusy=false;setMode('signup');}
+        if(mode==='recover'){authSerial++;authBusy=false;setMode('login');}
         onAccountChange();
         sessionLoad=Promise.resolve(store.setUser(user?.id||null));
         if(!user)await guest.refresh();
@@ -245,13 +245,13 @@
     $('#cloud-logout').onclick=async()=>{
       if(!provider||state().busy||transferTask||authBusy)return;
       authBusy=true;paint();
-      try{await provider.signOut();await applySession(null,'SIGNED_OUT');setMode('signup');say('已退出，云端足迹仍安全保存。现在新增的足迹会临时保存在此浏览器。');}
+      try{await provider.signOut();await applySession(null,'SIGNED_OUT');setMode('login');say('已退出，云端足迹仍安全保存。现在新增的足迹会临时保存在此浏览器。');}
       catch(_){say('退出未成功，请检查网络后重试。',true);}
       finally{authBusy=false;paint();}
     };
     function changed(){publish();}
     async function start(){
-      setMode('signup');publish();
+      setMode('login');publish();
       if(!readyConfig||!root.supabase?.createClient)return;
       try{
         const client=root.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storageKey:'shanhe-cloud-auth-v1'}});
