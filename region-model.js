@@ -72,7 +72,8 @@
   }
   function groupMarkers(visits,scope,countryFeatures,provinceFeatures){
     visits=visits.filter(f=>!f.properties.mapExcluded);
-    if(scope.kind==='province'||scope.kind==='country')return visits.filter(f=>scope.kind==='province'?countryOf(f)==='CHN'&&String(f.properties.provinceCode)===scope.code:countryOf(f)===scope.code&&f.properties.legacyKind!=='world-country').map(f=>({...f,count:1,target:f.properties.legacyKind==='world-region'?'legacy-region':'record'}));
+    // Retained prefecture records are not county visits; their centers can overlap a county flag.
+    if(scope.kind==='province'||scope.kind==='country')return visits.filter(f=>scope.kind==='province'?countryOf(f)==='CHN'&&String(f.properties.provinceCode)===scope.code&&f.properties.level!=='legacy':countryOf(f)===scope.code&&f.properties.legacyKind!=='world-country').map(f=>({...f,count:1,target:f.properties.legacyKind==='world-region'?'legacy-region':'record'}));
     const groups=new Map();
     for(const f of visits){const key=scope.kind==='china'?String(f.properties.provinceCode):countryOf(f);if(scope.kind==='china'&&countryOf(f)!=='CHN')continue;groups.set(key,(groups.get(key)||0)+1);}
     const shapes=scope.kind==='china'?provinceFeatures:countryFeatures.filter(f=>!['TWN','HKG','MAC'].includes(f.properties.countryCode));

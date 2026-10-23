@@ -7,9 +7,9 @@
     let storage;try{storage=root.localStorage;}catch(_){}
     const migrate=(records,occupied={})=>regionMigration?root.ShanheRegionMigration.migrateRecords(records,regionMigration,occupied):{records};
     const migrateLegacy=(records,occupied={})=>{const base=migrate(records,occupied);return cityMigration?root.ShanheRegionMigration.migrateRecords(base.records,cityMigration,occupied):base;};
-    // Remote archives were converted once on the server. Repeating capital
-    // conversion here would revive a deleted city from a retained conflict.
-    const guest=root.createGuestArchiveStore({storage,migrateRecords:migrate,migrateLegacyRecords:migrateLegacy});
+    // Current cloud archives and v4 drafts have already been upgraded. Repeating
+    // any region conversion would revive a removed place from a retained conflict.
+    const guest=root.createGuestArchiveStore({storage,migrateLegacyRecords:migrateLegacy});
     let provider,store,user=null,mode='signup',authBusy=false,sessionKnown=false,signupSubmitted=false;
     let authSerial=0,sessionGeneration=0,dialogGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
     let transferTask=null,transferAttempt=null,transferMessage='',transferError=false;
@@ -27,7 +27,7 @@
         const raw=storage?.getItem(INTENT_KEY);if(!raw)return null;
         const value=JSON.parse(raw);
         if(value?.version!==1||typeof value.id!=='string'||typeof value.email!=='string'||!value.email||!Number.isSafeInteger(value.snapshot?.revision)||value.snapshot.revision<0)return null;
-        return {...value,email:normalizeEmail(value.email),snapshot:{revision:value.snapshot.revision,records:migrate(prepareLocalArchiveImport(value.snapshot.records,{}).records).records}};
+        return {...value,email:normalizeEmail(value.email),snapshot:{revision:value.snapshot.revision,records:prepareLocalArchiveImport(value.snapshot.records,{}).records}};
       }catch(_){return null;}
     }
     const intentLock=action=>root.navigator?.locks?.request?root.navigator.locks.request('shanhe-cloud-transfer-intent-v1',action):Promise.resolve().then(action);
@@ -133,7 +133,7 @@
       task.promise=(async()=>{
         transferMessage='正在把临时足迹保存到云端…';transferError=false;paint();
         try{
-          const merged=prepareLocalArchiveImport(migrate(intent.snapshot.records,s.records).records,s.records);
+          const merged=prepareLocalArchiveImport(intent.snapshot.records,s.records);
           const result=merged.added?await store.save(merged.records,{expectedRevision:s.revision}):{ok:true};
           if(!sameSession(generation,id)||readIntent()?.id!==intent.id)return;
           if(!result.ok){transferMessage=`${result.message||'转存未成功。'} 临时足迹仍保留，请重试。`;transferError=true;return;}
@@ -256,7 +256,7 @@
       try{
         const client=root.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storageKey:'shanhe-cloud-auth-v1'}});
         provider=createSupabaseArchiveProvider(client,{url:config.url,publishableKey:config.publishableKey});
-        store=createCloudArchiveStore({transport:provider.transport,onChange:changed,migrateRecords:migrate});
+        store=createCloudArchiveStore({transport:provider.transport,onChange:changed});
         provider.onAuthStateChange((event,session)=>{setTimeout(()=>{applySession(session.user,event).catch(()=>{say('读取云端存档失败，请重试。',true);paint();});},0);});
         const initial=await provider.getSession();if(!sessionKnown)await applySession(initial.user,'INITIAL_SESSION');paint();
       }catch(_){say('云端连接失败。仍可先记录临时足迹，稍后再试。',true);paint();}
