@@ -38,7 +38,7 @@
         if(!themeById.has(id) || !themeById.get(id).placeIds.includes(place.id)) throw Error('Inconsistent landmark theme: ' + place.id + '/' + id);
       }
     }
-    return {places, themes, byId, themeById};
+    return {places, themes, byId, themeById, note: typeof data.note === 'string' ? data.note : ''};
   }
 
   function matches(place, query, country = 'all'){

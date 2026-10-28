@@ -341,7 +341,7 @@ async function init(){
     primaryLandmarkStore=createLandmarkStore({onChange:()=>{landmarkUI?.render();renderLandmarkMap();},onAccountChange:()=>landmarkUI?.closeEditor(),hasOpenEditor});
     familyUI=createFamilyUI({store:familyStore,onActiveChange:changeRecordMember,onVisibilityChange:renderMapState,onAuth:()=>$('#cloud-account-btn').click(),notify:toast});
     landmarkStore=createFamilyArchiveAdapter({kind:'landmarks',primary:primaryLandmarkStore,family:familyStore,getMemberId:activeMemberId,getSelectionVersion:()=>selectionVersion});
-    landmarkUI=createLandmarkUI({catalog:landmarkCatalog,store:landmarkStore,onMap:focusLandmark,onAuth:()=>$('#cloud-account-btn').click(),notify:toast,onViewChange:goView});
+    landmarkUI=createLandmarkUI({catalog:landmarkCatalog,store:landmarkStore,onMap:focusLandmark,onAuth:()=>$('#cloud-account-btn').click(),notify:toast,onViewChange:goView,countries:model.countries});
     landmarkMap=createLandmarkMap({catalog:landmarkCatalog,store:landmarkStore,getMembers:()=>mapMemberEntries('landmarks'),open:(id,memberId)=>{if(memberId)familyUI.selectMember(memberId);landmarkUI.open(id);}});
     primaryCloud=createShanheCloud({
       getLocalRecords:readLocalRecords,notify:toast,regionMigration:migration,cityMigration,prefectureMigration,
