@@ -22,6 +22,7 @@ DataV 福建市级边界和台湾县市边界都包含部分离岛。为延续�
 
 - `china-prefecture-index.json`：新单位目录、34 个省包清单、输入文件 SHA-256 和几何处理记录。
 - `china-prefectures/<provinceCode>.geo.json`：各省的市级地图；台湾和港澳也使用此目录中的同省代码文件。
+- `china-prefectures.geo.json`：全国地市总览，由上面 34 个省包逐项汇总，几何与 ID 完全一致。全国不再显示省级地块；三沙市在南海附图显示，可独立记录与插旗。生成脚本为 `scripts/build-china-overview.cjs`。
 - `china-prefecture-migration-map.json`：2,813 条大陆县区到所属地市的父子关系。根据保留的 `china-index.json` 中 `cityCode` 核实，并逐条确认父市存在、同属一个省、名称相符。关系来源为已归档的 DataV 父级下载，不使用坐标猜测归属。
 
 34 个原本就独立记录的市本级或省直辖单位保留原 ID，无需移动。台湾、香港和澳门不包含在这次县区到地市的映射内。原 `china-index.json`、`china/` 县区包和旧来源文件均完整保留，供历史记录识别和追溯；新地图不再将普通县区作为可新增单位。
