@@ -72,7 +72,7 @@
     // Explicitly select an independent archive; the existing region default
     // must never receive landmark IDs or share their revision counter.
     const archiveTable = options.archive === 'landmarks' ? 'shanhe_landmark_archives' : 'shanhe_archives';
-    const saveRpc = options.archive === 'landmarks' ? 'shanhe_save_landmark_archive' : 'shanhe_save_archive_v3';
+    const saveRpc = options.archive === 'landmarks' ? 'shanhe_save_landmark_archive' : 'shanhe_save_archive_v4';
     const authBase = typeof options.url === 'string' && /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(options.url)
       ? options.url.replace(/\/$/, '') : null;
     const publishableKey = typeof options.publishableKey === 'string' && options.publishableKey.startsWith('sb_publishable_')

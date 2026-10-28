@@ -1,10 +1,11 @@
 (function (root) {
   'use strict';
 
-  const KEY = 'shanhe-atlas-guest-v4';
-  const PREVIOUS_KEY = 'shanhe-atlas-guest-v3';
-  const LEGACY_KEY = 'shanhe-atlas-guest-v2';
-  const OLDER_KEY = 'shanhe-atlas-guest-v1';
+  const KEY = 'shanhe-atlas-guest-v5';
+  const PREVIOUS_KEY = 'shanhe-atlas-guest-v4';
+  const LEGACY_KEY = 'shanhe-atlas-guest-v3';
+  const OLDER_KEY = 'shanhe-atlas-guest-v2';
+  const OLDEST_KEY = 'shanhe-atlas-guest-v1';
   const LOCK = 'shanhe-guest-archive-v1';
   const merge = root.prepareLocalArchiveImport || (typeof require === 'function' ? require('./cloud-store.js').prepareLocalArchiveImport : null);
   const copy = records => merge({}, records).records;
@@ -36,18 +37,21 @@
     }
     function read() {
       if (storageError || !storage || typeof storage.getItem !== 'function') throw new Error('Storage unavailable');
-      let raw = storage.getItem(KEY), version = 4;
-      if (raw === null) { raw = storage.getItem(PREVIOUS_KEY); version = 3; }
-      if (raw === null) { raw = storage.getItem(LEGACY_KEY); version = 2; }
-      if (raw === null) { raw = storage.getItem(OLDER_KEY); version = 1; }
+      let raw = storage.getItem(KEY), version = 5;
+      if (raw === null) { raw = storage.getItem(PREVIOUS_KEY); version = 4; }
+      if (raw === null) { raw = storage.getItem(LEGACY_KEY); version = 3; }
+      if (raw === null) { raw = storage.getItem(OLDER_KEY); version = 2; }
+      if (raw === null) { raw = storage.getItem(OLDEST_KEY); version = 1; }
       if (raw === null) return { records: {}, revision: 0 };
       const value = JSON.parse(raw);
       if (!value || value.version !== version || !revisionValid(value.revision)) throw new Error('Invalid guest archive');
-      const records = copy(value.records);
-      // Capital conversion belongs only to the first read of a pre-city archive.
-      // Current archives retain unresolved old regions even after a city is removed.
-      const migrate = version === 4 ? options.migrateRecords : (options.migrateLegacyRecords || options.migrateRecords);
-      return { records: migrate ? copy(migrate(records).records) : records, revision: value.revision };
+      let records = copy(value.records);
+      // Only old versions receive level conversions. Saved v5 archives keep
+      // retained county histories without recreating a city the user cancelled.
+      const migrate = version < 4 ? (options.migrateLegacyRecords || options.migrateRecords) : version===4?options.migrateRecords:null;
+      if(migrate)records=copy(migrate(records).records);
+      if(version<5&&options.migratePrefectureRecords)records=copy(options.migratePrefectureRecords(records).records);
+      return { records, revision: value.revision };
     }
     function load() {
       try {
@@ -70,9 +74,9 @@
     }
     function write(records, revision) {
       if (!revisionValid(revision) || revision === Number.MAX_SAFE_INTEGER) throw new Error('Revision exhausted');
-      // Original v1/v2/v3 keys remain byte-for-byte backups. Cached pages and
-      // older Android versions cannot overwrite this city-record archive.
-      const next = { version: 4, revision: revision + 1, records };
+      // Original v1/v2/v3/v4 keys remain byte-for-byte backups. Cached pages and
+      // older Android versions cannot overwrite this prefecture archive.
+      const next = { version: 5, revision: revision + 1, records };
       const serialized = JSON.stringify(next);
       storage.setItem(KEY, serialized);
       if (storage.getItem(KEY) !== serialized) throw new Error('Storage did not retain the archive');
@@ -120,6 +124,7 @@
   root.SHANHE_PREVIOUS_GUEST_STORAGE_KEY = PREVIOUS_KEY;
   root.SHANHE_LEGACY_GUEST_STORAGE_KEY = LEGACY_KEY;
   root.SHANHE_OLDER_GUEST_STORAGE_KEY = OLDER_KEY;
+  root.SHANHE_OLDEST_GUEST_STORAGE_KEY = OLDEST_KEY;
   root.createGuestArchiveStore = createGuestArchiveStore;
-  if (typeof module !== 'undefined' && module.exports) module.exports = { createGuestArchiveStore, SHANHE_GUEST_STORAGE_KEY: KEY, SHANHE_PREVIOUS_GUEST_STORAGE_KEY: PREVIOUS_KEY, SHANHE_LEGACY_GUEST_STORAGE_KEY: LEGACY_KEY, SHANHE_OLDER_GUEST_STORAGE_KEY: OLDER_KEY };
+  if (typeof module !== 'undefined' && module.exports) module.exports = { createGuestArchiveStore, SHANHE_GUEST_STORAGE_KEY: KEY, SHANHE_PREVIOUS_GUEST_STORAGE_KEY: PREVIOUS_KEY, SHANHE_LEGACY_GUEST_STORAGE_KEY: LEGACY_KEY, SHANHE_OLDER_GUEST_STORAGE_KEY: OLDER_KEY, SHANHE_OLDEST_GUEST_STORAGE_KEY: OLDEST_KEY };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

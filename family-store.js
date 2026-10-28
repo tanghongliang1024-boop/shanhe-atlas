@@ -9,7 +9,7 @@
   const CHILD_ID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   const copy=value=>structuredClone(value);
   const defaultDocument=()=>({version:1,members:[{id:'self',name:'我',color:'terracotta'}],regions:{},landmarks:{}});
-  const messages={AUTH_REQUIRED:'请先登录家长账号，再添加或编辑家庭成员。',AUTH_FAILED:'暂时无法确认家庭账号，请重试。',FORBIDDEN:'账号已变化，请重新打开记录。',READ_FAILED:'暂时无法读取家庭足迹，请重试。',WRITE_FAILED:'家庭足迹保存失败，当前输入仍然保留，请重试。',CONFLICT:'家庭足迹已在其他窗口或设备更新，请读取最新记录后重新编辑。',STALE_CONTEXT:'成员或账号存档已变化，请重新打开记录。',INVALID_RESPONSE:'家庭云端返回的数据无效，请稍后重试。',INVALID_DOCUMENT:'家庭成员或足迹格式不正确。',BUSY:'家庭存档正在同步，请稍候。',NOT_READY:'请先成功读取家庭存档，再编辑。'};
+  const messages={CLIENT_UPDATE_REQUIRED:'请刷新网页或安装新版 App 后再保存。当前版本无法安全保存市级地图记录。',AUTH_REQUIRED:'请先登录家长账号，再添加或编辑家庭成员。',AUTH_FAILED:'暂时无法确认家庭账号，请重试。',FORBIDDEN:'账号已变化，请重新打开记录。',READ_FAILED:'暂时无法读取家庭足迹，请重试。',WRITE_FAILED:'家庭足迹保存失败，当前输入仍然保留，请重试。',CONFLICT:'家庭足迹已在其他窗口或设备更新，请读取最新记录后重新编辑。',STALE_CONTEXT:'成员或账号存档已变化，请重新打开记录。',INVALID_RESPONSE:'家庭云端返回的数据无效，请稍后重试。',INVALID_DOCUMENT:'家庭成员或足迹格式不正确。',BUSY:'家庭存档正在同步，请稍候。',NOT_READY:'请先成功读取家庭存档，再编辑。'};
   const error=(code,message)=>Object.assign(new Error(message||messages[code]),{code});
   const failure=(code,message)=>({ok:false,code,message:message||messages[code]});
   function props(value){
@@ -49,6 +49,7 @@
     return result;
   }
   function safeError(cause,fallback){
+    if(cause?.message==='CLIENT_UPDATE_REQUIRED')return error('CLIENT_UPDATE_REQUIRED');
     if(cause?.code==='40001'||cause?.message==='REVISION_CONFLICT'||cause?.code==='CONFLICT')return error('CONFLICT');
     if(cause?.code==='42501'||cause?.status===403)return error('FORBIDDEN');
     if(cause?.status===401||['PGRST301','PGRST303','session_not_found'].includes(cause?.code))return error('AUTH_REQUIRED');
@@ -153,7 +154,7 @@
       try{
         const token=await tokenFor(id);
         if(requestEpoch!==epoch||operation!==op)return failure('STALE_CONTEXT');
-        const data=await request(client.rpc('shanhe_save_family_archive',{p_document:clean,p_expected_revision:ctx.revision}).setHeader('Authorization','Bearer '+token),'WRITE_FAILED');
+        const data=await request(client.rpc('shanhe_save_family_archive_v2',{p_document:clean,p_expected_revision:ctx.revision}).setHeader('Authorization','Bearer '+token),'WRITE_FAILED');
         if(requestEpoch!==epoch||operation!==op)return failure('STALE_CONTEXT');
         const saved=snapshot(data,ctx.revision);
         state={...state,...saved,ready:true,busy:false,error:null,status:'saved'};operation=null;notify();return {ok:true,guest:false};

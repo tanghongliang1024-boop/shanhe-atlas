@@ -1,15 +1,18 @@
 (function(root){
   'use strict';
-  root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor,regionMigration,cityMigration,companion}){
+  root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor,regionMigration,cityMigration,prefectureMigration,companion}){
     const $=s=>document.querySelector(s),config=root.SHANHE_CLOUD_CONFIG||{};
     const dialog=$('#cloud-dialog'),message=$('#cloud-message'),form=$('#cloud-auth-form');
-    const INTENT_KEY='shanhe-cloud-transfer-v1';
+    const INTENT_KEY='shanhe-cloud-transfer-v2',LEGACY_INTENT_KEY='shanhe-cloud-transfer-v1';
     let storage;try{storage=root.localStorage;}catch(_){}
-    const migrate=(records,occupied={})=>regionMigration?root.ShanheRegionMigration.migrateRecords(records,regionMigration,occupied):{records};
+    const prefectureTargets=new Set(Object.values(prefectureMigration?.mappings||{}).filter(item=>item.verified===true).map(item=>item.targetId));
+    const legacyRegionMigration=regionMigration&&prefectureMigration?{...regionMigration,mappings:Object.fromEntries(Object.entries(regionMigration.mappings).filter(([from])=>!prefectureTargets.has(from)))}:regionMigration;
+    const migrate=(records,occupied={})=>legacyRegionMigration?root.ShanheRegionMigration.migrateRecords(records,legacyRegionMigration,occupied):{records};
+    const migratePrefecture=(records,occupied={})=>prefectureMigration?root.ShanhePrefectureMigration.migrateRecords(records,prefectureMigration,occupied):{records};
     const migrateLegacy=(records,occupied={})=>{const base=migrate(records,occupied);return cityMigration?root.ShanheRegionMigration.migrateRecords(base.records,cityMigration,occupied):base;};
-    // Current cloud archives and v4 drafts have already been upgraded. Repeating
-    // any region conversion would revive a removed place from a retained conflict.
-    const guest=root.createGuestArchiveStore({storage,migrateLegacyRecords:migrateLegacy});
+    const migrateImport=(records,occupied={})=>migratePrefecture(migrateLegacy(records,occupied).records,occupied);
+    // Current cloud archives and v5 drafts never run another level conversion.
+    const guest=root.createGuestArchiveStore({storage,migrateLegacyRecords:migrateLegacy,migratePrefectureRecords:migratePrefecture});
     let provider,store,user=null,mode='login',authBusy=false,sessionKnown=false,signupSubmitted=false;
     let authSerial=0,sessionGeneration=0,dialogGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
     let transferTask=null,transferAttempt=null,transferMessage='',transferError=false;
@@ -24,10 +27,13 @@
     function publish(){onRecords(state().records);paint();}
     function readIntent(){
       try{
-        const raw=storage?.getItem(INTENT_KEY);if(!raw)return null;
+        let raw=storage?.getItem(INTENT_KEY),legacy=false;
+        if(raw==null){raw=storage?.getItem(LEGACY_INTENT_KEY);legacy=true;}
+        if(!raw)return null;
         const value=JSON.parse(raw);
-        if(value?.version!==1||typeof value.id!=='string'||typeof value.email!=='string'||!value.email||!Number.isSafeInteger(value.snapshot?.revision)||value.snapshot.revision<0)return null;
-        return {...value,email:normalizeEmail(value.email),snapshot:{revision:value.snapshot.revision,records:prepareLocalArchiveImport(value.snapshot.records,{}).records}};
+        if(value?.version!==(legacy?1:2)||typeof value.id!=='string'||typeof value.email!=='string'||!value.email||!Number.isSafeInteger(value.snapshot?.revision)||value.snapshot.revision<0)return null;
+        const records=prepareLocalArchiveImport(value.snapshot.records,{}).records;
+        return {...value,version:2,legacy,email:normalizeEmail(value.email),snapshot:{revision:value.snapshot.revision,records:legacy?migratePrefecture(records).records:records}};
       }catch(_){return null;}
     }
     const intentLock=action=>root.navigator?.locks?.request?root.navigator.locks.request('shanhe-cloud-transfer-intent-v1',action):Promise.resolve().then(action);
@@ -39,7 +45,7 @@
         const snapshot=guest.getState();
         if(!snapshot.ready)throw {code:'LOCAL_INTENT_FAILED'};
         if(!count(snapshot.records))return readIntent();
-        const intent={version:1,id:root.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`,email:normalizeEmail(email),snapshot:{records:snapshot.records,revision:snapshot.revision}};
+        const intent={version:2,id:root.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`,email:normalizeEmail(email),snapshot:{records:snapshot.records,revision:snapshot.revision}};
         try{const raw=JSON.stringify(intent);storage.setItem(INTENT_KEY,raw);if(storage.getItem(INTENT_KEY)!==raw)throw new Error();}
         catch(_){throw {code:'LOCAL_INTENT_FAILED'};}
         transferAttempt=null;transferMessage='';transferError=false;return intent;
@@ -57,7 +63,7 @@
       $('#cloud-signed-in').hidden=!signed||mode==='recover';
       $('#cloud-auth-area').hidden=signed&&mode!=='recover';
       $('#cloud-account-email').textContent=user?.email||'已登录';
-      $('#cloud-import-count').textContent=localCount()?`本机有 ${localCount()} 条旧版本足迹。已核实的城市记录会定位到政府所在县区；冲突和待核实记录继续保留。`:'本机没有待导入的旧版本足迹。';
+      $('#cloud-import-count').textContent=localCount()?`本机有 ${localCount()} 条旧版本足迹。大陆县区记录会归到所属地市；同城其他日期和笔记继续保留。`:'本机没有待导入的旧版本足迹。';
       $('#cloud-import').disabled=!signed||s.busy||!!transferTask||!s.ready||!localCount();
       $('#cloud-refresh').disabled=s.busy||!!transferTask;
       $('#cloud-logout').disabled=s.busy||authBusy||!!transferTask;
@@ -116,7 +122,8 @@
         const cleared=await guest.clearIfUnchanged(intent.snapshot,{shouldClear:current});
         if(!current())return stale();
         if(cleared.ok||cleared.code==='CONFLICT'){
-          try{storage.removeItem(INTENT_KEY);}catch(_){return {ok:false,message:'云端已保存，但本机转存状态未能清理。临时足迹仍保留，可重试。'};}
+          // The tombstone prevents the untouched v1 backup from reactivating.
+          try{storage.setItem(INTENT_KEY,'null');if(storage.getItem(INTENT_KEY)!=='null')throw Error();}catch(_){return {ok:false,message:'云端已保存，但本机转存状态未能清理。临时足迹仍保留，可重试。'};}
         }
         await guest.refresh();return cleared;
       });
@@ -124,6 +131,16 @@
     async function transferPending(){
       const intent=readIntent(),s=state(),generation=sessionGeneration,id=user?.id;
       if(!id||!intent||intent.email!==normalizeEmail(user.email)||mode==='recover')return;
+      if(intent.legacy){
+        try{
+          const upgraded=await intentLock(()=>{
+            if(!sameSession(generation,id)||readIntent()?.id!==intent.id)return false;
+            const raw=JSON.stringify({...intent,legacy:undefined});storage.setItem(INTENT_KEY,raw);
+            if(storage.getItem(INTENT_KEY)!==raw)throw Error();return true;
+          });
+          if(!upgraded||!sameSession(generation,id))return;
+        }catch(_){transferMessage='无法保留新版转存请求，旧草稿仍完整保留，请检查浏览器存储权限后重试。';transferError=true;paint();return;}
+      }
       const attempt=`${generation}:${intent.id}`;
       if(transferTask?.attempt===attempt)return transferTask.promise;
       if(!s.ready||s.busy)return;
@@ -238,7 +255,7 @@
     $('#cloud-import').onclick=async()=>{
       const s=state(),generation=sessionGeneration,id=user?.id;if(!id||!s.ready||s.busy||transferTask)return;
       try{
-        const merged=prepareLocalArchiveImport(migrateLegacy(getLocalRecords(),s.records).records,s.records);
+        const merged=prepareLocalArchiveImport(migrateImport(getLocalRecords(),s.records).records,s.records);
         if(!merged.added){say('这些地区已经在云端，无需重复导入。原本机备份仍保留。');return;}
         const result=await store.save(merged.records,{expectedRevision:s.revision});if(!sameSession(generation,id))return;
         say(result.ok?`已存入云端 ${merged.added} 条足迹，保留 ${merged.skipped} 条已有云端记录。本机备份未改动。`:result.message,!result.ok);
@@ -270,8 +287,8 @@
       else if(!user){await guest.refresh();if(!user)publish();}
     });
     root.addEventListener('storage',async event=>{
-      if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===root.SHANHE_PREVIOUS_GUEST_STORAGE_KEY||event.key===root.SHANHE_LEGACY_GUEST_STORAGE_KEY||event.key===root.SHANHE_OLDER_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
-      if(event.key===INTENT_KEY){transferAttempt=null;paint();if(user&&!hasOpenEditor())await transferPending();}
+      if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===root.SHANHE_PREVIOUS_GUEST_STORAGE_KEY||event.key===root.SHANHE_LEGACY_GUEST_STORAGE_KEY||event.key===root.SHANHE_OLDER_GUEST_STORAGE_KEY||event.key===root.SHANHE_OLDEST_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
+      if(event.key===INTENT_KEY||event.key===LEGACY_INTENT_KEY){transferAttempt=null;paint();if(user&&!hasOpenEditor())await transferPending();}
       if(event.key==='shanhe-atlas-v1')paint();
     });
     return {
