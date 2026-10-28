@@ -4,7 +4,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const R=ShanheRegions,STORAGE='shanhe-atlas-v1';
 let records={},features=[],provinces=[],world=[],model,chinaIndex,countyIndex,worldIndex,migration,reversal,worldCities,cityMigration,prefectureMigration;
 let selected=null,mode='flag',currentView='map',scope={kind:'world'},shapes=[];
-let svg,layer,projection,zoom,cityShapes,markers,labels,cloud=null,mapHeight=740,cityPoints,cityPointLabels;
+let svg,layer,projection,zoom,cityShapes,markers,labels,cloud=null,mapHeight=740,cityPoints,cityPointLabels,southProjection,southMarkers;
 let landmarkCatalog,landmarkStore,landmarkUI,landmarkMap,landmarkFocus=0;
 let familyStore,familyUI,primaryCloud,primaryLandmarkStore,selectionVersion=0,primaryRecords={};
 let detailContext=null,detailBase={},detailBusy=false,detailOperation=0,listLimit=60,mapRequest=0;
@@ -127,12 +127,14 @@ $('#flag-mode').onclick=()=>setMode('flag');$('#fill-mode').onclick=()=>setMode(
 function scopeName(s=scope){return s.kind==='world'?'世界':s.kind==='china'?'中国':s.kind==='province'?provinces.find(f=>R.id(f)===s.code)?.properties.name:model.countries.get(s.code)?.name;}
 function paintNavigation(){
   $('#map-heading').textContent=scopeName()+'旅行地图';
-  $('#map-description').textContent=scope.kind==='world'?'选择国家继续探索，或搜索你的下一站':scope.kind==='china'?'大陆（含海南）按地市，台湾按县市，港澳整体标记':scope.kind==='province'&&scope.code==='710000'?'选择台湾22个县市，记录第一次到访':scope.kind==='country'?(model.countries.get(scope.code)?.detailPath?'保留省州边界 · 点击城市插旗，或点地块选城市':'保留国家轮廓 · 点击城市插旗，或点国土选城市'):'点击一个地区，记录第一次到访';
+  $('#map-description').textContent=scope.kind==='world'?'选择国家继续探索，或搜索你的下一站':scope.kind==='china'?'全国直接按地市展示 · 点击城市记录，放大查看更多名称':scope.kind==='province'&&scope.code==='710000'?'选择台湾22个县市，记录第一次到访':scope.kind==='country'?(model.countries.get(scope.code)?.detailPath?'保留省州边界 · 点击城市插旗，或点地块选城市':'保留国家轮廓 · 点击城市插旗，或点国土选城市'):'点击一个地区，记录第一次到访';
   $('#map-breadcrumb').innerHTML='<button data-scope="world">世界</button>'+(scope.kind==='china'||scope.kind==='province'?'<span>›</span><button data-scope="china">中国</button>':'')+(scope.kind==='province'||scope.kind==='country'?'<span>›</span><strong>'+esc(scopeName())+'</strong>':'');
   $('#map-breadcrumb').querySelectorAll('[data-scope]').forEach(b=>b.onclick=()=>navigate({kind:b.dataset.scope}));
   $('#world-shortcut').classList.toggle('active',scope.kind==='world');$('#china-shortcut').classList.toggle('active',scope.kind==='china'||scope.kind==='province');
   $('#china-map').setAttribute('aria-label',scopeName()+'旅行足迹交互地图');
-  $('#map-focus-row').hidden=!['province','country'].includes(scope.kind);$('#map-region-focus').innerHTML='<option value="">完整地图</option>'+shapes.map(f=>'<option value="'+esc(R.id(f))+'">'+esc(R.displayName(f))+'</option>').join('');
+  $('#map-focus-row').hidden=!['china','province','country'].includes(scope.kind);
+  $('#map-focus-row label').textContent=scope.kind==='china'?'放大查看省份':'定位地区';
+  $('#map-region-focus').innerHTML='<option value="">'+(scope.kind==='china'?'全国地市地图':'完整地图')+'</option>'+(scope.kind==='china'?provinces:shapes).map(f=>'<option value="'+esc(R.id(f))+'">'+esc(R.displayName(f))+'</option>').join('');
   $('#map-caption-text').textContent=scope.kind==='world'?'WORLD · MY TRAVEL FOOTPRINTS':scopeName()+' · MY TRAVEL FOOTPRINTS';
 }
 async function jsonFile(path){const response=await fetch(path+'?v=20261022-230');if(!response.ok)throw Error('无法读取地图资源');return response.json();}
@@ -141,7 +143,11 @@ async function navigate(next){
   try{
     let geo;
     if(next.kind==='world')geo={features:world};
-    else if(next.kind==='china')geo={features:provinces};
+    else if(next.kind==='china'){
+      const path='assets/geo/china-prefectures.geo.json';
+      if(!geometryCache.has(path))geometryCache.set(path,await jsonFile(path));
+      geo=geometryCache.get(path);
+    }
     else{
       const path=next.kind==='province'?'assets/geo/china-prefectures/'+next.code+'.geo.json':model.countries.get(next.code)?.detailPath;
       if(path){
@@ -170,7 +176,7 @@ function openShape(f){
     if(R.countryOf(f)==='CHN')return navigate(['TWN','HKG','MAC'].includes(p.countryCode)?{kind:'province',code:String(p.provinceCode)}:{kind:'china'});
     if(p.detailPath||model.citiesByCountry.has(p.countryCode))return navigate({kind:'country',code:p.countryCode});
   }
-  if(scope.kind==='china')return navigate({kind:'province',code:R.id(f)});
+  if(scope.kind==='china')return openCity(R.id(f));
   if(scope.kind==='country')return openWorldRegion(R.id(f));
   openCity(R.id(f));
 }
@@ -193,13 +199,14 @@ $('#world-shortcut').onclick=()=>navigate({kind:'world'});$('#china-shortcut').o
 $('#focus-taiwan').onclick=()=>navigate({kind:'province',code:'710000'});
 window.ShanheAtlas={backMap:()=>{if(currentView!=='map'||scope.kind==='world')return false;navigate(scope.kind==='province'?{kind:'china'}:{kind:'world'});return true;}};
 function focusRegion(id){const f=shapes.find(x=>R.id(x)===String(id));if(!f)return;const [[x0,y0],[x1,y1]]=d3.geoPath(projection).bounds(f),k=Math.max(1,Math.min(192,Math.min((phoneLayout.matches?720:800)/Math.max(1,x1-x0),(mapHeight-(phoneLayout.matches?400:250))/Math.max(1,y1-y0))));svg.transition().duration(300).call(zoom.transform,d3.zoomIdentity.translate(500-k*(x0+x1)/2,mapHeight/2-(phoneLayout.matches?90:0)-k*(y0+y1)/2).scale(k));}
-$('#map-region-focus').onchange=()=>{const id=$('#map-region-focus').value;if(id)focusRegion(id);else svg.transition().duration(250).call(zoom.transform,d3.zoomIdentity);};
+$('#map-region-focus').onchange=()=>{const id=$('#map-region-focus').value;if(scope.kind==='china'&&id)return navigate({kind:'province',code:id});if(id)focusRegion(id);else svg.transition().duration(250).call(zoom.transform,d3.zoomIdentity);};
 $('#detail-show-map').onclick=async()=>{const f=selected;if(!f)return;$('#city-dialog').close();goView('map');await navigate(R.countryOf(f)==='CHN'?{kind:'province',code:String(f.properties.provinceCode)}:(f.properties.level==='city'||f.properties.level==='admin1'||isWorldLegacy(f)||isCountryLegacy(f))?{kind:'country',code:f.properties.countryCode}:{kind:'world'});const region=f.properties.parentRegionId||R.id(f);focusRegion(region);$('#map-region-focus').value=region;};
 function localGeometry(f){
   // Center the projection on each country's longitude so date-line islands stay together.
   return f;
 }
 function drawMap(){
+  southProjection=null;southMarkers=null;
   mapHeight=phoneLayout.matches?1000:740;svg=d3.select('#china-map').attr('viewBox','0 0 1000 '+mapHeight);svg.selectAll('*').remove();svg.on('.zoom',null);
   const geo={type:'FeatureCollection',features:shapes.map(localGeometry)};
   const fitted=scope.kind==='china'?{type:'FeatureCollection',features:shapes.map(f=>{const polys=f.geometry.type==='MultiPolygon'?f.geometry.coordinates:[f.geometry.coordinates];return {...f,geometry:{type:'MultiPolygon',coordinates:polys.filter(p=>p[0].some(c=>c[1]>=17.5))}};})}:geo;
@@ -211,8 +218,9 @@ function drawMap(){
   const path=d3.geoPath(projection),colors=['#e2e9d7','#e5eadb','#dce6d2','#e6ebdc','#dfe7d2','#e9ecdf'];
   layer=svg.append('g');
   if(scope.kind==='world')layer.append('path').datum({type:'Sphere'}).attr('d',path).attr('fill','#edf4ef').attr('stroke','#dbe6dc').attr('stroke-width',1);
-  cityShapes=layer.append('g').selectAll('path').data(shapes).join('path').attr('d',path).attr('class','city-shape').attr('fill',(f,i)=>colors[i%colors.length]).attr('tabindex',0).attr('role','button').attr('aria-label',f=>R.displayName(f)+'，'+(['world','china'].includes(scope.kind)?'探索地区':scope.kind==='country'?'选择城市':'记录足迹')).on('click',(e,f)=>{openShape(f);$('#map-tooltip').hidden=true;}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openShape(f);}}).on('pointermove',(e,f)=>{if(e.pointerType==='touch')return;const r=$('#map-stage').getBoundingClientRect(),t=$('#map-tooltip');t.textContent=R.displayName(f)+(d3.select(e.currentTarget).classed('visited')?' · 已经去过':'');t.hidden=false;t.style.left=Math.min(e.clientX-r.left+14,r.width-180)+'px';t.style.top=Math.max(12,e.clientY-r.top-35)+'px';}).on('pointerleave',()=>$('#map-tooltip').hidden=true);
-  labels=layer.append('g').attr('pointer-events','none').selectAll('text').data(shapes.filter(f=>Array.isArray(f.properties.center))).join('text').attr('class','city-label').attr('x',f=>projection(f.properties.center)[0]).attr('y',f=>projection(f.properties.center)[1]).text(f=>scope.kind==='world'?shortName(f.properties.name):R.displayName(f));
+  const mainShapes=shapes.filter(f=>scope.kind!=='china'||R.id(f)!=='460300');
+  cityShapes=layer.append('g').selectAll('path').data(mainShapes).join('path').attr('d',path).attr('class','city-shape').attr('fill',(f,i)=>colors[i%colors.length]).attr('tabindex',0).attr('role','button').attr('aria-label',f=>R.displayName(f)+'，'+(scope.kind==='world'?'探索地区':scope.kind==='country'?'选择城市':'记录足迹')).on('click',(e,f)=>{openShape(f);$('#map-tooltip').hidden=true;}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openShape(f);}}).on('pointermove',(e,f)=>{if(e.pointerType==='touch')return;const r=$('#map-stage').getBoundingClientRect(),t=$('#map-tooltip');t.textContent=R.displayName(f)+(d3.select(e.currentTarget).classed('visited')?' · 已经去过':'');t.hidden=false;t.style.left=Math.min(e.clientX-r.left+14,r.width-180)+'px';t.style.top=Math.max(12,e.clientY-r.top-35)+'px';}).on('pointerleave',()=>$('#map-tooltip').hidden=true);
+  labels=layer.append('g').attr('pointer-events','none').selectAll('text').data(mainShapes.filter(f=>Array.isArray(f.properties.center))).join('text').attr('class','city-label').attr('x',f=>projection(f.properties.center)[0]).attr('y',f=>projection(f.properties.center)[1]).text(f=>scope.kind==='world'?shortName(f.properties.name):R.displayName(f));
   const countryCities=scope.kind==='country'?(model.citiesByCountry.get(scope.code)||[]):[];
   cityPoints=layer.append('g').selectAll('g').data(countryCities).join('g').attr('class','world-city-point').attr('tabindex',0).attr('role','button').attr('aria-label',f=>R.displayName(f)+'，记录城市足迹').on('click',(e,f)=>{e.stopPropagation();openCity(R.id(f));}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCity(R.id(f));}});
   cityPoints.append('circle').attr('class','city-point-hit').attr('r',18);
@@ -220,7 +228,7 @@ function drawMap(){
   cityPointLabels=layer.append('g').attr('pointer-events','none').selectAll('text').data(countryCities).join('text').attr('class','world-city-label').attr('x',f=>projection(f.properties.center)[0]).attr('y',f=>projection(f.properties.center)[1]).text(f=>R.displayName(f));
   markers=layer.append('g');
   landmarkMap?.mount(layer);
-  if(scope.kind==='china')drawSouthInset(svg);
+  if(scope.kind==='china'){drawSouthInset(svg);cityShapes=svg.selectAll('.city-shape');}
   zoom=d3.zoom().scaleExtent([1,192]).clickDistance(8).tapDistance(12).filter(e=>{if(e.type.startsWith('touch')&&phoneLayout.matches&&!mapTouchActive)return false;return(!e.ctrlKey||e.type==='wheel')&&!e.button;}).translateExtent([[-300,-200],[1300,mapHeight+200]]).on('zoom',e=>{layer.attr('transform',e.transform);updateMapOverlays();$('#map-tooltip').hidden=true;});
   svg.call(zoom).on('dblclick.zoom',null).call(zoom.transform,d3.zoomIdentity);
   $('#zoom-in').onclick=()=>svg.transition().duration(200).call(zoom.scaleBy,1.6);
@@ -229,9 +237,14 @@ function drawMap(){
   $('#map-loading').hidden=true;renderMapState();
 }
 function drawSouthInset(root){
- const h=mapHeight,south={type:'FeatureCollection',features:provinces.filter(f=>R.id(f)==='460000').map(f=>{const cs=f.geometry.type==='MultiPolygon'?f.geometry.coordinates:[f.geometry.coordinates];return {...f,geometry:{type:'MultiPolygon',coordinates:cs.filter(p=>p[0].every(c=>c[1]<20))}};})};
- const sp=d3.geoMercator().fitExtent([[835,h-285],[935,h-130]],south),inset=root.append('g').attr('pointer-events','none');
- inset.append('rect').attr('x',820).attr('y',h-300).attr('width',130).attr('height',200).attr('rx',4).attr('fill','#f5f8f2').attr('stroke','#c9d5be');inset.selectAll('path').data(south.features).join('path').attr('d',d3.geoPath(sp)).attr('fill','#dae4cd').attr('stroke','#a1b393').attr('stroke-width',1);inset.append('text').attr('x',885).attr('y',h-111).attr('text-anchor','middle').attr('font-size',14).attr('fill','#8a9c7f').text('南海诸岛');
+ const h=mapHeight,south={type:'FeatureCollection',features:shapes.filter(f=>R.id(f)==='460300')};
+ southProjection=d3.geoMercator().fitExtent([[85,h-285],[235,h-165]],south);
+ const inset=root.append('g').attr('class','south-inset');
+ inset.append('rect').attr('x',70).attr('y',h-300).attr('width',180).attr('height',200).attr('rx',4).attr('fill','#f5f8f2').attr('stroke','#c9d5be').attr('pointer-events','none');
+ inset.selectAll('path').data(south.features).join('path').attr('class','city-shape').attr('d',d3.geoPath(southProjection)).attr('fill','#dae4cd').style('stroke','#91a47c').style('stroke-width','1').attr('tabindex',0).attr('role','button').attr('aria-label','三沙市，记录足迹').on('click',(e,f)=>{e.stopPropagation();openCity(R.id(f));}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCity(R.id(f));}});
+ inset.append('text').attr('class','south-caption').attr('x',160).attr('y',h-135).attr('text-anchor','middle').attr('fill','#637657').attr('pointer-events','none').text('三沙市');
+ inset.append('text').attr('class','south-caption').attr('x',160).attr('y',h-107).attr('text-anchor','middle').attr('fill','#637657').attr('pointer-events','none').text('南海诸岛');
+ southMarkers=inset.append('g');
 }
 function renderMapState(){
   if(!cityShapes||!model)return;
@@ -240,14 +253,19 @@ function renderMapState(){
   cityShapes.classed('visited',f=>scope.kind==='world'?v.some(x=>!x.properties.mapExcluded&&R.countryOf(x)===R.countryOf(f)):scope.kind==='china'?counts.has(R.id(f)):scope.kind==='country'?R.regionVisited(f,v):ids.has(R.id(f)));
   cityPoints?.classed('visited',f=>ids.has(R.id(f)));
   markers.selectAll('*').remove();
+  southMarkers?.selectAll('*').remove();
   if(mode==='flag'){
     const openFlag=f=>{familyUI.selectMember(f.member.id);if(f.target==='record'||f.target==='legacy-region')openCity(R.id(f));else openShape(f);};
-    const flags=markers.selectAll('g').data(groups).join('g').attr('class',f=>'city-marker'+(f.target==='legacy-region'?' legacy-region-marker':'')).attr('role','button').attr('tabindex',0).attr('aria-label',f=>f.member.name+'，'+R.displayName(f)+(f.target==='legacy-region'?'，旧省州足迹待整理':'，'+f.count+'处足迹')).on('click',(e,f)=>{e.stopPropagation();openFlag(f);}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFlag(f);}});
+    const paintFlags=(parent,data)=>{
+    const flags=parent.selectAll('g').data(data).join('g').attr('class',f=>'city-marker'+(f.target==='legacy-region'?' legacy-region-marker':'')).attr('role','button').attr('tabindex',0).attr('aria-label',f=>f.member.name+'，'+R.displayName(f)+(f.target==='legacy-region'?'，旧省州足迹待整理':'，'+f.count+'处足迹')).on('click',(e,f)=>{e.stopPropagation();openFlag(f);}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFlag(f);}});
     flags.append('rect').attr('x',-10).attr('y',-35).attr('width',44).attr('height',44).attr('fill','transparent');
     flags.append('ellipse').attr('cx',0).attr('cy',2).attr('rx',5).attr('ry',2).attr('fill','#9cae8270');
     flags.append('path').attr('d','M0,1 V-26').attr('stroke','#7c6246').attr('stroke-width',1.7);
     flags.append('path').attr('d','M1,-26 C8,-31 14,-20 23,-26 L23,-13 C14,-7 8,-19 1,-13 Z').attr('fill',f=>f.member.hex).attr('stroke','#fff9ed').attr('stroke-width',.8);
     flags.filter(f=>f.target!=='record'&&f.target!=='legacy-region').append('text').attr('x',12).attr('y',-17).attr('fill','white').attr('text-anchor','middle').attr('font-size',9).attr('font-weight',700).text(f=>f.count);
+    };
+    paintFlags(markers,groups.filter(f=>!southMarkers||R.id(f)!=='460300'));
+    if(southMarkers)paintFlags(southMarkers,groups.filter(f=>R.id(f)==='460300'));
   }
   renderLandmarkMap();updateMapOverlays();
 }
@@ -266,7 +284,10 @@ function updateMapOverlays(){
   const width=svg.node().getBoundingClientRect().width;if(!width)return;
   const transform=d3.zoomTransform(svg.node()),k=transform.k,phone=phoneLayout.matches,scale=phone?Math.max(1,720/width):1,font=(phone?11:10)*1000/width,occupied=[];
   landmarkMap?.update({scope,projection,mapHeight,width,transform});
-  markers.selectAll('g').attr('transform',f=>'translate('+projection(f.properties.center)+') scale('+(1000/width)/k+') translate('+((f.flagOffset||0)-11)+',0)');
+  const flagScale=scope.kind==='china'?Math.min(1,.72+.2*(k-1)):1;
+  markers.selectAll('g').attr('transform',f=>'translate('+projection(f.properties.center)+') scale('+(1000/width)*flagScale/k+') translate('+((f.flagOffset||0)-11)+',0)');
+  southMarkers?.selectAll('g').attr('transform',f=>'translate('+southProjection(f.properties.center)+') scale('+(1000/width)+') translate('+((f.flagOffset||0)-11)+',0)');
+  svg.selectAll('.south-caption').style('font-size',(phone?8:10)*1000/width+'px');
   cityPoints?.attr('transform',f=>'translate('+projection(f.properties.center)+') scale('+(1000/width)/k+')');
   cityPointLabels?.style('font-size',(phone?12:11)*1000/width/k+'px').style('stroke-width',3*1000/width/k+'px').each(function(f){
     const l=d3.select(this),p=projection(f.properties.center),x=p[0]*k+transform.x,y=p[1]*k+transform.y,unit=1000/width,w=R.displayName(f).length*(phone?12:11)*unit,h=14*unit;

@@ -81,12 +81,13 @@
   }
   function groupMarkers(visits,scope,countryFeatures,provinceFeatures){
     visits=visits.filter(f=>!f.properties.mapExcluded);
-    // Retained prefecture records are not county visits; their centers can overlap a county flag.
+    // China overview and province detail use the same record units. Historical
+    // county records remain accessible without producing a second city flag.
+    if(scope.kind==='china')return visits.filter(f=>countryOf(f)==='CHN'&&f.properties.level!=='legacy').map(f=>({...f,count:1,target:'record'}));
     if(scope.kind==='province'||scope.kind==='country')return visits.filter(f=>scope.kind==='province'?countryOf(f)==='CHN'&&String(f.properties.provinceCode)===scope.code&&f.properties.level!=='legacy':countryOf(f)===scope.code&&f.properties.legacyKind!=='world-country').map(f=>({...f,count:1,target:f.properties.legacyKind==='world-region'?'legacy-region':'record'}));
     const groups=new Map();
-    for(const f of visits){const key=scope.kind==='china'?String(f.properties.provinceCode):countryOf(f);if(scope.kind==='china'&&countryOf(f)!=='CHN')continue;groups.set(key,(groups.get(key)||0)+1);}
-    const shapes=scope.kind==='china'?provinceFeatures:countryFeatures.filter(f=>!['TWN','HKG','MAC'].includes(f.properties.countryCode));
-    return shapes.filter(f=>groups.has(scope.kind==='china'?id(f):countryOf(f))).map(f=>({...f,count:groups.get(scope.kind==='china'?id(f):countryOf(f)),target:scope.kind==='china'?'province':'country'}));
+    for(const f of visits){const key=countryOf(f);groups.set(key,(groups.get(key)||0)+1);}
+    return countryFeatures.filter(f=>!['TWN','HKG','MAC'].includes(f.properties.countryCode)&&groups.has(countryOf(f))).map(f=>({...f,count:groups.get(countryOf(f)),target:'country'}));
   }
   const api=Object.freeze({text,id,countryOf,displayName,trail,matches,catalog,regionVisited,moveLegacyRegionRecord,recordsWithFeatures,groupMarkers,prefectureHistory});
   root.ShanheRegions=api;
