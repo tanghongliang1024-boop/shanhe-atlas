@@ -92,13 +92,13 @@
     return Number.isSafeInteger(value) && value >= 0;
   }
 
-  function validateSnapshot(snapshot, previousRevision) {
+  function validateSnapshot(snapshot, previousRevision, recordValidator = validateRecords) {
     if (!plainObject(snapshot) || !validRevision(snapshot.revision) ||
         (previousRevision !== undefined && snapshot.revision <= previousRevision)) {
       throw problem('INVALID_RESPONSE', '云端返回的存档版本无效，请刷新后重试。');
     }
     try {
-      return { records: validateRecords(snapshot.records), revision: snapshot.revision };
+      return { records: recordValidator(snapshot.records), revision: snapshot.revision };
     } catch (error) {
       throw problem('INVALID_RESPONSE', '云端返回的足迹格式无效，当前记录未被替换。');
     }
@@ -145,7 +145,7 @@
     return failure(code, defaults[code]);
   }
 
-  function createCloudArchiveStore({ transport, onChange, onStatus, migrateRecords } = {}) {
+  function createCloudArchiveStore({ transport, onChange, onStatus, migrateRecords, validateRecords: recordValidator = validateRecords } = {}) {
     if (!transport || typeof transport.read !== 'function' || typeof transport.write !== 'function') {
       throw new TypeError('A cloud archive transport with read and write methods is required.');
     }
@@ -188,8 +188,8 @@
       try {
         const response = await transport.read(userId);
         if (epoch !== requestEpoch || state.userId !== userId) return stale();
-        const snapshot = validateSnapshot(response);
-        if (typeof migrateRecords === 'function') snapshot.records = validateRecords(migrateRecords(snapshot.records).records);
+        const snapshot = validateSnapshot(response, undefined, recordValidator);
+        if (typeof migrateRecords === 'function') snapshot.records = recordValidator(migrateRecords(snapshot.records).records);
         state = { ...state, ...snapshot, ready: true, busy: false, status: 'ready', error: null };
         operation = null;
         notify();
@@ -228,7 +228,7 @@
         return publishError(failure('CONFLICT', '当前表单对应的存档版本已变化，请保留输入并重新打开编辑。'));
       }
       let validated;
-      try { validated = validateRecords(next); }
+      try { validated = recordValidator(next); }
       catch (error) { return publishError(failure('INVALID_RECORDS', error.message)); }
       const requestEpoch = epoch, userId = state.userId;
       operation = 'write';
@@ -237,7 +237,7 @@
       try {
         const response = await transport.write(userId, { records: validated, expectedRevision });
         if (epoch !== requestEpoch || state.userId !== userId) return stale();
-        const snapshot = validateSnapshot(response, expectedRevision);
+        const snapshot = validateSnapshot(response, expectedRevision, recordValidator);
         state = { ...state, ...snapshot, ready: true, busy: false, status: 'saved', error: null };
         operation = null;
         notify();

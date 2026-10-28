@@ -69,6 +69,10 @@
         typeof client.from !== 'function' || typeof client.rpc !== 'function') {
       throw new TypeError('A Supabase JavaScript client is required.');
     }
+    // Explicitly select an independent archive; the existing region default
+    // must never receive landmark IDs or share their revision counter.
+    const archiveTable = options.archive === 'landmarks' ? 'shanhe_landmark_archives' : 'shanhe_archives';
+    const saveRpc = options.archive === 'landmarks' ? 'shanhe_save_landmark_archive' : 'shanhe_save_archive_v3';
     const authBase = typeof options.url === 'string' && /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(options.url)
       ? options.url.replace(/\/$/, '') : null;
     const publishableKey = typeof options.publishableKey === 'string' && options.publishableKey.startsWith('sb_publishable_')
@@ -108,7 +112,7 @@
     const transport = {
       async read(userId) {
         const token = await requireUser(userId);
-        const data = await request(() => client.from('shanhe_archives')
+        const data = await request(() => client.from(archiveTable)
           .select('records,revision').eq('user_id', userId).maybeSingle()
           .setHeader('Authorization', 'Bearer ' + token), 'READ_FAILED');
         return data === null ? { records: {}, revision: 0 } : snapshot(data);
@@ -116,7 +120,7 @@
       async write(userId, payload) {
         const token = await requireUser(userId);
         if (!Number.isSafeInteger(payload?.expectedRevision) || payload.expectedRevision < 0) throw problem('INVALID_REVISION');
-        const data = await request(() => client.rpc('shanhe_save_archive_v3', {
+        const data = await request(() => client.rpc(saveRpc, {
           p_records: payload.records,
           p_expected_revision: payload.expectedRevision
         }).setHeader('Authorization', 'Bearer ' + token), 'WRITE_FAILED');

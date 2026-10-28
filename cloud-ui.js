@@ -1,6 +1,6 @@
 (function(root){
   'use strict';
-  root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor,regionMigration,cityMigration}){
+  root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor,regionMigration,cityMigration,companion}){
     const $=s=>document.querySelector(s),config=root.SHANHE_CLOUD_CONFIG||{};
     const dialog=$('#cloud-dialog'),message=$('#cloud-message'),form=$('#cloud-auth-form');
     const INTENT_KEY='shanhe-cloud-transfer-v1';
@@ -193,6 +193,8 @@
           if(serial!==authSerial||recoveryGeneration!==sessionGeneration)return;
           recoveryUserId=null;setMode('login');say('密码已更新，可以继续使用云端存档。');
         }else{
+          await companion?.rememberIntent(email);
+          if(serial!==authSerial||sessionGeneration!==recoveryGeneration)return;
           await rememberIntent(email,()=>serial===authSerial&&sessionGeneration===recoveryGeneration);
           if(serial!==authSerial||sessionGeneration!==recoveryGeneration)return;
           const result=await(action==='signup'?provider.signUp(email,password,redirect):provider.signIn(email,password));
@@ -256,6 +258,7 @@
       try{
         const client=root.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storageKey:'shanhe-cloud-auth-v1'}});
         provider=createSupabaseArchiveProvider(client,{url:config.url,publishableKey:config.publishableKey});
+        if(companion)Promise.resolve(companion.start(client)).catch(()=>notify?.('景点云端暂时未能连接，请在名胜打卡中重试。'));
         store=createCloudArchiveStore({transport:provider.transport,onChange:changed});
         provider.onAuthStateChange((event,session)=>{setTimeout(()=>{applySession(session.user,event).catch(()=>{say('读取云端存档失败，请重试。',true);paint();});},0);});
         const initial=await provider.getSession();if(!sessionKnown)await applySession(initial.user,'INITIAL_SESSION');paint();
