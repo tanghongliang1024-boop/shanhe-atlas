@@ -4,7 +4,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const R=ShanheRegions,STORAGE='shanhe-atlas-v1';
 let records={},features=[],provinces=[],world=[],model,chinaIndex,countyIndex,worldIndex,migration,reversal,worldCities,cityMigration,prefectureMigration;
 let selected=null,mode='flag',currentView='map',scope={kind:'world'},shapes=[];
-let svg,layer,projection,zoom,cityShapes,markers,labels,cloud=null,mapHeight=740,cityPoints,cityPointLabels,southProjection,southMarkers;
+let svg,layer,projection,zoom,cityShapes,markers,labels,cloud=null,mapHeight=740,cityPoints,cityPointLabels,countryLocators,southProjection,southMarkers;
 let landmarkCatalog,landmarkStore,landmarkUI,landmarkMap,landmarkFocus=0;
 let familyStore,familyUI,primaryCloud,primaryLandmarkStore,selectionVersion=0,primaryRecords={};
 let detailContext=null,detailBase={},detailBusy=false,detailOperation=0,listLimit=60,mapRequest=0;
@@ -220,7 +220,17 @@ function drawMap(){
   if(scope.kind==='world')layer.append('path').datum({type:'Sphere'}).attr('d',path).attr('fill','#edf4ef').attr('stroke','#dbe6dc').attr('stroke-width',1);
   const mainShapes=shapes.filter(f=>scope.kind!=='china'||R.id(f)!=='460300');
   cityShapes=layer.append('g').selectAll('path').data(mainShapes).join('path').attr('d',path).attr('class','city-shape').attr('fill',(f,i)=>colors[i%colors.length]).attr('tabindex',0).attr('role','button').attr('aria-label',f=>R.displayName(f)+'，'+(scope.kind==='world'?'探索地区':scope.kind==='country'?'选择城市':'记录足迹')).on('click',(e,f)=>{openShape(f);$('#map-tooltip').hidden=true;}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openShape(f);}}).on('pointermove',(e,f)=>{if(e.pointerType==='touch')return;const r=$('#map-stage').getBoundingClientRect(),t=$('#map-tooltip');t.textContent=R.displayName(f)+(d3.select(e.currentTarget).classed('visited')?' · 已经去过':'');t.hidden=false;t.style.left=Math.min(e.clientX-r.left+14,r.width-180)+'px';t.style.top=Math.max(12,e.clientY-r.top-35)+'px';}).on('pointerleave',()=>$('#map-tooltip').hidden=true);
-  labels=layer.append('g').attr('pointer-events','none').selectAll('text').data(mainShapes.filter(f=>Array.isArray(f.properties.center))).join('text').attr('class','city-label').attr('x',f=>projection(f.properties.center)[0]).attr('y',f=>projection(f.properties.center)[1]).text(f=>scope.kind==='world'?shortName(f.properties.name):R.displayName(f));
+  // Mauritius is only a few pixels wide in the world overview. Keep its real
+  // coastline, with a separate, screen-sized target for mouse and touch input.
+  const locatorCountries=scope.kind==='world'?mainShapes.filter(f=>f.properties.countryCode==='MUS'):[];
+  const locatorIds=new Set(locatorCountries.map(R.id));
+  countryLocators=layer.append('g').selectAll('g').data(locatorCountries).join('g').attr('class','country-locator').attr('tabindex',0).attr('role','button').attr('aria-label',f=>R.displayName(f)+'，记录足迹').on('click',(e,f)=>{e.stopPropagation();openShape(f);}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openShape(f);}});
+  // Put the roomy target east/south of the island; a centered target would
+  // intercept Madagascar and Reunion at phone overview scale.
+  countryLocators.append('rect').attr('class','country-locator-hit').attr('x',8).attr('y',0).attr('width',68).attr('height',44).attr('rx',8);
+  countryLocators.append('circle').attr('class','country-locator-dot').attr('r',4);
+  countryLocators.append('text').attr('class','country-locator-label').attr('x',10).attr('y',15).text(f=>R.displayName(f));
+  labels=layer.append('g').attr('pointer-events','none').selectAll('text').data(mainShapes.filter(f=>Array.isArray(f.properties.center)&&!locatorIds.has(R.id(f)))).join('text').attr('class','city-label').attr('x',f=>projection(f.properties.center)[0]).attr('y',f=>projection(f.properties.center)[1]).text(f=>scope.kind==='world'?shortName(f.properties.name):R.displayName(f));
   const countryCities=scope.kind==='country'?(model.citiesByCountry.get(scope.code)||[]):[];
   cityPoints=layer.append('g').selectAll('g').data(countryCities).join('g').attr('class','world-city-point').attr('tabindex',0).attr('role','button').attr('aria-label',f=>R.displayName(f)+'，记录城市足迹').on('click',(e,f)=>{e.stopPropagation();openCity(R.id(f));}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCity(R.id(f));}});
   cityPoints.append('circle').attr('class','city-point-hit').attr('r',18);
@@ -252,6 +262,7 @@ function renderMapState(){
   const counts=new Map(groups.map(f=>[R.id(f),f.count]));
   cityShapes.classed('visited',f=>scope.kind==='world'?v.some(x=>!x.properties.mapExcluded&&R.countryOf(x)===R.countryOf(f)):scope.kind==='china'?counts.has(R.id(f)):scope.kind==='country'?R.regionVisited(f,v):ids.has(R.id(f)));
   cityPoints?.classed('visited',f=>ids.has(R.id(f)));
+  countryLocators?.classed('visited',f=>v.some(x=>!x.properties.mapExcluded&&R.countryOf(x)===R.countryOf(f)));
   markers.selectAll('*').remove();
   southMarkers?.selectAll('*').remove();
   if(mode==='flag'){
@@ -283,6 +294,11 @@ function updateMapOverlays(){
   if(!svg||!markers||!labels||!projection)return;
   const width=svg.node().getBoundingClientRect().width;if(!width)return;
   const transform=d3.zoomTransform(svg.node()),k=transform.k,phone=phoneLayout.matches,scale=phone?Math.max(1,720/width):1,font=(phone?11:10)*1000/width,occupied=[];
+  countryLocators?.attr('transform',f=>'translate('+projection(f.properties.center)+') scale('+(1000/width)/k+')').each(function(f){
+    const p=projection(f.properties.center),x=p[0]*k+transform.x,y=p[1]*k+transform.y,unit=1000/width;
+    // Reserve room for this small island's persistent label before other labels.
+    occupied.push([x+7*unit,y+2*unit,x+(12+R.displayName(f).length*12)*unit,y+19*unit]);
+  });
   landmarkMap?.update({scope,projection,mapHeight,width,transform});
   const flagScale=scope.kind==='china'?Math.min(1,.72+.2*(k-1)):1;
   markers.selectAll('g').attr('transform',f=>'translate('+projection(f.properties.center)+') scale('+(1000/width)*flagScale/k+') translate('+((f.flagOffset||0)-11)+',0)');
