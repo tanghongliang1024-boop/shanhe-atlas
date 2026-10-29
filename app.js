@@ -65,10 +65,16 @@ function renderList(){
   const recommended=['110000','310000','330100','440100','tw-63000',...(model.citiesByRegion.get('world:JPN:JP-13')||[]).map(R.id),...(model.citiesByRegion.get('world:USA:US-CA')||[]).map(R.id)];
   if(!query&&country==='all'&&status==='all')list.sort((a,b)=>(recommended.indexOf(R.id(a))<0?999:recommended.indexOf(R.id(a)))-(recommended.indexOf(R.id(b))<0?999:recommended.indexOf(R.id(b))));
   $('#list-heading').textContent=query?'搜索结果':country==='all'?'从这里开始':'探索地区';
-  $('#result-count').textContent=list.length+' 个';
-  const rows=list.slice(0,listLimit).map(f=>{const p=f.properties,r=records[p.adcode];return '<button class="city-row" data-city="'+esc(p.adcode)+'"><span class="city-row-icon '+(visited(f)?'done':'')+'">'+icon(visited(f)?'flag':'pin')+'</span><span><span class="city-row-name">'+esc(R.displayName(f))+'</span><span class="city-row-meta">'+esc(R.trail(f))+(p.level==='legacy'?(p.mapExcluded?' · 已从地图移除，记录保留':isCountryLegacy(f)?' · 旧国家足迹保留':isWorldLegacy(f)?' · 旧省州足迹待整理':p.reversalTarget?' · 旧分区记录保留':' · 旧版待定位'):'')+(visited(f)?' · '+esc(dateString(r.date)):'')+'</span></span>'+icon(visited(f)?'check':'arrow')+'</button>';});
-  $('#city-list').innerHTML=rows.length?rows.join('')+(list.length>listLimit?'<button class="list-more" id="list-more">显示更多地区（剩余 '+(list.length-listLimit)+'）</button>':''):'<div class="empty-results">没有找到这个地区<br>试试城市、州省或国家名称</div>';
+  const landmarkRecords=landmarkStore?.getState().records||{};
+  const places=query&&landmarkCatalog?landmarkCatalog.places.filter(p=>ShanheLandmarks.matches(p,query,country)&&(province==='all'||p.provinceCodes.includes(province)||p.regionIds.includes(province))&&(status==='all'||(status==='visited'?ShanheLandmarks.status(landmarkRecords,p.id)==='visited':ShanheLandmarks.status(landmarkRecords,p.id)!=='visited'))):[];
+  const results=[...places.map(place=>({place})),...list.map(feature=>({feature}))];
+  $('#result-count').textContent=results.length+' 个';
+  const rows=results.slice(0,listLimit).map(({place,feature})=>{
+    if(place){const state=ShanheLandmarks.status(landmarkRecords,place.id),done=state==='visited';return '<button class="city-row" data-landmark="'+esc(place.id)+'"><span class="city-row-icon '+(done?'done':'')+'">'+icon(done?'flag':'pin')+'</span><span><span class="city-row-name">'+esc(place.name)+' · 景点</span><span class="city-row-meta">'+esc(place.location||place.country)+' · '+(done?esc(dateString(landmarkRecords[place.id].date)):state==='wish'?'想去':'尚未到访')+'</span></span>'+icon(done?'check':'arrow')+'</button>';}
+    const f=feature,p=f.properties,r=records[p.adcode];return '<button class="city-row" data-city="'+esc(p.adcode)+'"><span class="city-row-icon '+(visited(f)?'done':'')+'">'+icon(visited(f)?'flag':'pin')+'</span><span><span class="city-row-name">'+esc(R.displayName(f))+'</span><span class="city-row-meta">'+esc(R.trail(f))+(p.level==='legacy'?(p.mapExcluded?' · 已从地图移除，记录保留':isCountryLegacy(f)?' · 旧国家足迹保留':isWorldLegacy(f)?' · 旧省州足迹待整理':p.reversalTarget?' · 旧分区记录保留':' · 旧版待定位'):'')+(visited(f)?' · '+esc(dateString(r.date)):'')+'</span></span>'+icon(visited(f)?'check':'arrow')+'</button>';});
+  $('#city-list').innerHTML=rows.length?rows.join('')+(results.length>listLimit?'<button class="list-more" id="list-more">显示更多结果（剩余 '+(results.length-listLimit)+'）</button>':''):'<div class="empty-results">没有找到这个地点<br>试试城市、景点、州省或国家名称</div>';
   $('#city-list').querySelectorAll('[data-city]').forEach(b=>b.onclick=()=>openCity(b.dataset.city));
+  $('#city-list').querySelectorAll('[data-landmark]').forEach(b=>b.onclick=()=>{if($('#city-picker').open)$('#city-picker').close();landmarkUI.open(b.dataset.landmark);});
   if($('#list-more'))$('#list-more').onclick=()=>{const scroller=$('#city-list'),top=scroller.scrollTop;listLimit+=60;renderList();scroller.scrollTop=top;};
 }
 function resetList(){listLimit=60;renderList();$('#city-list').scrollTop=0;}
@@ -288,6 +294,7 @@ async function focusLandmark(place){
   const next=place.countryCode==='CHN'&&place.provinceCodes?.length?{kind:'province',code:place.provinceCodes[0]}:model.countries.get(place.countryCode)?.detailPath||model.citiesByCountry.has(place.countryCode)?{kind:'country',code:place.countryCode}:{kind:'world'};
   const pending=navigate(next),request=mapRequest;await pending;
   if(focusRequest!==landmarkFocus||request!==mapRequest||currentView!=='map'||scope.kind!==next.kind||scope.code!==next.code)return;
+  landmarkMap.focus(place.id);
   const point=projection(place.coordinates),k=next.kind==='world'?8:next.kind==='country'?5:3;
   svg.transition().duration(300).call(zoom.transform,d3.zoomIdentity.translate(500-k*point[0],mapHeight/2-k*point[1]).scale(k));
   $('#map-stage').scrollIntoView({behavior:'smooth',block:'center'});
@@ -356,7 +363,7 @@ async function init(){
     landmarkCatalog=ShanheLandmarks.catalog(SHANHE_LANDMARK_CATALOG);
     const hasOpenEditor=()=>Boolean(document.querySelector('#city-dialog[open]'))||Boolean(landmarkUI?.hasOpenEditor())||Boolean(familyUI?.hasOpenEditor());
     familyStore=createFamilyStore({onChange:syncMemberRecords,onAccountChange:resetFamilyAccount,hasOpenEditor});
-    primaryLandmarkStore=createLandmarkStore({onChange:()=>{landmarkUI?.render();renderLandmarkMap();},onAccountChange:()=>landmarkUI?.closeEditor(),hasOpenEditor});
+    primaryLandmarkStore=createLandmarkStore({onChange:()=>{landmarkUI?.render();renderList();renderLandmarkMap();},onAccountChange:()=>landmarkUI?.closeEditor(),hasOpenEditor});
     familyUI=createFamilyUI({store:familyStore,onActiveChange:changeRecordMember,onVisibilityChange:renderMapState,onAuth:()=>$('#cloud-account-btn').click(),notify:toast});
     landmarkStore=createFamilyArchiveAdapter({kind:'landmarks',primary:primaryLandmarkStore,family:familyStore,getMemberId:activeMemberId,getSelectionVersion:()=>selectionVersion});
     landmarkUI=createLandmarkUI({catalog:landmarkCatalog,store:landmarkStore,onMap:focusLandmark,onAuth:()=>$('#cloud-account-btn').click(),notify:toast,onViewChange:goView,countries:model.countries});
