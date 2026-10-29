@@ -1,6 +1,6 @@
 'use strict';
 
-// Rebuild the U.S. city supplement from the frozen Census 2026 source, offline.
+// Rebuild incorporated places and legal towns from frozen Census 2026, offline.
 // Run: node scripts/build-us-cities.cjs [--check]
 // Existing world-cities.json, city IDs, coordinates, and archives are read-only.
 const assert=require('node:assert/strict');
@@ -102,29 +102,39 @@ function buildUsCities(source,worldCities,worldIndex){
     // cross counties; do not describe this as its exclusive jurisdiction.
     return matches[0].NAME;
   }
-  const rows=all.filter(({kind,p})=>!used.has(sourceKey(kind,p))).map(({kind,p})=>{
+  const allRows=all.filter(({kind,p})=>!used.has(sourceKey(kind,p))).map(({kind,p})=>{
     const longitude=+p.INTPTLON,latitude=+p.INTPTLAT;
     assert.ok(Number.isFinite(longitude)&&longitude>=-180&&longitude<=180);
     assert.ok(Number.isFinite(latitude)&&latitude>=-90&&latitude<=90);
     return [p.GEOID,kind,states.get(p.STATE),p.NAME,longitude,latitude,countyFor(kind,p)];
   }).sort((a,b)=>compare(a[2],b[2])||compare(a[0],b[0])||compare(a[1],b[1]));
-  assert.equal(rows.length,35499);
-  const ids=rows.map(r=>cityId(r[1],r[0]));assert.equal(new Set(ids).size,rows.length);
+  const cdpIds=new Set(data.cdp.map(p=>p.GEOID));
+  const isCdp=(kind,geoid)=>kind==='place'&&cdpIds.has(geoid);
+  // Keep previous CDP identifiers and all seven fields for archive resolution.
+  // A statistical CDP is not silently reassigned to a county or legal city.
+  const rows=allRows.filter(r=>!isCdp(r[1],r[0]));
+  const retiredRows=allRows.filter(r=>isCdp(r[1],r[0]));
+  const activeExisting=matchedExisting.filter(m=>!isCdp(m.kind,m.geoid));
+  const retiredExisting=matchedExisting.filter(m=>isCdp(m.kind,m.geoid));
+  assert.equal(allRows.length,35499);assert.equal(rows.length,22944);assert.equal(retiredRows.length,12555);
+  assert.equal(activeExisting.length,107);assert.equal(retiredExisting.length,2);
+  assert.deepEqual(retiredExisting.map(m=>m.adcode).sort(),['world:USA:city-1159149209','world:USA:city-1159151221']);
+  const ids=allRows.map(r=>cityId(r[1],r[0]));assert.equal(new Set(ids).size,allRows.length);
   assert.ok(ids.every(id=>!worldCities.cities.some(c=>c.adcode===id)));
   const labels=new Map();
-  for(const row of rows){const key=[row[2],row[3],row[6]].join('|');assert.ok(!labels.has(key),'Unresolved name ambiguity: '+key);labels.set(key,row[0]);}
+  for(const row of allRows){const key=[row[2],row[3],row[6]].join('|');assert.ok(!labels.has(key),'Unresolved name ambiguity: '+key);labels.set(key,row[0]);}
   const byState={};
   for(const state of [...states.values()].sort()){
-    const placeCount=places.filter(p=>states.get(p.STATE)===state).length,townCount=towns.filter(p=>states.get(p.STATE)===state).length;
-    byState[state]={places:placeCount,towns:townCount,existing:matchedExisting.filter(p=>p.state===state).length,supplemental:rows.filter(r=>r[2]===state).length,total:placeCount+townCount};
+    const placeCount=data.incorporated.filter(p=>states.get(p.STATE)===state).length,townCount=towns.filter(p=>states.get(p.STATE)===state).length;
+    byState[state]={places:placeCount,towns:townCount,existing:activeExisting.filter(p=>p.state===state).length,supplemental:rows.filter(r=>r[2]===state).length,total:placeCount+townCount,retiredCdp:data.cdp.filter(p=>states.get(p.STATE)===state).length};
   }
   const statusCounts=list=>list.reduce((counts,p)=>(counts[p.FUNCSTAT]=(counts[p.FUNCSTAT]||0)+1,counts),{});
-  return {version:1,generatedAt:'2026-10-29',vintage:'2026-01-01',countryCode:'USA',
+  return {version:1,generatedAt:'2026-10-29',vintage:'2026-01-01',countryCode:'USA',scope:'incorporated-places-and-legal-towns',
     source:'U.S. Census Bureau TIGERweb',sourceDocument:'assets/geo/us-cities-sources.md',license:'Public domain (U.S. federal government data)',
-    columns:COLUMNS,rows,matchedExisting,
-    coverage:{states:51,placeCount:32071,sourceTownCount:3562,coextensiveTownCount:25,townCount:3537,existingCityCount:109,matchedExistingCount:109,supplementalCityCount:rows.length,totalCityCount:35608,byState},
+    columns:COLUMNS,rows,matchedExisting:activeExisting,retiredRows,retiredExisting,
+    coverage:{states:51,activeStates:50,placeCount:19514,sourceTownCount:3562,coextensiveTownCount:25,townCount:3537,existingCityCount:107,matchedExistingCount:107,supplementalCityCount:rows.length,totalCityCount:23051,retiredCdpCount:12557,retiredSupplementalCount:12555,retiredExistingCount:2,byState},
     representedTowns:representedTowns.map(p=>({geoid:p.GEOID,name:p.NAME,state:states.get(p.STATE),classCode:p.COUSUBCC,reason:'Census T5: coextensive with an incorporated place; covered by the Places layer'})),
-    functionalStatusCounts:{incorporated:statusCounts(data.incorporated),cdp:statusCounts(data.cdp),supplementalTowns:statusCounts(towns)},
+    functionalStatusCounts:{incorporated:statusCounts(data.incorporated),retiredCdp:statusCounts(data.cdp),supplementalTowns:statusCounts(towns)},
     countyMeaning:'For towns, the official parent county; for same-name Places, the county containing the Census internal point, not necessarily every county crossed by the place.',
     sources:source.queries.map(q=>({name:q.name,url:q.url,countUrl:q.countUrl,count:q.countResponse.count,vintage:'2026-01-01',responseSha256:sha256(JSON.stringify(q.response))})),
     sourceSnapshot:{path:'scripts/us-cities-source.json.gz',gzipSha256:SOURCE_GZIP_SHA256,jsonSha256:SOURCE_JSON_SHA256,baseUsaSha256:BASE_USA_SHA256}};
@@ -140,6 +150,6 @@ if(require.main===module){
   if(args[0]==='--check')assert.equal(fs.readFileSync(output,'utf8'),text,'U.S. city supplement is stale');
   else fs.writeFileSync(output,text);
   for(const [file,hash] of before)assert.equal(sha256(fs.readFileSync(file)),hash,'Existing geography changed: '+file);
-  console.log(JSON.stringify({checkOnly:args[0]==='--check',supplemental:result.rows.length,existing:result.matchedExisting.length,total:result.coverage.totalCityCount,bytes:Buffer.byteLength(text),protectedFilesUnchanged:before.size,sha256:sha256(text)}));
+  console.log(JSON.stringify({checkOnly:args[0]==='--check',supplemental:result.rows.length,existing:result.matchedExisting.length,total:result.coverage.totalCityCount,retiredSupplemental:result.retiredRows.length,retiredExisting:result.retiredExisting.length,bytes:Buffer.byteLength(text),protectedFilesUnchanged:before.size,sha256:sha256(text)}));
 }
 module.exports={buildUsCities,readSource,cityId,COLUMNS,EXPECTED_COUNTS,REVIEWED_MATCHES,SOURCE_GZIP_SHA256,SOURCE_JSON_SHA256,BASE_USA_SHA256};
