@@ -82,7 +82,9 @@
       if(themeIds && !themeIds.has(place.id)) return false;
       if(wanted !== 'all' && status(records, place.id) !== wanted) return false;
       switch(scope?.kind){
-        case 'world': return true;
+        // Keep the world overview readable: domestic landmarks appear there
+        // only as the Five Great Mountains. China/detail maps retain all places.
+        case 'world': return place.countryCode !== 'CHN' || place.themeIds.includes('wuyue');
         case 'china': return countriesOf(place).includes('CHN');
         case 'country': return countriesOf(place).includes(String(scope.code));
         case 'province': return countriesOf(place).includes('CHN') && place.provinceCodes.includes(String(scope.code));
