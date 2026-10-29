@@ -56,7 +56,7 @@ function harness({width=375,phone=true,kind='world'}={}){
     let scope={kind},mapHeight=phone?1000:740,phoneLayout={matches:phone},mode='flag';
     const svg=d3.select(root),layer=svg.append('g'),mainShapes=world,provinces=[];
     const cityShapes=layer.append('g').selectAll('path').data(world).join('path');
-    let countryLocators,labels,cityPoints=null,cityPointLabels=null,southMarkers=null,southProjection=null;
+    let countryLocators,labels,cityPoints=null,cityPointLabels=null,southMarkers=null,southProjection=null,citySpatial=null,cityPointLayer=null,mapCityVisited=new Set();
     const shortName=name=>name,openCity=id=>state.opened.push(id),navigate=next=>state.opened.push(next);
     const $=()=>({hidden:false}),renderLandmarkMap=()=>{},landmarkMap=null;
     const familyUI={selectMember(){}},mapVisits=()=>R.recordsWithFeatures(state.records,model);
@@ -65,7 +65,7 @@ function harness({width=375,phone=true,kind='world'}={}){
     ${section("  const locatorCountries=",'  const countryCities=')}
     const markers=layer.append('g');
     ${section('function renderMapState(){','function renderLandmarkMap(){')}
-    ${section('function updateMapOverlays(){','function renderCollection(){')}
+    ${section('function refreshCityPoints(transform,width){','function renderCollection(){')}
     return {renderMapState,updateMapOverlays};
   `);
   const api=install(root,state,d3,R,model,world,F,projection,phone,kind);

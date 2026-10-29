@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const R = require('../region-model.js');
+const C = require('../city-catalog.js');
 const L = require('../landmark-model.js');
 const read = name => JSON.parse(fs.readFileSync(path.join(__dirname, '../assets', name), 'utf8'));
 const model = R.catalog(read('geo/china-prefecture-index.json'), read('geo/world-index.json'),
@@ -52,7 +53,7 @@ function harness(options = {}) {
     return elements.get(selector);
   }
   const context = {
-    $:el,R,ShanheLandmarks:L,model,features:model.features,records:members[activeMember].regions,
+    $:el,R,ShanheLandmarks:L,model,features:model.features,citySearch:C.createSearch(model.features,R),records:members[activeMember].regions,
     landmarkCatalog:options.withoutLandmarks?null:catalog,listLimit:options.limit||60,
     landmarkStore:{getState:()=>({records:members[activeMember].landmarks,memberId:activeMember})},
     landmarkUI:{open(id){events.push('open-landmark');opened.push({kind:'landmark',id,memberId:activeMember,pickerOpen:el('#city-picker').open});}},
