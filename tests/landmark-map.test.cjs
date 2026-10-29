@@ -5,6 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const L = require('../landmark-model.js');
+const F = require('../family-map-model.js');
+const geoD3 = require('../assets/d3.min.js');
 const data = require('../landmark-catalog.js');
 const WUYUE_IDS=['poi:CHN:taishan','poi:CHN:huashan','poi:CHN:hengshan-hunan','poi:CHN:hengshan-shanxi','poi:CHN:songshan'];
 const WORLD_MAP_IDS=[...WUYUE_IDS,...data.places.filter(place=>place.countryCode!=='CHN').map(place=>place.id)];
@@ -29,20 +31,20 @@ class Selection {
   each(callback) { this.nodes.forEach(node=>callback.call(node,node.datum));return this; }
   remove() { this.nodes.forEach(node=>node.parent.children=node.parent.children.filter(child=>child!==node));return this; }
 }
-function harness(input=data) {
+function harness(input=data,{members}={}) {
   const controls = new Map();
   const control = selector => {
     if(!controls.has(selector)) controls.set(selector,{checked:true,value:'all',children:[],events:{},append(child){this.children.push(child);},addEventListener(key,handler){this.events[key]=handler;}});
     return controls.get(selector);
   };
   const world = new Node('svg'), opened = [], state={records:{}};
-  const context={window:{ShanheLandmarks:L},document:{querySelector:control,createElement:tag=>new Node(tag)},d3:{select:node=>new Selection([node])}};
+  const context={window:{ShanheLandmarks:L,ShanheFamilyMap:F},document:{querySelector:control,createElement:tag=>new Node(tag)},d3:{select:node=>new Selection([node])}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../landmark-map.js'),'utf8'),context);
-  const map=context.window.createLandmarkMap({catalog:L.catalog(input),store:{getState:()=>state},open:id=>opened.push(id)});
+  const map=context.window.createLandmarkMap({catalog:L.catalog(input),store:{getState:()=>state},getMembers:members?()=>members:undefined,open:id=>opened.push(id)});
   map.mount(new Selection([world]));
   const view={scope:{kind:'world'},projection:([lon,lat])=>[lon+300,lat+250],transform:{k:1,x:0,y:0},width:375,mapHeight:1000};
   const nodes=className=>descendants(world).filter(node=>String(node.attributes.class||'').split(' ').includes(className));
-  return {map,state,opened,view,nodes,control};
+  return {map,state,opened,view,nodes,control,remount(){world.children=[];map.mount(new Selection([world]));}};
 }
 
 test('map re-render removes a cancelled flag, including when the visited filter is active', () => {
@@ -167,4 +169,77 @@ test('a projection that cannot represent a point hides it instead of writing NaN
   assert.ok(h.nodes('landmark-map-label').every(node=>node.styles.display==='none'));
   h.map.update(h.view);
   assert.ok(h.nodes('landmark-marker').every(node=>node.styles.display===undefined&&node.attributes.transform));
+});
+
+function jerusalemView(h,width){
+  const height=width<851?1000:740,projection=geoD3.geoEqualEarth().fitExtent([[22,90],[978,height-100]],{type:'Sphere'});
+  const place=data.places.find(p=>p.id==='poi:PSX:jerusalem'),point=projection(place.coordinates),k=8;
+  return {...h.view,width,mapHeight:height,projection,transform:{k,x:500-k*point[0],y:height/2-k*point[1]}};
+}
+function coveringMarkers(h,id,view){
+  const target=view.projection(data.places.find(p=>p.id===id).coordinates);
+  return h.nodes('landmark-marker').filter(node=>{
+    if(node.styles.display==='none')return false;
+    const point=view.projection(node.datum.coordinates),offset=node.datum.flagOffset||0;
+    const dx=(point[0]-target[0])*view.transform.k*view.width/1000+offset,dy=(point[1]-target[1])*view.transform.k*view.width/1000;
+    return Math.hypot(dx,dy)<=22;
+  });
+}
+
+test('focusing Jerusalem makes its label visible and puts its touch target above nearby landmarks on phones and desktop', () => {
+  const id='poi:PSX:jerusalem';
+  for(const width of [375,800]){
+    const h=harness(),view=jerusalemView(h,width);h.map.render(view);
+    const before=coveringMarkers(h,id,view);
+    assert.ok(before.length>1,'use the real dense Middle East geometry');
+    assert.notEqual(before.at(-1).datum.id,id,'the original target order can intercept Jerusalem');
+    h.map.focus(id);
+    const labels=h.nodes('landmark-map-label'),target=h.nodes('landmark-marker').at(-1);
+    assert.equal(labels[0].datum.id,id);assert.notEqual(labels[0].styles.display,'none');
+    assert.equal(target.datum.id,id);assert.equal(coveringMarkers(h,id,view).at(-1).datum.id,id);
+    assert.equal(h.nodes('landmark-focus-ring').length,1);
+    assert.equal(h.nodes('landmark-focus-ring')[0].attributes['pointer-events'],'none');
+    target.events.click({stopPropagation(){}},target.datum);
+    assert.deepEqual(h.opened,[id]);
+    const point=view.projection(data.places.find(place=>place.id===id).coordinates);
+    h.map.update({...view,transform:{k:9,x:500-9*point[0],y:view.mapHeight/2-9*point[1]}});
+    assert.equal(h.nodes('landmark-marker').at(-1).datum.id,id,'zoom keeps the selected target on top');
+    assert.notEqual(h.nodes('landmark-map-label')[0].styles.display,'none');
+  }
+});
+
+test('focus is cleared by user filters and navigation and never bypasses the domestic world-overview rule', () => {
+  const h=harness(),id='poi:PSX:jerusalem';h.map.render(jerusalemView(h,375));
+  for(const selector of ['#landmark-map-toggle','#landmark-map-theme','#landmark-map-status']){
+    h.map.focus(id);assert.equal(h.nodes('landmark-focus-ring').length,1);
+    h.control(selector).events.change();assert.equal(h.nodes('landmark-focus-ring').length,0);
+  }
+  h.map.focus(id);h.map.render({...h.view,scope:{kind:'country',code:'PSX'}});
+  assert.equal(h.nodes('landmark-focus-ring').length,0,'a different geographical scope clears the focus');
+  h.map.focus(id);h.remount();h.map.render({...h.view,scope:{kind:'country',code:'PSX'}});
+  assert.equal(h.nodes('landmark-focus-ring').length,0,'a fresh map mount clears focus even in the same scope');
+  h.map.render(h.view);h.map.focus(data.places.find(p=>p.name==='九寨沟').id);
+  assert.equal(h.nodes('landmark-focus-ring').length,0);
+  assert.deepEqual(new Set(h.nodes('landmark-marker').filter(node=>node.datum.countryCode==='CHN').map(node=>node.datum.id)),new Set(WUYUE_IDS));
+  h.map.focus(id);h.map.show();assert.equal(h.nodes('landmark-focus-ring').length,0);
+  h.map.focus('poi:PSX:missing');assert.equal(h.nodes('landmark-focus-ring').length,0);
+});
+
+test('focusing a family landmark raises the whole place while retaining member order, colors and offsets', () => {
+  const id='poi:PSX:jerusalem',neighbor='poi:JOR:jerash';
+  const members=[
+    {member:{id:'a',name:'甲',color:'blue',hex:'#478ab7'},records:{[id]:{status:'visited',date:'2024-04-01',note:'甲的旅行'},[neighbor]:{status:'wish'}}},
+    {member:{id:'b',name:'乙',color:'purple',hex:'#916aa9'},records:{[id]:{status:'visited',date:'2025-05-02',note:'乙的旅行'}}}
+  ];
+  const h=harness(data,{members}),before=structuredClone(members);h.map.render(jerusalemView(h,375));
+  const original=h.nodes('landmark-marker').filter(node=>node.datum.id===id).map(node=>({member:node.datum.member.id,offset:node.datum.flagOffset}));
+  h.map.focus(id);
+  const selected=h.nodes('landmark-marker').slice(-2);
+  assert.ok(selected.every(node=>node.datum.id===id));
+  assert.deepEqual(selected.map(node=>({member:node.datum.member.id,offset:node.datum.flagOffset})),original);
+  assert.deepEqual(selected.map(node=>node.datum.member.hex),['#478ab7','#916aa9']);
+  assert.equal(h.nodes('landmark-focus-ring').length,2);
+  assert.equal(h.nodes('landmark-map-label').filter(node=>node.datum.id===id).length,1);
+  assert.notEqual(h.nodes('landmark-map-label')[0].styles.display,'none');
+  assert.deepEqual(members,before,'painting focus cannot mutate either archive');
 });
