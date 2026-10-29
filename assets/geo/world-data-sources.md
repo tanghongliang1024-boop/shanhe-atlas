@@ -88,3 +88,14 @@ Natural Earth 的默认世界边界依据其事实控制口径，包含部分单
 - 生成脚本 `scripts/world-build.py`、固定 OSM 快照 `scripts/world-osm-naypyidaw-20261022.json` 和来源 SHA-256 记录 `scripts/world-validation.json` 在工程源码中保留；任何更新都应再次检查稳定 ID 与已有记录兼容性。
 
 核验包括所有 JSON 可解析、全局 ID 唯一、坐标有限且在经纬度范围内、中心位于自身几何内、环方向正确、D3 球面面积不会被解释为地球补面、旋转后投影路径无 NaN/Infinity。中国城市记录迁移不在这批世界边界脚本中执行。
+
+## 法国本土与海外地区分别展示（2026-10-29）
+
+原世界底图的 `world:FRA` 将法国本土（含科西嘉及邻近岛屿）和法属圭亚那、瓜德罗普、马提尼克、留尼汪、马约特合在同一个多多边形要素中。为避免只到访法国本土就同时点亮海外地区，`world-france-parts.geo.json` 将这一个显示要素分为六部分；它是世界视图的展示补充，不新增国家或修改行政归属。
+
+- 法国本土沿用 `world:FRA`，关联原有 13 个本土大区编号，包括科西嘉 `world:FRA:FR-COR`。
+- 五个海外部分沿用对应大区编号 `world:FRA:FR-GF`、`world:FRA:FR-GP`、`world:FRA:FR-MQ`、`world:FRA:FR-RE`、`world:FRA:FR-YT`，各自只关联本区。六部分的 `countryCode` 都保持 `FRA`，`parentCountryId` 都为 `world:FRA`；`worldRegionIds` 表示着色和旗帜所对应的既有大区，海外部分的 `focusRegionId` 用于定位。
+- 原有 21 个多边形按 10、1、6、1、1、2 个分组，坐标、环、岛屿和边界原样保留；`world.geo.json`、法国详图、城市编号和用户存档不因此改写。底图中已独立显示的其他法国海外领地维持原来的要素与编号。
+- 可在仓库根目录运行 `node scripts/build-france-world-parts.cjs` 重现文件，或加 `--check` 只校验。脚本锁定原法国几何的 SHA-256 `be4ee5ffb4b2ca8f223d7c5024e63cf1d274aee6b831e7e2ace561f22283ddb2`，检查地域范围、18 个大区归属和全部多边形恰好出现一次；来源更新导致几何或分区不符时会停止，需重新核对后才能生成。
+
+该展示补充沿用原 Natural Earth 数据的 public domain 许可与署名。它区分实际到访区域，不把到访一个法国地区解释为已经到访所有海外地区。
