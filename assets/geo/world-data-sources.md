@@ -99,3 +99,15 @@ Natural Earth 的默认世界边界依据其事实控制口径，包含部分单
 - 可在仓库根目录运行 `node scripts/build-france-world-parts.cjs` 重现文件，或加 `--check` 只校验。脚本锁定原法国几何的 SHA-256 `be4ee5ffb4b2ca8f223d7c5024e63cf1d274aee6b831e7e2ace561f22283ddb2`，检查地域范围、18 个大区归属和全部多边形恰好出现一次；来源更新导致几何或分区不符时会停止，需重新核对后才能生成。
 
 该展示补充沿用原 Natural Earth 数据的 public domain 许可与署名。它区分实际到访区域，不把到访一个法国地区解释为已经到访所有海外地区。
+
+## 阿联酋七个酋长国（2026-10-29）
+
+新增 `world/ARE.geo.json`，包含阿布扎比、迪拜、沙迦、阿治曼、乌姆盖万、拉斯海玛和富查伊拉七个可选择的酋长国，编号分别为 `world:ARE:AE-AZ`、`AE-DU`、`AE-SH`、`AE-AJ`、`AE-UQ`、`AE-RK`、`AE-FU`（后六项同样使用 `world:ARE:` 前缀）。这是对原国家地图的细分，国家编号 `world:ARE` 不变。世界索引现有 26 个细分国家、651 个可选择州省级区域。
+
+边界来自现有固定 Natural Earth 提交 `ca96624a56bd078437bca8184e78163e5039ad19` 的 [Admin 1 GeoJSON](https://raw.githubusercontent.com/nvkelso/natural-earth-vector/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_10m_admin_1_states_provinces.geojson)，文件 SHA-256 为 `22d0e3ad85eb3e27f17cabf8ba2d50e554fbc27a87796ff891d958185da62fb5`。七个酋长国的飞地和岛屿均保留，未简化、剪裁或改写原始经纬度；原数据的外环方向直接适用于 D3。
+
+该版本来源还单列两个名为 `Neutral Zone` 的共管片区：`ARE-344` 的来源注记为富查伊拉与沙迦共管，`ARE-347` 为阿治曼与阿曼共管。它们不构成额外酋长国，不擅自并入任何一方；两片完整几何保存在 `contextFeatures` 中，标记 `displayOnly: true`、`level: context`，仅显示为灰色背景轮廓，不进入地区索引、城市选择、搜索、访问统计或旗帜记录。对应中文名称为“富查伊拉—沙迦共管区”“阿治曼—阿曼共管区”，同时保留来源原名和注记。共管名称描述的是上述固定来源，未据此另行判定行政归属。
+
+七个可选择要素加两个背景要素，共保留原始 30 个多边形，每个坐标和环恰好出现一次；各要素的 `sourceGeometrySha256` 可用于核对。原 `world.geo.json`、法国六部分展示文件、其他国家详图和所有历史迁移表逐字节保持不变。七座首府的城市来源与核对依据见 [海外城市数据说明](world-cities-sources.md#阿联酋七座首府2026-10-29)；不会把旧 `world:ARE` 足迹自动解释为去过某一座城市。
+
+从仓库根目录运行 `node scripts/build-uae-data.cjs` 可重复生成本次三个 JSON 文件，附加 `--check` 只核对输出。脚本优先读取工程现有缓存，也可使用 `--source-dir <缓存目录>`；若缺少输入，则下载固定提交文件并核验 SHA-256。它检查九个来源要素的编号、独立几何哈希、区域中心与首府位置、全部 30 个多边形守恒，逐项更新阿联酋索引和城市。其余国家/地区/城市的原始 JSON 条目文本及其他地理 JSON 文件均须不变，不能用历史全世界构建脚本替代本次局部更新。

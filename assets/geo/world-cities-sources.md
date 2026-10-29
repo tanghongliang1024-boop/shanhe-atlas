@@ -255,3 +255,27 @@ Made with Natural Earth. 作者及贡献者包括 Tom Patterson、Nathaniel Vaug
 验收覆盖 JSON 可解析、城市 ID 唯一且符合格式、全部中文显示名、父区存在、坐标范围及有限性、每个非空州省地块 1～5 城、同城去重、所有首府迁移目标真实存在且同国同父区、新加坡多父区关联、28 个明确空间例外，以及既有世界边界和索引逐文件 SHA-256 不变。本版另核验新增 231 个地点、旧 1088 个可选地点逐字段保持、1 个历史地点保持在 `legacyCities`、51 个必须覆盖单元全部达到 5 城或已核实单城例外。固定输入重复构建得到相同城市 JSON；迁移 JSON 只读核验，绝不重写。详细数量、来源哈希和逐地块选择见 `scripts/world-cities-validation.json`。
 
 本版已用无缓存的独立源码副本重新下载固定 Natural Earth 输入完成重建，城市 JSON、验收 JSON 与已发布迁移 JSON 的 SHA-256 均与主目录完全一致；也通过了原目录重复构建验证。
+
+## 阿联酋七座首府（2026-10-29）
+
+在此前 1319 个地点原样保留的基础上，新增阿联酋七座首府，当前共 **1326 个可选择城市或城镇**。每座首府只对应自己的酋长国，使用 `parentRegionId` 与 `capitalOf` 明确关联；没有增加其他旅游城市，也没有把阿联酋原有国家级记录迁移到首府。
+
+[阿布扎比社区发展部《Our Emirates》](https://www.dcd.gov.ae/portal/portal/yearlyreport/english/OurEmirates-ar-en.pdf)的地图用“Capital of the Emirate”图例标注这七座城市；[阿联酋政府七个酋长国介绍](https://u.ae/en/about-the-uae/the-seven-emirates)核对七区范围。迪拜与拉斯海玛的政府页面、[阿治曼政府数据页](https://egov.ajman.ae/en/ajman-data)、[沙迦档案馆](https://www.alwathiqa.ae/en/State/Sharjah/)也明确对应城市的首府身份。
+
+| 酋长国编号 | 首府 | 稳定城市编号 | 坐标来源 |
+| --- | --- | --- | --- |
+| `world:ARE:AE-AZ` | 阿布扎比 Abu Dhabi | `world:ARE:city-1159150565` | Natural Earth |
+| `world:ARE:AE-DU` | 迪拜 Dubai | `world:ARE:city-1159151497` | Natural Earth |
+| `world:ARE:AE-SH` | 沙迦 Sharjah | `world:ARE:city-1159126943` | Natural Earth |
+| `world:ARE:AE-AJ` | 阿治曼 Ajman | `world:ARE:city-gn292932` | GeoNames 292932 |
+| `world:ARE:AE-UQ` | 乌姆盖万 Umm Al Quwain | `world:ARE:city-1159126925` | Natural Earth |
+| `world:ARE:AE-RK` | 拉斯海玛 Ras Al Khaimah | `world:ARE:city-1159134277` | Natural Earth |
+| `world:ARE:AE-FU` | 富查伊拉 Fujairah | `world:ARE:city-1159134281` | Natural Earth |
+
+六座城市的名称、稳定 `NE_ID` 和原始坐标取自同一固定 Natural Earth 提交的 [Populated Places 文件](https://raw.githubusercontent.com/nvkelso/natural-earth-vector/ca96624a56bd078437bca8184e78163e5039ad19/geojson/ne_10m_populated_places.geojson)，SHA-256 为 `9b8e3de09048ef00dfc70357dbb9fa324493f214b5e0ae4daf1aa79a8d10116b`，沿用 public domain 许可。沙迦保留“夏尔迦”、富查伊拉保留“富吉拉”等来源别名，支持原有名称习惯搜索。
+
+阿治曼未在该 Natural Earth 城市点文件单列，使用 [GeoNames 292932](https://www.geonames.org/292932/) 的真实城市点 `[55.47878,25.40177]`，来源类别为 `PPLA`、国家 `AE`、一级行政代码 `02`。该行取自工程已冻结的 2026-10-22 `cities1000.zip` 缓存（SHA-256 `9d3916f7a9448bb4ea45e93c06c5413d2cceb1a89e03f75c2178bbb08af12018`，行修改日期 2026-04-13），必要字段和别名完整冻结在 `scripts/build-uae-data.cjs` 的 `AJMAN` 常量中，复现不依赖实时搜索或新版下载。GeoNames 署名与 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 许可继续适用。城市总来源数现为 1160 个 Natural Earth、166 个 GeoNames。
+
+七个城市均保留真实来源坐标，并位于各自酋长国原始几何内，无需移动标记点或增加边界例外。`world/ARE.geo.json` 另保留的两片来源共管区域只用于背景显示，没有独立城市、首府或记录。`world-city-migration-map.json` 保持原来的 20 条映射和 SHA-256 `2985f0a2adc82053cfdc6e48dad9a0801386bbe5ca446a03bf624da36e8797ee`，旧 `world:ARE` 记录继续作为国家历史足迹；不能据其推测到过阿布扎比或迪拜。
+
+本次使用 `node scripts/build-uae-data.cjs` 局部构建，`--check` 可检查可重复性。脚本只生成阿联酋详图、修改该国索引、增加七城，并逐项保留其他国家、城市、历史城市及欧洲覆盖清单。此前全世界构建脚本与冻结配置保留作历史版本的复现依据，不用于覆盖此次新增内容。
