@@ -78,7 +78,7 @@
 
 ## Android 安装与升级
 
-Android 2.4.1 APK 通过 [android-v2.4.1 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.4.4)提供。已安装旧版时，请直接安装同签名的新版 APK 覆盖升级，**不要先卸载**，以保留 App 内的临时足迹和登录状态。若系统提示签名不一致而不能覆盖，请先保留现有 App 和数据，核对下载来源。
+Android 2.4.4 APK 通过 [android-v2.4.4 发布页](https://github.com/tanghongliang1024-boop/shanhe-atlas/releases/tag/android-v2.4.4)提供。已安装旧版时，请直接安装同签名的新版 APK 覆盖升级，**不要先卸载**，以保留 App 内的临时足迹和登录状态。若系统提示签名不一致而不能覆盖，请先保留现有 App 和数据，核对下载来源。
 
 2.4.0 使用个人地区 v4、家庭 v2 云端接口及 v5 本机草稿。旧版个人地区和家庭保存入口提示升级，防止县区版本覆盖市级存档。请覆盖升级所有使用中的设备，网页刷新即可加载新版。云端账号、名胜存档和成员归属继续沿用。
 
