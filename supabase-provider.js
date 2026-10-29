@@ -160,6 +160,11 @@
         // confirmation is pending. That user is not signed in yet.
         return publicSession(data?.session);
       },
+      async resendConfirmation(email, redirectTo) {
+        await request(() => client.auth.resend({
+          type: 'signup', email, options: { emailRedirectTo: redirectTo }
+        }));
+      },
       async sendPasswordReset(email, redirectTo) {
         await request(() => client.auth.resetPasswordForEmail(email, { redirectTo }));
       },

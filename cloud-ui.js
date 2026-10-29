@@ -15,6 +15,7 @@
     const guest=root.createGuestArchiveStore({storage,migrateLegacyRecords:migrateLegacy,migratePrefectureRecords:migratePrefecture});
     let provider,store,user=null,mode='login',authBusy=false,sessionKnown=false,signupSubmitted=false;
     let authSerial=0,sessionGeneration=0,dialogGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
+    let resendAfter=0;
     let transferTask=null,transferAttempt=null,transferMessage='',transferError=false;
     const readyConfig=typeof config.url==='string'&&/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.url)&&typeof config.publishableKey==='string'&&config.publishableKey.startsWith('sb_publishable_');
     const state=()=>user&&store?store.getState():guest.getState();
@@ -68,6 +69,9 @@
       $('#cloud-refresh').disabled=s.busy||!!transferTask;
       $('#cloud-logout').disabled=s.busy||authBusy||!!transferTask;
       $('#cloud-submit').disabled=authBusy||!provider;
+      $('#cloud-resend').hidden=signed||mode==='recover';
+      $('#cloud-resend').disabled=authBusy||!provider||Date.now()<resendAfter;
+      $('#cloud-resend').textContent=Date.now()<resendAfter?'请稍候再发送验证邮件':'重新发送验证邮件';
       $('#cloud-status-inline').textContent=signed?(s.error?.message||labels[s.status]||'云端存档'):'';
       $('#cloud-transfer-area').hidden=!signed||(!pending&&!matches&&!transferMessage);
       $('#cloud-transfer-status').textContent=transferMessage||(pending?`此浏览器还有 ${pending} 条临时足迹。${intent&&!matches?'它们尚未转存到当前账号。':'可以一起保存到云端。'}`:'临时足迹已转存。');
@@ -109,11 +113,40 @@
     function authError(error){
       const code=String(error?.code||'').toLowerCase();
       if(code==='local_intent_failed')return '无法保留临时足迹的转存请求，请检查浏览器存储权限后重试。原足迹仍保留。';
-      if(['invalid_credentials','email_not_confirmed'].includes(code))return code==='email_not_confirmed'?'请先打开注册邮箱中的验证链接，再登录。临时足迹仍保留在此浏览器。':'邮箱或密码不正确，请检查后重试。';
+      if(['invalid_credentials','email_not_confirmed'].includes(code))return code==='email_not_confirmed'?'邮箱尚未验证成功。若已经点过链接，可点击“重新发送验证邮件”，再打开最新邮件中的链接。临时足迹仍保留在此浏览器。':'邮箱或密码不正确，请检查后重试。';
       if(/rate|over_email/.test(code))return '请求过于频繁，请稍后再试。';
       if(/weak_password/.test(code))return '请使用至少 8 位的更强密码。';
       if(/email_address_not_authorized|email_provider_disabled/.test(code))return '邮件服务暂未配置完成，请联系网站管理员。';
       return '暂时无法完成，请检查网络后重试。如果验证邮件未到达，请查看垃圾邮件箱。';
+    }
+    $('#cloud-resend').onclick=async()=>{
+      if(authBusy||!provider||user||mode==='recover'||Date.now()<resendAfter)return;
+      const field=$('#cloud-email'),email=normalizeEmail(field.value);
+      if(!field.reportValidity())return;
+      const serial=++authSerial,generation=sessionGeneration,dialogVersion=dialogGeneration;
+      const current=()=>serial===authSerial&&generation===sessionGeneration&&dialogVersion===dialogGeneration&&!user&&normalizeEmail(field.value)===email;
+      authBusy=true;say('正在请求重新发送验证邮件…');paint();
+      try{
+        await provider.resendConfirmation(email,new URL('./',location.href).href);
+        resendAfter=Date.now()+60000;root.setTimeout?.(()=>paint(),60000);
+        if(current())say('已提交重发请求，请到 '+email+' 查看最新验证邮件，也请检查垃圾邮箱。请尽快打开最新链接；完成验证后再登录。');
+      }catch(error){if(current())say(authError(error),true);}
+      finally{if(serial===authSerial){authBusy=false;paint();}}
+    };
+    function readAuthCallback(){
+      const url=new URL(location.href),hash=new URLSearchParams(url.hash.slice(1));
+      const value=key=>url.searchParams.get(key)||hash.get(key);
+      const has=key=>url.searchParams.has(key)||hash.has(key),failed=['error','error_code','error_description'].some(has),hasCode=has('code'),hasToken=has('access_token')||has('refresh_token');
+      return {present:failed||hasCode||hasToken,failed,hasCode,hasToken,expired:value('error_code')==='otp_expired',recovery:value('type')==='recovery'};
+    }
+    function showAuthCallback(callback,initializationError,signedIn,recovery){
+      if(!callback.present)return;
+      const failed=callback.failed||initializationError,remaining=readAuthCallback();
+      if(!failed&&(callback.recovery||recovery||mode==='recover'))return;
+      if(!failed&&!remaining.hasCode&&!remaining.hasToken&&signedIn&&user){notify?.('邮箱链接验证成功，已登录 '+user.email+'。');return;}
+      if(!dialog.open){dialogGeneration++;dialog.showModal();}
+      const text=failed&&callback.recovery?'密码重置链接已失效或未完成。请点击“忘记密码”重新获取重置邮件。':callback.expired?'验证链接已失效或已使用。请先尝试登录；若仍提示邮箱未验证，请重新发送验证邮件，并打开最新邮件中的链接。':failed?'邮箱链接验证未完成。请重新发送验证邮件并打开最新链接，或稍后重试。':user?'未能确认这次邮箱链接的验证结果。当前登录的是 '+user.email+'；若要使用另一个账号，请先退出再登录。':'验证链接已打开，但没有完成自动登录。请用注册邮箱和密码登录；若仍提示邮箱未验证，可重新发送验证邮件。';
+      say(text,true);notify?.(text);paint();
     }
     async function finishIntent(intent,generation,id){
       return intentLock(async()=>{
@@ -272,14 +305,17 @@
     async function start(){
       setMode('login');publish();
       if(!readyConfig||!root.supabase?.createClient)return;
+      const callback=readAuthCallback();let callbackSignedIn=false,callbackRecovery=false;
       try{
         const client=root.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storageKey:'shanhe-cloud-auth-v1'}});
         provider=createSupabaseArchiveProvider(client,{url:config.url,publishableKey:config.publishableKey});
         if(companion)Promise.resolve(companion.start(client)).catch(()=>notify?.('景点云端暂时未能连接，请在名胜打卡中重试。'));
         store=createCloudArchiveStore({transport:provider.transport,onChange:changed});
-        provider.onAuthStateChange((event,session)=>{setTimeout(()=>{applySession(session.user,event).catch(()=>{say('读取云端存档失败，请重试。',true);paint();});},0);});
+        provider.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN')callbackSignedIn=true;if(event==='PASSWORD_RECOVERY')callbackRecovery=true;setTimeout(()=>{applySession(session.user,event).catch(()=>{say('读取云端存档失败，请重试。',true);paint();});},0);});
+        const initialized=await client.auth?.initialize?.();
         const initial=await provider.getSession();if(!sessionKnown)await applySession(initial.user,'INITIAL_SESSION');paint();
-      }catch(_){say('云端连接失败。仍可先记录临时足迹，稍后再试。',true);paint();}
+        showAuthCallback(callback,initialized?.error,callbackSignedIn,callbackRecovery);
+      }catch(_){if(callback.present)showAuthCallback(callback,true,false,callbackRecovery);else{say('云端连接失败。仍可先记录临时足迹，稍后再试。',true);paint();}}
     }
     root.addEventListener('focus',async()=>{
       if(hasOpenEditor()||dialog.open)return;
