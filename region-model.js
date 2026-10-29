@@ -8,10 +8,24 @@
     const mainland=countryOf(feature)==='CHN'&&/^\d{6}$/.test(String(p.provinceCode))&&Number(p.provinceCode)<710000;
     return mainland&&p.level==='county'&&city&&city!==name&&!name.startsWith(city)?city+name:name;
   }
-  function trail(feature){const p=feature.properties;return [...new Set([p.country,p.province,p.city].filter(Boolean))].join(' · ');}
+  function trail(feature){const p=feature.properties;return [...new Set([p.country,p.province,p.county,p.city].filter(Boolean))].join(' · ');}
   function matches(feature,query,country='all',province='all'){
     const p=feature.properties;
     return (country==='all'||countryOf(feature)===country)&&(province==='all'||String(p.provinceCode)===province||p.regionIds?.includes(String(province))===true)&&(!query||text([displayName(feature),p.name,p.country,p.province,p.city,...(p.aliases||[])].join(' ')).includes(text(query)));
+  }
+  function withCitySupplement(worldCities,supplement,worldIndex){
+    const columns=['geoid','kind','state','name','longitude','latitude','county'];
+    if(supplement?.version!==1||JSON.stringify(supplement.columns)!==JSON.stringify(columns)||!Array.isArray(supplement.rows))throw Error('Invalid US city catalogue');
+    const regions=new Map(worldIndex.regions.filter(p=>p.countryCode==='USA').map(p=>[String(p.adcode),p]));
+    const existing=new Set(worldCities.cities.map(p=>String(p.adcode)));
+    const added=supplement.rows.map(row=>{
+      if(!Array.isArray(row)||row.length!==columns.length)throw Error('Invalid US city row');
+      const [geoid,kind,state,name,longitude,latitude,county]=row,parentRegionId='world:USA:US-'+state;
+      if(!['place','town'].includes(kind)||!(kind==='place'?/^\d{7}$/:/^\d{10}$/).test(geoid)||!regions.has(parentRegionId)||typeof name!=='string'||!name.trim()||typeof county!=='string'||!Number.isFinite(longitude)||!Number.isFinite(latitude)||Math.abs(longitude)>180||Math.abs(latitude)>90)throw Error('Invalid US city: '+geoid);
+      const adcode='world:USA:city-us'+kind+geoid;if(existing.has(adcode))throw Error('Duplicate US city: '+adcode);existing.add(adcode);
+      return {adcode,name,nameEn:name,officialName:name,aliases:[name,county,state].filter(Boolean),country:'美国',countryCode:'USA',province:regions.get(parentRegionId).name,provinceCode:parentRegionId,parentRegionId,parentId:parentRegionId,county,center:[longitude,latitude],level:'city',source:'US Census Bureau',sourceId:geoid,catalogKind:kind==='town'?'census-town':'census-place'};
+    });
+    return {...worldCities,cities:[...worldCities.cities,...added],usCoverage:supplement.coverage};
   }
   function catalog(chinaIndex,worldIndex,legacy=[],reversal,worldCities,prefectureMigration){
     const countries=new Map(worldIndex.countries.map(p=>[p.countryCode,p]));
@@ -97,7 +111,7 @@
     if(scope.kind==='province'||scope.kind==='country')return visits.filter(f=>scope.kind==='province'?countryOf(f)==='CHN'&&String(f.properties.provinceCode)===scope.code&&f.properties.level!=='legacy':countryOf(f)===scope.code&&f.properties.legacyKind!=='world-country').map(f=>({...f,count:1,target:f.properties.legacyKind==='world-region'?'legacy-region':'record'}));
     return countryFeatures.filter(f=>!['TWN','HKG','MAC'].includes(f.properties.countryCode)).map(f=>({...f,count:visits.filter(visit=>worldVisitMatches(f,visit)).length,target:'country'})).filter(f=>f.count>0);
   }
-  const api=Object.freeze({text,id,countryOf,displayName,trail,matches,catalog,regionVisited,worldVisited,moveLegacyRegionRecord,recordsWithFeatures,groupMarkers,prefectureHistory});
+  const api=Object.freeze({text,id,countryOf,displayName,trail,matches,withCitySupplement,catalog,regionVisited,worldVisited,moveLegacyRegionRecord,recordsWithFeatures,groupMarkers,prefectureHistory});
   root.ShanheRegions=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
