@@ -6,6 +6,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 const L = require('../landmark-model.js');
 const data = require('../landmark-catalog.js');
+const WUYUE_IDS=['poi:CHN:taishan','poi:CHN:huashan','poi:CHN:hengshan-hunan','poi:CHN:hengshan-shanxi','poi:CHN:songshan'];
+const WORLD_MAP_IDS=[...WUYUE_IDS,...data.places.filter(place=>place.countryCode!=='CHN').map(place=>place.id)];
 
 // Small SVG selection fixture: execute the production rendering and event
 // handlers, while retaining the resulting tree for state-transition assertions.
@@ -47,7 +49,7 @@ test('map re-render removes a cancelled flag, including when the visited filter 
   const h=harness(), id=data.places[0].id;
   h.state.records[id]={status:'visited'};
   h.map.render(h.view);
-  assert.equal(h.nodes('landmark-marker').length,data.places.length);
+  assert.equal(h.nodes('landmark-marker').length,WORLD_MAP_IDS.length);
   assert.equal(h.nodes('landmark-flag').length,1);
   delete h.state.records[id];
   h.map.render();
@@ -86,13 +88,36 @@ test('a new book landmark can be filtered on the city map and cancelling it remo
   assert.equal(h.nodes('landmark-flag').length,1);
 });
 
+test('world render hides a saved non-mountain China flag and restores it on China maps without changing the record', () => {
+  const h=harness(),jiuzhaigou=data.places.find(place=>place.name==='九寨沟'),nara=data.places.find(place=>place.name==='奈良');
+  assert.ok(jiuzhaigou&&nara);
+  h.state.records[jiuzhaigou.id]={status:'visited',date:'2024-06-15',note:'家人一起的旅行'};
+  h.state.records[nara.id]={status:'visited',date:'2025-04-03',note:'奈良'};
+  const before=structuredClone(h.state.records);
+  h.map.render(h.view);
+  assert.deepEqual(new Set(h.nodes('landmark-marker').map(node=>node.datum.id)),new Set(WORLD_MAP_IDS));
+  assert.deepEqual(new Set(h.nodes('landmark-marker').filter(node=>node.datum.countryCode==='CHN').map(node=>node.datum.id)),new Set(WUYUE_IDS));
+  assert.deepEqual(h.nodes('landmark-flag').map(node=>node.datum.id),[nara.id]);
+  assert.equal(h.control('#landmark-map-count').textContent,'当前地图 '+WORLD_MAP_IDS.length+' 处名胜');
+  h.control('#landmark-map-status').value='visited';h.control('#landmark-map-status').events.change();
+  assert.deepEqual(h.nodes('landmark-marker').map(node=>node.datum.id),[nara.id]);
+  for(const scope of [{kind:'china'},{kind:'province',code:'510000'}]){
+    h.map.render({...h.view,scope});
+    assert.deepEqual(h.nodes('landmark-marker').map(node=>node.datum.id),[jiuzhaigou.id]);
+    assert.deepEqual(h.nodes('landmark-flag').map(node=>node.datum.id),[jiuzhaigou.id]);
+  }
+  h.map.render(h.view);
+  assert.deepEqual(h.nodes('landmark-flag').map(node=>node.datum.id),[nara.id]);
+  assert.deepEqual(h.state.records,before);
+});
+
 test('international, shared-theme and province maps use one marker per matching place', () => {
   const extended=structuredClone(data), id='poi:FRA:test-border';
   extended.places.push({id,name:'测试景点',countryCode:'FRA',countryCodes:['FRA','ITA'],coordinates:[7,45],themeIds:['shared']});
   extended.themes.push({id:'shared',name:'测试主题',placeIds:[id,data.places[0].id,data.places[0].id]});
   const h=harness(extended);
   h.map.render(h.view);
-  assert.equal(h.nodes('landmark-marker').length,data.places.length+1);
+  assert.equal(h.nodes('landmark-marker').length,WORLD_MAP_IDS.length+1);
   h.control('#landmark-map-theme').value='shared';
   h.map.render({...h.view,scope:{kind:'country',code:'ITA'}});
   assert.deepEqual(h.nodes('landmark-marker').map(node=>node.datum.id),[id]);
@@ -130,7 +155,7 @@ test('hiding the layer removes targets and showing it resets stale filters', () 
   h.control('#landmark-map-theme').value='missing';
   h.control('#landmark-map-status').value='visited';
   h.map.show();
-  assert.equal(h.nodes('landmark-marker').length,data.places.length);
+  assert.equal(h.nodes('landmark-marker').length,WORLD_MAP_IDS.length);
   assert.equal(h.control('#landmark-map-theme').value,'all');
   assert.equal(h.control('#landmark-map-status').value,'all');
 });

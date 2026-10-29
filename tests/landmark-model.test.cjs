@@ -9,6 +9,7 @@ const model = L.catalog(data);
 const clone = value => JSON.parse(JSON.stringify(value));
 const visited = () => ({status:'visited', date:'2024-10-01', note:'旅行记录'});
 const WUYUE_IDS = ['poi:CHN:taishan','poi:CHN:huashan','poi:CHN:hengshan-hunan','poi:CHN:hengshan-shanxi','poi:CHN:songshan'];
+const WORLD_MAP_IDS = [...WUYUE_IDS,...data.places.filter(place=>place.countryCode!=='CHN').map(place=>place.id)];
 // Independently verified book entries, with three separate Qufu sites and the user-approved Nara supplement.
 const SOURCE_NAMES = {
   "china-most-beautiful-100": [
@@ -314,7 +315,7 @@ test('international and cross-border places use the same records and filtering w
   extended.themes.push({id:'global',name:'环球测试',placeIds:['poi:FRA:test-alpine-place',data.places[0].id]});
   const global = L.catalog(extended);
   const records = {'poi:FRA:test-alpine-place':visited(),[data.places[0].id]:visited()};
-  assert.equal(L.markerPlaces(global, {kind:'world'}).length, data.places.length + 1);
+  assert.equal(L.markerPlaces(global, {kind:'world'}).length, WORLD_MAP_IDS.length + 1);
   assert.equal(L.markerPlaces(global, {kind:'china'}).length, data.places.filter(p=>p.countryCodes.includes('CHN')).length);
   assert.equal(L.markerPlaces(global, {kind:'country',code:'ITA'}, {theme:'global'}).length, 1);
   assert.equal(L.markerPlaces(global, {kind:'region',code:'world:ITA:alpine'}, {theme:'global'}).length, 1);
@@ -329,9 +330,49 @@ test('marker filtering intersects map scope, theme and the latest visit status',
   assert.deepEqual(L.markerPlaces(model,{kind:'province',code:'610000'},{status:'wish',records}).map(place=>place.id), [data.places[1].id]);
   assert.equal(L.markerPlaces(model,{kind:'country',code:'USA'},{status:'visited',records}).length, 0);
   assert.equal(L.markerPlaces(model,{kind:'world'},{theme:'missing'}).length, 0);
-  assert.equal(L.markerPlaces(model,{kind:'world'},{status:'unvisited',records}).length, data.places.length - 2);
+  assert.equal(L.markerPlaces(model,{kind:'world'},{status:'unvisited',records}).length, WORLD_MAP_IDS.length - 2);
   delete records[data.places[0].id];
   assert.equal(L.markerPlaces(model,{kind:'world'},{status:'visited',records}).length, 0);
+});
+
+test('world overview shows exactly the five sacred mountains in China and preserves every overseas destination', () => {
+  const before=clone(data),world=L.markerPlaces(model,{kind:'world'});
+  assert.deepEqual(new Set(world.map(place=>place.id)),new Set(WORLD_MAP_IDS));
+  assert.deepEqual(new Set(world.filter(place=>place.countryCode==='CHN').map(place=>place.id)),new Set(WUYUE_IDS));
+  assert.deepEqual(world.filter(place=>place.countryCode!=='CHN').map(place=>place.id),model.places.filter(place=>place.countryCode!=='CHN').map(place=>place.id));
+  assert.ok(world.some(place=>place.id==='poi:NPL:himalayas'),'an overseas-primary cross-border destination remains visible');
+  assert.equal(world.some(place=>place.id==='poi:CHN:hong-kong'),false,'membership in the world book does not bypass the China overview rule');
+  assert.equal(world.some(place=>place.id==='poi:CHN:shangri-la'),false);
+  assert.deepEqual(L.markerPlaces(model,{kind:'world'},{theme:'china-most-beautiful-100'}).map(place=>place.id),['poi:CHN:taishan','poi:CHN:huashan']);
+  assert.deepEqual(data,before,'rendering choices never change the source catalogue');
+});
+
+test('China and province maps retain all domestic landmarks independently of the world overview filter', () => {
+  const expected=model.places.filter(place=>place.countryCodes.includes('CHN'));
+  assert.deepEqual(L.markerPlaces(model,{kind:'china'}).map(place=>place.id),expected.map(place=>place.id));
+  assert.deepEqual(L.markerPlaces(model,{kind:'country',code:'CHN'}).map(place=>place.id),expected.map(place=>place.id));
+  for(const code of new Set(expected.flatMap(place=>place.provinceCodes))){
+    assert.deepEqual(L.markerPlaces(model,{kind:'province',code}).map(place=>place.id),expected.filter(place=>place.provinceCodes.includes(code)).map(place=>place.id));
+  }
+  assert.equal(model.themeById.get('china-most-beautiful-100').placeIds.length,100);
+  assert.equal(model.themeById.get('world-most-beautiful-100').placeIds.length,100);
+  assert.equal(model.places.length,201);
+});
+
+test('hiding non-mountain China markers on the world map preserves saved dates, notes and passport progress', () => {
+  const jiuzhaigou=model.places.find(place=>place.name==='九寨沟'),nara=model.places.find(place=>place.name==='奈良');
+  assert.ok(jiuzhaigou&&nara);
+  const records={[jiuzhaigou.id]:visited(),[nara.id]:visited(),[WUYUE_IDS[0]]:{status:'wish',date:'',note:'计划登泰山'}};
+  const before=clone(records),stats=L.stats(model,records),progress=model.themes.map(theme=>L.progress(theme,records));
+  assert.deepEqual(L.markerPlaces(model,{kind:'world'},{status:'visited',records}).map(place=>place.id),[nara.id]);
+  assert.deepEqual(L.markerPlaces(model,{kind:'world'},{status:'wish',records}).map(place=>place.id),[WUYUE_IDS[0]]);
+  assert.deepEqual(L.markerPlaces(model,{kind:'china'},{status:'visited',records}).map(place=>place.id),[jiuzhaigou.id]);
+  assert.ok(L.matches(model.byId.get(jiuzhaigou.id),'九寨沟'),'the full list can still find the hidden world marker');
+  assert.equal(L.progress(model.themeById.get('china-most-beautiful-100'),records).visited,1);
+  assert.equal(L.stats(model,records).visited,2);
+  assert.deepEqual(L.stats(model,records),stats);
+  assert.deepEqual(model.themes.map(theme=>L.progress(theme,records)),progress);
+  assert.deepEqual(records,before);
 });
 
 test('Jiuzhaigou can be found and filtered by its book theme, Sichuan scope and current visit status', () => {

@@ -121,6 +121,30 @@ test('landmark member filters intersect theme and geographical scope without dup
   assert.deepEqual(input, before);
 });
 
+test('all family members use the five-mountain China world overview rule while retaining full domestic records', () => {
+  const domestic=landmarks.places.find(place=>place.name==='九寨沟'),overseas=landmarks.places.find(place=>place.name==='奈良');
+  assert.ok(domestic&&overseas);
+  const input=entries([
+    {[domestic.id]:{status:'visited',date:'2024-06-15',note:'家长九寨沟'},[TAISHAN]:{status:'visited'},[overseas.id]:{status:'wish'}},
+    {[domestic.id]:{status:'visited',date:'2025-08-11',note:'孩子九寨沟'},[TAISHAN]:{status:'wish'},[overseas.id]:{status:'visited'}}
+  ]);
+  const before=structuredClone(input),progress=input.map(entry=>L.progress(landmarks.themeById.get('china-most-beautiful-100'),entry.records));
+  const worldFlags=landmarkFlags(input);
+  assert.equal(worldFlags.some(flag=>flag.place.id===domestic.id),false);
+  assert.deepEqual(new Set(worldFlags.filter(flag=>flag.place.countryCode==='CHN').map(flag=>flag.place.id)),new Set(['poi:CHN:taishan','poi:CHN:huashan','poi:CHN:hengshan-hunan','poi:CHN:hengshan-shanxi','poi:CHN:songshan']));
+  assert.deepEqual(worldFlags.filter(flag=>flag.place.id===overseas.id).map(flag=>[flag.member.id,flag.status]),[['self','wish'],['child-a','visited']]);
+  assert.deepEqual(worldFlags.filter(flag=>flag.place.id===TAISHAN).map(flag=>[flag.member.id,flag.status]),[['self','visited'],['child-a','wish']]);
+  for(const scope of [{kind:'china'},{kind:'province',code:'510000'}]){
+    const domesticFlags=landmarkFlags(input,'visited',scope).filter(flag=>flag.place.id===domestic.id);
+    assert.deepEqual(domesticFlags.map(flag=>flag.member.id),['self','child-a']);
+    assert.ok(domesticFlags[0].flagOffset<0&&domesticFlags[1].flagOffset>0);
+  }
+  assert.equal(landmarkFlags(input.slice(1),'visited').some(flag=>flag.place.id===domestic.id),false);
+  assert.deepEqual(landmarkFlags(input.slice(1),'visited').filter(flag=>flag.place.id===overseas.id).map(flag=>flag.member.id),['child-a']);
+  assert.deepEqual(input,before);
+  assert.deepEqual(input.map(entry=>L.progress(landmarks.themeById.get('china-most-beautiful-100'),entry.records)),progress);
+});
+
 test('two children can independently cancel Nara while member selection preserves the other child flags', () => {
   const NARA = 'poi:JPN:nara', KYOTO = 'poi:JPN:kyoto';
   const catalog = L.catalog({
