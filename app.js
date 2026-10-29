@@ -174,7 +174,9 @@ function openShape(f){
   const p=f.properties;
   if(scope.kind==='world'){
     if(R.countryOf(f)==='CHN')return navigate(['TWN','HKG','MAC'].includes(p.countryCode)?{kind:'province',code:String(p.provinceCode)}:{kind:'china'});
-    if(p.detailPath||model.citiesByCountry.has(p.countryCode))return navigate({kind:'country',code:p.countryCode});
+    if(p.detailPath||model.citiesByCountry.has(p.countryCode))return navigate({kind:'country',code:p.countryCode}).then(()=>{
+      if(p.focusRegionId&&scope.kind==='country'&&scope.code===p.countryCode){$('#map-region-focus').value=p.focusRegionId;focusRegion(p.focusRegionId);}
+    });
   }
   if(scope.kind==='china')return openCity(R.id(f));
   if(scope.kind==='country')return openWorldRegion(R.id(f));
@@ -260,9 +262,9 @@ function renderMapState(){
   if(!cityShapes||!model)return;
   const v=mapVisits(),groups=ShanheFamilyMap.regionMarkers(mapMemberEntries('regions'),scope,world,provinces,model,R),ids=new Set(v.map(R.id));
   const counts=new Map(groups.map(f=>[R.id(f),f.count]));
-  cityShapes.classed('visited',f=>scope.kind==='world'?v.some(x=>!x.properties.mapExcluded&&R.countryOf(x)===R.countryOf(f)):scope.kind==='china'?counts.has(R.id(f)):scope.kind==='country'?R.regionVisited(f,v):ids.has(R.id(f)));
+  cityShapes.classed('visited',f=>scope.kind==='world'?R.worldVisited(f,v):scope.kind==='china'?counts.has(R.id(f)):scope.kind==='country'?R.regionVisited(f,v):ids.has(R.id(f)));
   cityPoints?.classed('visited',f=>ids.has(R.id(f)));
-  countryLocators?.classed('visited',f=>v.some(x=>!x.properties.mapExcluded&&R.countryOf(x)===R.countryOf(f)));
+  countryLocators?.classed('visited',f=>R.worldVisited(f,v));
   markers.selectAll('*').remove();
   southMarkers?.selectAll('*').remove();
   if(mode==='flag'){
@@ -338,13 +340,13 @@ $('#export-btn').onclick=()=>{
 function showInfo(html){$('#info-body').innerHTML=html;$('#info-dialog').showModal();}
 $('#close-info').onclick=()=>$('#info-dialog').close();
 $('#help-btn').onclick=()=>showInfo('<h2>从一面小旗开始</h2><p>家庭旅行：登录后在页面顶部管理成员，一个邮箱最多记录 4 人。选择当前记录人为他单独保存；勾选地图显示成员，可同时查看不同颜色的旗子。共同到访的地点并排显示，取消一个人的到访不会影响其他成员。原有记录归在“我”名下。</p><p>① 无需注册，先选择国家或中国省份，进入详细地图；也可以直接搜索城市或州省名称。</p><p>② 海外地图支持按城市记录。已有省州细分的国家保留省州地块；新增覆盖的欧洲国家保留国界。点击城市圆点，或点击地块选择城市；填写首次到访日期和旅行记忆，保存足迹。总览上的数字小旗表示该区域的足迹数量。</p><p>③ 足迹临时保存在此浏览器。想长期保存或换设备继续时，点击“保存到云端”，用邮箱注册或登录；注册需两次输入相同密码并验证邮箱。</p><p>登录后的修改直接保存到云端，以成功提示为准。本机与云端同一地区内容不同的草稿会保留，避免覆盖。你也可以导出 CSV 留存。</p><p>大陆（含海南）改回地市级。旧县区足迹归到所属地市；地市已有记录时保留它，没有记录时取日期最早的一条完整记录。其他县区日期和笔记留在城市详情的历史记录里，不重复插旗或计数。取消城市到访后，历史记录不会重新生成旗子。台湾恢复22县市，港澳整体标记。海外旧省州足迹按已核实的首府归档，日期、笔记与更新时间原样保留；目标已有记录或首府无法唯一确定时，旧记录完整保留供整理。新增欧洲城市后，原有国家级足迹仍按原名保留，不自动改成某个城市。旧分区足迹回到所属县市，日期与笔记保持不变；同一县市有多条记录时，其余内容单独保留在“我的足迹”中。</p>');
-$('#coverage-btn').onclick=()=>showInfo('<h2>地图数据与范围</h2><p>中国共 '+chinaIndex.features.length+' 个可标记地区，大陆（含海南）按地市、自治州、地区及盟等单位标记，四个直辖市各为一个城市；没有上级地市的省直辖单位沿用独立记录。台湾保持22个县市，香港、澳门各为整体。</p><p>世界总览包含 '+world.length+' 个国家和地区边界要素，其中 '+worldIndex.detailCountries.length+' 个旅行目的地保留州省边界，并按其中的城市或主要居民点记录足迹。每个区域提供代表城市，热门旅行省州补充更多旅游城市；无人离岛不虚构城市，新加坡共用同一个城市记录。欧洲各国及跨洲旅行目的地至少提供5个真实城市或城镇，摩纳哥、梵蒂冈等单城单位保留一个；新增覆盖国家保留原国界并添加城市点。其余国家和地区可整体标记。</p><p>Natural Earth · © OpenStreetMap contributors。新加坡保留社区发展理事会辖区，新西兰含部分岛屿；具体范围、版本、许可证与开放数据下载见 <a href="assets/geo/world-data-sources.md" target="_blank" rel="noopener">世界地图数据说明</a>、<a href="assets/geo/world-cities-sources.md" target="_blank" rel="noopener">海外城市与来源</a>、<a href="assets/geo/china-data-sources.md" target="_blank" rel="noopener">中国地图数据说明</a>。</p><p>边界以各数据源所载版本为准，用于个人旅行记录。旧记录迁移依据见 <a href="assets/geo/china-prefecture-migration-map.json" target="_blank" rel="noopener">县区归市对应关系</a>。</p>');
+$('#coverage-btn').onclick=()=>showInfo('<h2>地图数据与范围</h2><p>中国共 '+chinaIndex.features.length+' 个可标记地区，大陆（含海南）按地市、自治州、地区及盟等单位标记，四个直辖市各为一个城市；没有上级地市的省直辖单位沿用独立记录。台湾保持22个县市，香港、澳门各为整体。</p><p>世界总览包含 '+worldIndex.countries.length+' 个国家和地区边界要素，其中 '+worldIndex.detailCountries.length+' 个旅行目的地保留州省边界，并按其中的城市或主要居民点记录足迹。每个区域提供代表城市，热门旅行省州补充更多旅游城市；无人离岛不虚构城市，新加坡共用同一个城市记录。欧洲各国及跨洲旅行目的地至少提供5个真实城市或城镇，摩纳哥、梵蒂冈等单城单位保留一个；新增覆盖国家保留原国界并添加城市点。其余国家和地区可整体标记。</p><p>Natural Earth · © OpenStreetMap contributors。新加坡保留社区发展理事会辖区，新西兰含部分岛屿；具体范围、版本、许可证与开放数据下载见 <a href="assets/geo/world-data-sources.md" target="_blank" rel="noopener">世界地图数据说明</a>、<a href="assets/geo/world-cities-sources.md" target="_blank" rel="noopener">海外城市与来源</a>、<a href="assets/geo/china-data-sources.md" target="_blank" rel="noopener">中国地图数据说明</a>。</p><p>边界以各数据源所载版本为准，用于个人旅行记录。旧记录迁移依据见 <a href="assets/geo/china-prefecture-migration-map.json" target="_blank" rel="noopener">县区归市对应关系</a>。</p>');
 async function init(){
   try{
     [chinaIndex,worldIndex,migration,reversal,worldCities,cityMigration,countyIndex,prefectureMigration]=await Promise.all([jsonFile('assets/geo/china-prefecture-index.json'),jsonFile('assets/geo/world-index.json'),jsonFile('assets/geo/county-migration-map.json'),jsonFile('assets/geo/region-level-reversal-map.json'),jsonFile('assets/geo/world-cities.json'),jsonFile('assets/geo/world-city-migration-map.json'),jsonFile('assets/geo/china-index.json'),jsonFile('assets/geo/china-prefecture-migration-map.json')]);
     migration={version:1,mappings:{...migration.mappings,...reversal.mappings}};
-    const [wg,pg,cg,tg]=await Promise.all([jsonFile('assets/geo/world.geo.json'),jsonFile('assets/provinces.json'),jsonFile('assets/cities.json'),jsonFile('assets/taiwan-counties.json')]);
-    world=wg.features;provinces=pg.features.filter(f=>/^\d{6}$/.test(String(f.properties.adcode)));
+    const [wg,pg,cg,tg,franceParts]=await Promise.all([jsonFile('assets/geo/world.geo.json'),jsonFile('assets/provinces.json'),jsonFile('assets/cities.json'),jsonFile('assets/taiwan-counties.json'),jsonFile('assets/geo/world-france-parts.geo.json')]);
+    world=wg.features.flatMap(f=>R.id(f)==='world:FRA'?franceParts.features:[f]);provinces=pg.features.filter(f=>/^\d{6}$/.test(String(f.properties.adcode)));
     if(tg.outline)provinces.find(f=>R.id(f)==='710000').geometry=tg.outline;
     model=R.catalog(chinaIndex,worldIndex,[...cg.features,...tg.features,...countyIndex.features],reversal,worldCities,prefectureMigration);features=model.features;
     const countries=worldIndex.countries.filter(p=>!['TWN','HKG','MAC'].includes(p.countryCode)).sort((a,b)=>(a.countryCode==='CHN'?-1:b.countryCode==='CHN'?1:a.name.localeCompare(b.name,'zh-CN')));
