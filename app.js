@@ -359,8 +359,21 @@ function renderCollection(){
 function renderStats(){
   const v=visits(),key=f=>R.countryOf(f)==='CHN'?f.properties.province:f.properties.country,groups=d3.group(v,key);
   $('#province-stats').innerHTML=groups.size?[...groups].sort((a,b)=>b[1].length-a[1].length).map(([name,fs])=>{const total=features.filter(f=>key(f)===name).length,current=fs.filter(f=>model.byId.has(R.id(f))).length,legacy=fs.length-current;return '<div class="bar-row"><div class="bar-label"><span>'+esc(name||'旧版足迹')+'</span><span>'+current+(total?' / '+total:'')+' 个地区'+(legacy?' · 另有 '+legacy+' 条旧足迹':'')+'</span></div><div class="bar-track"><i style="width:'+Math.min(100,current/(total||current||1)*100)+'%"></i></div></div>';}).join(''):'<p class="empty-results">插下第一面旗后，这里会展示探索进度。</p>';
-  $('#timeline').innerHTML=v.length?[...v].sort((a,b)=>(records[R.id(a)].date||'9999').localeCompare(records[R.id(b)].date||'9999')).map(f=>{const r=records[R.id(f)];return '<div class="timeline-item"><small>'+esc(dateString(r.date))+'</small><h4>'+esc(R.displayName(f))+'</h4><p>'+esc(R.trail(f))+'</p>'+(r.note?'<p>'+esc(r.note)+'</p>':'')+'</div>';}).join(''):'<p class="empty-results">记录首次到访日期，串起你的旅行时间线。</p>';
+  const entries=timelineEntries();
+  $('#timeline').innerHTML=entries.length?entries.map(entry=>'<div class="timeline-item"><div class="timeline-meta"><small>'+esc(dateString(entry.date))+'</small><span class="timeline-kind">'+(entry.kind==='landmark'?'景点':'城市 / 地区')+'</span></div><div class="timeline-heading"><h4>'+esc(entry.name)+'</h4><button type="button" class="timeline-edit" data-timeline-kind="'+entry.kind+'" data-timeline-id="'+esc(entry.id)+'" aria-label="'+esc('编辑'+entry.name+'的首次到访日期')+'">编辑日期 <span aria-hidden="true">↗</span></button></div><p>'+esc(entry.location)+'</p>'+(entry.note?'<p>'+esc(entry.note)+'</p>':'')+'</div>').join(''):'<p class="empty-results">记录城市或景点的首次到访日期，串起你的旅行时间线。</p>';
+  $('#timeline').onclick=event=>{const button=event.target.closest('button[data-timeline-id]');if(button)openTimelineEntry(button.dataset.timelineKind,button.dataset.timelineId);};
 }
+function timelineEntries(){
+  const entries=visits().map(f=>{const r=records[R.id(f)];return {kind:'region',id:R.id(f),name:R.displayName(f),location:R.trail(f),date:r.date||'',note:r.note||''};});
+  const landmarkState=landmarkStore?.getState(),regionState=cloud?.getState();
+  const sameAccount=landmarkState?.ready&&regionState?.ready&&landmarkState.userId===regionState.userId&&Boolean(landmarkState.guest)===Boolean(regionState.guest);
+  const landmarkRecords=sameAccount?landmarkState.records||{}:{};
+  const places=new Map((landmarkCatalog?.places||[]).map(place=>[place.id,place]));
+  for(const place of places.values()){const r=landmarkRecords[place.id];if(r?.status==='visited')entries.push({kind:'landmark',id:place.id,name:place.name,location:place.location||place.country||'',date:r.date||'',note:r.note||''});}
+  return entries.sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.name.localeCompare(b.name,'zh-CN')||a.kind.localeCompare(b.kind)||a.id.localeCompare(b.id));
+}
+function openTimelineEntry(kind,id){if(kind==='region')openCity(id);else if(kind==='landmark')landmarkUI?.open(id);}
+function refreshLandmarkViews(){landmarkUI?.render();renderList();renderLandmarkMap();if(currentView==='stats')renderStats();}
 function renderAll(){renderSummary();renderList();renderMapState();if(currentView==='cities')renderCollection();if(currentView==='stats')renderStats();}
 $('#export-btn').onclick=()=>{
   const list=allVisits();if(!list.length){toast('先记录一段足迹，再来导出吧');return;}
@@ -388,7 +401,7 @@ async function init(){
     landmarkCatalog=ShanheLandmarks.catalog(SHANHE_LANDMARK_CATALOG);
     const hasOpenEditor=()=>Boolean(document.querySelector('#city-dialog[open]'))||Boolean(landmarkUI?.hasOpenEditor())||Boolean(familyUI?.hasOpenEditor());
     familyStore=createFamilyStore({onChange:syncMemberRecords,onAccountChange:resetFamilyAccount,hasOpenEditor});
-    primaryLandmarkStore=createLandmarkStore({onChange:()=>{landmarkUI?.render();renderList();renderLandmarkMap();},onAccountChange:()=>landmarkUI?.closeEditor(),hasOpenEditor});
+    primaryLandmarkStore=createLandmarkStore({onChange:refreshLandmarkViews,onAccountChange:()=>landmarkUI?.closeEditor(),hasOpenEditor});
     familyUI=createFamilyUI({store:familyStore,onActiveChange:changeRecordMember,onVisibilityChange:renderMapState,onAuth:()=>$('#cloud-account-btn').click(),notify:toast});
     landmarkStore=createFamilyArchiveAdapter({kind:'landmarks',primary:primaryLandmarkStore,family:familyStore,getMemberId:activeMemberId,getSelectionVersion:()=>selectionVersion});
     landmarkUI=createLandmarkUI({catalog:landmarkCatalog,store:landmarkStore,onMap:focusLandmark,onAuth:()=>$('#cloud-account-btn').click(),notify:toast,onViewChange:goView,countries:model.countries});
