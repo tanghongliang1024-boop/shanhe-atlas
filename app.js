@@ -51,12 +51,31 @@ function setDetailBusy(busy){detailBusy=busy;$('#city-form').querySelectorAll('b
 function showSaveResult(result){$('#detail-save-status').textContent=result.ok?(result.guest?'已临时保存在此浏览器。':'已保存到云端。'):result.message;$('#detail-save-status').dataset.error=String(!result.ok);$('#detail-reload-cloud').hidden=result.ok||result.code!=='CONFLICT';$('#detail-reload-cloud').textContent=cloud.getState().guest?'读取最新临时足迹并重新编辑':'读取最新云端记录并重新编辑';}
 function goView(view){if(view!=='map')landmarkFocus++;currentView=view;document.body.dataset.activeView=view;['map','cities','stats','landmarks','passport'].forEach(v=>{$('#'+v+'-view').hidden=v!==view;});document.querySelectorAll('.nav-item[data-view]').forEach(nav=>{const active=nav.dataset.view===(view==='cities'?'passport':view);nav.classList.toggle('active',active);nav.setAttribute('aria-current',active?'page':'false');});if(view==='cities')renderCollection();if(view==='stats')renderStats();if(['landmarks','passport'].includes(view))landmarkUI?.render();if(phoneLayout.matches){window.scrollTo({top:0,behavior:'instant'});setMapTouch(false);}if(view==='map')updateMapOverlays();}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>goView(b.dataset.view));
+function summaryMemberEntries(){
+  const regionState=primaryCloud?.getState(),landmarkState=primaryLandmarkStore?.getState(),familyState=familyStore?.getState();
+  const sameFamily=familyState&&regionState&&familyState.userId===regionState.userId&&Boolean(familyState.guest)===Boolean(regionState.guest);
+  const sameLandmarks=landmarkState?.ready&&regionState?.ready&&landmarkState.userId===regionState.userId&&Boolean(landmarkState.guest)===Boolean(regionState.guest);
+  const members=familyState?.document.members||[{id:'self',name:'我',color:'terracotta'}];
+  const visible=new Set(familyUI?.visibleIds()||['self']);
+  return members.filter(member=>visible.has(member.id)).map(member=>{
+    const self=member.id==='self',ready=Boolean(self?sameFamily&&sameLandmarks:sameFamily&&regionState.ready&&familyState.ready&&!familyState.guest&&familyState.userId);
+    const color=ShanheFamily.COLORS.find(color=>color.id===member.color)||ShanheFamily.COLORS[0];
+    return {member:{...member,hex:color.hex},ready,
+      regions:ready?(self?regionState.records:familyState.document.regions[member.id])||{}:{},
+      landmarks:ready?(self?(sameLandmarks?landmarkState.records:{}):familyState.document.landmarks[member.id])||{}:{}};
+  });
+}
 function renderSummary(){
-  const v=visits(),cn=v.filter(f=>R.countryOf(f)==='CHN'&&f.properties.level!=='legacy');
-  const count=visitedCountryCodes().size;
-  const progress=chinaIndex?cn.length/chinaIndex.features.length*100:0;
-  $('#city-count').textContent=v.length;$('#province-count').textContent=count;
-  $('#progress-count').textContent=Number(progress.toFixed(1));$('#progress-ring').style.background='conic-gradient(var(--green) '+progress+'%,#edf0e8 0)';
+  const entries=summaryMemberEntries().map(entry=>{
+    const v=model?R.recordsWithFeatures(entry.regions,model).filter(f=>!f.properties.prefectureTarget):[];
+    const cn=v.filter(f=>R.countryOf(f)==='CHN'&&f.properties.level!=='legacy');
+    return {...entry,regions:v.length,countries:visitedCountryCodes(v,entry.landmarks).size,progress:chinaIndex?.features.length?Number((cn.length/chinaIndex.features.length*100).toFixed(1)):0};
+  });
+  for(const key of ['regions','countries','progress']){
+    const unit=key==='progress'?'%':'个';
+    $('#summary-'+key).innerHTML=entries.map(entry=>'<li class="summary-member-row" data-summary-member="'+esc(entry.member.id)+'" style="--member-color:'+entry.member.hex+'"><span class="summary-member-name">'+icon('flag')+'<span>'+esc(entry.member.name)+'</span></span><span class="summary-member-value"><strong>'+ (entry.ready?entry[key]:'—')+'</strong><span class="stat-unit">'+(entry.ready?unit:'读取中')+'</span></span></li>').join('');
+  }
+  $('#summary-empty').hidden=entries.length>0;
 }
 function renderList(){
   if(!model)return;
@@ -368,10 +387,9 @@ function currentLandmarkRecords(){
   const sameAccount=landmarkState?.ready&&regionState?.ready&&landmarkState.userId===regionState.userId&&Boolean(landmarkState.guest)===Boolean(regionState.guest);
   return sameAccount?landmarkState.records||{}:{};
 }
-function visitedCountryCodes(){
+function visitedCountryCodes(regionVisits=visits(),landmarkRecords=currentLandmarkRecords()){
   const countryCode=code=>R.countryOf({properties:model?.countries.get(code)||{countryCode:code}});
-  const countries=new Set(visits().map(feature=>countryCode(R.countryOf(feature))));
-  const landmarkRecords=currentLandmarkRecords();
+  const countries=new Set(regionVisits.map(feature=>countryCode(R.countryOf(feature))));
   for(const place of landmarkCatalog?.places||[]){if(landmarkRecords[place.id]?.status==='visited')countries.add(countryCode(place.countryCode));}
   return countries;
 }
@@ -393,7 +411,7 @@ $('#export-btn').onclick=()=>{
 };
 function showInfo(html){$('#info-body').innerHTML=html;$('#info-dialog').showModal();}
 $('#close-info').onclick=()=>$('#info-dialog').close();
-$('#help-btn').onclick=()=>showInfo('<h2>从一面小旗开始</h2><p>家庭旅行：登录后在页面顶部管理成员，一个邮箱最多记录 4 人。选择当前记录人为他单独保存；勾选地图显示成员，可同时查看不同颜色的旗子。共同到访的地点并排显示，取消一个人的到访不会影响其他成员。原有记录归在“我”名下。</p><p>① 无需注册，先选择国家或中国省份，进入详细地图；也可以直接搜索城市或州省名称。</p><p>② 海外地图支持按城市记录。已有省州细分的国家保留省州地块；新增覆盖的欧洲国家保留国界。点击城市圆点，或点击地块选择城市；填写首次到访日期和旅行记忆，保存足迹。总览上的数字小旗表示该区域的足迹数量。</p><p>③ 足迹临时保存在此浏览器。想长期保存或换设备继续时，点击“保存到云端”，用邮箱注册或登录；注册需两次输入相同密码并验证邮箱。</p><p>登录后的修改直接保存到云端，以成功提示为准。本机与云端同一地区内容不同的草稿会保留，避免覆盖。你也可以导出 CSV 留存。</p><p>大陆（含海南）改回地市级。旧县区足迹归到所属地市；地市已有记录时保留它，没有记录时取日期最早的一条完整记录。其他县区日期和笔记留在城市详情的历史记录里，不重复插旗或计数。取消城市到访后，历史记录不会重新生成旗子。台湾恢复22县市，港澳整体标记。海外旧省州足迹按已核实的首府归档，日期、笔记与更新时间原样保留；目标已有记录或首府无法唯一确定时，旧记录完整保留供整理。新增欧洲城市后，原有国家级足迹仍按原名保留，不自动改成某个城市。旧分区足迹回到所属县市，日期与笔记保持不变；同一县市有多条记录时，其余内容单独保留在“我的足迹”中。</p>');
+$('#help-btn').onclick=()=>showInfo('<h2>从一面小旗开始</h2><p>家庭旅行：登录后在页面顶部管理成员，一个邮箱最多记录 4 人。选择当前记录人为他单独保存；勾选显示成员，可同时查看不同颜色的旗子和各自的旅行统计。共同到访的地点并排显示，取消一个人的到访不会影响其他成员。原有记录归在“我”名下。</p><p>① 无需注册，先选择国家或中国省份，进入详细地图；也可以直接搜索城市或州省名称。</p><p>② 海外地图支持按城市记录。已有省州细分的国家保留省州地块；新增覆盖的欧洲国家保留国界。点击城市圆点，或点击地块选择城市；填写首次到访日期和旅行记忆，保存足迹。总览上的数字小旗表示该区域的足迹数量。</p><p>③ 足迹临时保存在此浏览器。想长期保存或换设备继续时，点击“保存到云端”，用邮箱注册或登录；注册需两次输入相同密码并验证邮箱。</p><p>登录后的修改直接保存到云端，以成功提示为准。本机与云端同一地区内容不同的草稿会保留，避免覆盖。你也可以导出 CSV 留存。</p><p>大陆（含海南）改回地市级。旧县区足迹归到所属地市；地市已有记录时保留它，没有记录时取日期最早的一条完整记录。其他县区日期和笔记留在城市详情的历史记录里，不重复插旗或计数。取消城市到访后，历史记录不会重新生成旗子。台湾恢复22县市，港澳整体标记。海外旧省州足迹按已核实的首府归档，日期、笔记与更新时间原样保留；目标已有记录或首府无法唯一确定时，旧记录完整保留供整理。新增欧洲城市后，原有国家级足迹仍按原名保留，不自动改成某个城市。旧分区足迹回到所属县市，日期与笔记保持不变；同一县市有多条记录时，其余内容单独保留在“我的足迹”中。</p>');
 $('#coverage-btn').onclick=()=>showInfo('<h2>地图数据与范围</h2><p>中国共 '+chinaIndex.features.length+' 个可标记地区，大陆（含海南）按地市、自治州、地区及盟等单位标记，四个直辖市各为一个城市；没有上级地市的省直辖单位沿用独立记录。台湾保持22个县市，香港、澳门各为整体。</p><p>世界总览包含 '+worldIndex.countries.length+' 个国家和地区边界要素，其中 '+worldIndex.detailCountries.length+' 个旅行目的地保留州省边界，并按其中的城市或主要居民点记录足迹。每个区域提供代表城市，热门旅行省州补充更多旅游城市；无人离岛不虚构城市，新加坡共用同一个城市记录。欧洲各国及跨洲旅行目的地至少提供5个真实城市或城镇，摩纳哥、梵蒂冈等单城单位保留一个；新增覆盖国家保留原国界并添加城市点。其余国家和地区可整体标记。</p><p>美国城市目录采用50州及华盛顿特区的数据，只收录正式建制城市与法定城镇，不包含统计居民点；夏威夷州在此口径下暂无可选地点，已有居民点足迹作为历史记录保留。来源口径、版本及数量见 <a href="assets/geo/us-cities-sources.md" target="_blank" rel="noopener">美国城市目录说明</a>。未有核实中文名的地点使用官方英文名称。同名地点按州区分，必要时附县名。</p><p>Natural Earth · U.S. Census Bureau · © OpenStreetMap contributors。新加坡保留社区发展理事会辖区，新西兰含部分岛屿；具体范围、版本、许可证与开放数据下载见 <a href="assets/geo/world-data-sources.md" target="_blank" rel="noopener">世界地图数据说明</a>、<a href="assets/geo/world-cities-sources.md" target="_blank" rel="noopener">海外城市与来源</a>、<a href="assets/geo/china-data-sources.md" target="_blank" rel="noopener">中国地图数据说明</a>。</p><p>边界以各数据源所载版本为准，用于个人旅行记录。旧记录迁移依据见 <a href="assets/geo/china-prefecture-migration-map.json" target="_blank" rel="noopener">县区归市对应关系</a>。</p>');
 async function init(){
   try{
@@ -412,7 +430,7 @@ async function init(){
     const hasOpenEditor=()=>Boolean(document.querySelector('#city-dialog[open]'))||Boolean(landmarkUI?.hasOpenEditor())||Boolean(familyUI?.hasOpenEditor());
     familyStore=createFamilyStore({onChange:syncMemberRecords,onAccountChange:resetFamilyAccount,hasOpenEditor});
     primaryLandmarkStore=createLandmarkStore({onChange:refreshLandmarkViews,onAccountChange:()=>landmarkUI?.closeEditor(),hasOpenEditor});
-    familyUI=createFamilyUI({store:familyStore,onActiveChange:changeRecordMember,onVisibilityChange:renderMapState,onAuth:()=>$('#cloud-account-btn').click(),notify:toast});
+    familyUI=createFamilyUI({store:familyStore,onActiveChange:changeRecordMember,onVisibilityChange:()=>{renderSummary();renderMapState();},onAuth:()=>$('#cloud-account-btn').click(),notify:toast});
     landmarkStore=createFamilyArchiveAdapter({kind:'landmarks',primary:primaryLandmarkStore,family:familyStore,getMemberId:activeMemberId,getSelectionVersion:()=>selectionVersion});
     landmarkUI=createLandmarkUI({catalog:landmarkCatalog,store:landmarkStore,onMap:focusLandmark,onAuth:()=>$('#cloud-account-btn').click(),notify:toast,onViewChange:goView,countries:model.countries});
     landmarkMap=createLandmarkMap({catalog:landmarkCatalog,store:landmarkStore,getMembers:()=>mapMemberEntries('landmarks'),open:openLandmarkFromMap});
