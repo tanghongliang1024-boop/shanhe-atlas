@@ -53,7 +53,7 @@ function goView(view){if(view!=='map')landmarkFocus++;currentView=view;document.
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>goView(b.dataset.view));
 function renderSummary(){
   const v=visits(),cn=v.filter(f=>R.countryOf(f)==='CHN'&&f.properties.level!=='legacy');
-  const count=new Set(v.map(R.countryOf)).size;
+  const count=visitedCountryCodes().size;
   const progress=chinaIndex?cn.length/chinaIndex.features.length*100:0;
   $('#city-count').textContent=v.length;$('#province-count').textContent=count;
   $('#progress-count').textContent=Number(progress.toFixed(1));$('#progress-ring').style.background='conic-gradient(var(--green) '+progress+'%,#edf0e8 0)';
@@ -363,17 +363,27 @@ function renderStats(){
   $('#timeline').innerHTML=entries.length?entries.map(entry=>'<div class="timeline-item"><div class="timeline-meta"><small>'+esc(dateString(entry.date))+'</small><span class="timeline-kind">'+(entry.kind==='landmark'?'景点':'城市 / 地区')+'</span></div><div class="timeline-heading"><h4>'+esc(entry.name)+'</h4><button type="button" class="timeline-edit" data-timeline-kind="'+entry.kind+'" data-timeline-id="'+esc(entry.id)+'" aria-label="'+esc('编辑'+entry.name+'的首次到访日期')+'">编辑日期 <span aria-hidden="true">↗</span></button></div><p>'+esc(entry.location)+'</p>'+(entry.note?'<p>'+esc(entry.note)+'</p>':'')+'</div>').join(''):'<p class="empty-results">记录城市或景点的首次到访日期，串起你的旅行时间线。</p>';
   $('#timeline').onclick=event=>{const button=event.target.closest('button[data-timeline-id]');if(button)openTimelineEntry(button.dataset.timelineKind,button.dataset.timelineId);};
 }
-function timelineEntries(){
-  const entries=visits().map(f=>{const r=records[R.id(f)];return {kind:'region',id:R.id(f),name:R.displayName(f),location:R.trail(f),date:r.date||'',note:r.note||''};});
+function currentLandmarkRecords(){
   const landmarkState=landmarkStore?.getState(),regionState=cloud?.getState();
   const sameAccount=landmarkState?.ready&&regionState?.ready&&landmarkState.userId===regionState.userId&&Boolean(landmarkState.guest)===Boolean(regionState.guest);
-  const landmarkRecords=sameAccount?landmarkState.records||{}:{};
+  return sameAccount?landmarkState.records||{}:{};
+}
+function visitedCountryCodes(){
+  const countryCode=code=>R.countryOf({properties:model?.countries.get(code)||{countryCode:code}});
+  const countries=new Set(visits().map(feature=>countryCode(R.countryOf(feature))));
+  const landmarkRecords=currentLandmarkRecords();
+  for(const place of landmarkCatalog?.places||[]){if(landmarkRecords[place.id]?.status==='visited')countries.add(countryCode(place.countryCode));}
+  return countries;
+}
+function timelineEntries(){
+  const entries=visits().map(f=>{const r=records[R.id(f)];return {kind:'region',id:R.id(f),name:R.displayName(f),location:R.trail(f),date:r.date||'',note:r.note||''};});
+  const landmarkRecords=currentLandmarkRecords();
   const places=new Map((landmarkCatalog?.places||[]).map(place=>[place.id,place]));
   for(const place of places.values()){const r=landmarkRecords[place.id];if(r?.status==='visited')entries.push({kind:'landmark',id:place.id,name:place.name,location:place.location||place.country||'',date:r.date||'',note:r.note||''});}
   return entries.sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.name.localeCompare(b.name,'zh-CN')||a.kind.localeCompare(b.kind)||a.id.localeCompare(b.id));
 }
 function openTimelineEntry(kind,id){if(kind==='region')openCity(id);else if(kind==='landmark')landmarkUI?.open(id);}
-function refreshLandmarkViews(){landmarkUI?.render();renderList();renderLandmarkMap();if(currentView==='stats')renderStats();}
+function refreshLandmarkViews(){landmarkUI?.render();renderSummary();renderList();renderLandmarkMap();if(currentView==='stats')renderStats();}
 function renderAll(){renderSummary();renderList();renderMapState();if(currentView==='cities')renderCollection();if(currentView==='stats')renderStats();}
 $('#export-btn').onclick=()=>{
   const list=allVisits();if(!list.length){toast('先记录一段足迹，再来导出吧');return;}
