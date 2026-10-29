@@ -287,9 +287,8 @@ function renderMapState(){
   markers.selectAll('*').remove();
   southMarkers?.selectAll('*').remove();
   if(mode==='flag'){
-    const openFlag=f=>{familyUI.selectMember(f.member.id);if(f.target==='record'||f.target==='legacy-region')openCity(R.id(f));else openShape(f);};
     const paintFlags=(parent,data)=>{
-    const flags=parent.selectAll('g').data(data).join('g').attr('class',f=>'city-marker'+(f.target==='legacy-region'?' legacy-region-marker':'')).attr('role','button').attr('tabindex',0).attr('aria-label',f=>f.member.name+'，'+R.displayName(f)+(f.target==='legacy-region'?'，旧省州足迹待整理':'，'+f.count+'处足迹')).on('click',(e,f)=>{e.stopPropagation();openFlag(f);}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFlag(f);}});
+    const flags=parent.selectAll('g').data(data).join('g').attr('class',f=>'city-marker'+(f.target==='legacy-region'?' legacy-region-marker':'')).attr('role','button').attr('tabindex',0).attr('aria-label',f=>f.member.name+'，'+R.displayName(f)+(f.target==='legacy-region'?'，旧省州足迹待整理':'，'+f.count+'处足迹')+'，查看当前记录人的足迹').on('click',(e,f)=>{e.stopPropagation();openRegionFlag(f);}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openRegionFlag(f);}});
     flags.append('rect').attr('x',-10).attr('y',-35).attr('width',44).attr('height',44).attr('fill','transparent');
     flags.append('ellipse').attr('cx',0).attr('cy',2).attr('rx',5).attr('ry',2).attr('fill','#9cae8270');
     flags.append('path').attr('d','M0,1 V-26').attr('stroke','#7c6246').attr('stroke-width',1.7);
@@ -301,6 +300,10 @@ function renderMapState(){
   }
   renderLandmarkMap();updateMapOverlays();
 }
+// Coloured flags show who visited; editing always follows the member explicitly
+// selected above the map, including when a flag overlaps a city's hit target.
+function openRegionFlag(f){if(f.target==='record'||f.target==='legacy-region')openCity(R.id(f));else openShape(f);}
+function openLandmarkFromMap(id){landmarkUI.open(id);}
 function renderLandmarkMap(){if(svg&&projection)landmarkMap?.render({scope,projection,mapHeight,width:svg.node().getBoundingClientRect().width,transform:d3.zoomTransform(svg.node())});}
 async function focusLandmark(place){
   goView('map');const focusRequest=++landmarkFocus;landmarkMap.show();
@@ -389,7 +392,7 @@ async function init(){
     familyUI=createFamilyUI({store:familyStore,onActiveChange:changeRecordMember,onVisibilityChange:renderMapState,onAuth:()=>$('#cloud-account-btn').click(),notify:toast});
     landmarkStore=createFamilyArchiveAdapter({kind:'landmarks',primary:primaryLandmarkStore,family:familyStore,getMemberId:activeMemberId,getSelectionVersion:()=>selectionVersion});
     landmarkUI=createLandmarkUI({catalog:landmarkCatalog,store:landmarkStore,onMap:focusLandmark,onAuth:()=>$('#cloud-account-btn').click(),notify:toast,onViewChange:goView,countries:model.countries});
-    landmarkMap=createLandmarkMap({catalog:landmarkCatalog,store:landmarkStore,getMembers:()=>mapMemberEntries('landmarks'),open:(id,memberId)=>{if(memberId)familyUI.selectMember(memberId);landmarkUI.open(id);}});
+    landmarkMap=createLandmarkMap({catalog:landmarkCatalog,store:landmarkStore,getMembers:()=>mapMemberEntries('landmarks'),open:openLandmarkFromMap});
     primaryCloud=createShanheCloud({
       getLocalRecords:readLocalRecords,notify:toast,regionMigration:migration,cityMigration,prefectureMigration,
       companion:{start:client=>Promise.all([primaryLandmarkStore.start(client),familyStore.start(client)]),rememberIntent:email=>primaryLandmarkStore.rememberIntent(email)},
