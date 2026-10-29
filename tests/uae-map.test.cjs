@@ -177,7 +177,7 @@ test('production progress counts current UAE cities separately from retained cou
     return elements.get(selector);
   };
   const helpers=source.slice(source.indexOf('const icon='),source.indexOf('const R='));
-  const context={R,d3,model,features:model.features,records:{[COUNTRY]:row('旧国家笔记')},$:el,
+  const context={R,d3,model,features:model.features,records:{[COUNTRY]:row('旧国家笔记')},$:el,landmarkStore:null,landmarkCatalog:null,cloud:null,
     dateString:value=>value?value.replaceAll('-','.'):'待补充'};
   context.visits=()=>resolved(context.records);
   vm.createContext(context);vm.runInContext(helpers+source.slice(begin,end)+'renderStats();',context);
