@@ -18,14 +18,23 @@
     if(supplement?.version!==1||JSON.stringify(supplement.columns)!==JSON.stringify(columns)||!Array.isArray(supplement.rows))throw Error('Invalid US city catalogue');
     const regions=new Map(worldIndex.regions.filter(p=>p.countryCode==='USA').map(p=>[String(p.adcode),p]));
     const existing=new Set(worldCities.cities.map(p=>String(p.adcode)));
-    const added=supplement.rows.map(row=>{
+    const retiredExisting=supplement.retiredExisting||[],retiredRows=supplement.retiredRows||[];
+    if(!Array.isArray(retiredExisting)||!Array.isArray(retiredRows))throw Error('Invalid retired US cities');
+    const retiredIds=new Set();
+    for(const item of retiredExisting){
+      const key=String(item?.adcode||''),city=worldCities.cities.find(p=>String(p.adcode)===key);
+      if(!city||city.countryCode!=='USA'||retiredIds.has(key))throw Error('Invalid retired existing US city: '+key);
+      retiredIds.add(key);
+    }
+    const decode=row=>{
       if(!Array.isArray(row)||row.length!==columns.length)throw Error('Invalid US city row');
       const [geoid,kind,state,name,longitude,latitude,county]=row,parentRegionId='world:USA:US-'+state;
       if(!['place','town'].includes(kind)||!(kind==='place'?/^\d{7}$/:/^\d{10}$/).test(geoid)||!regions.has(parentRegionId)||typeof name!=='string'||!name.trim()||typeof county!=='string'||!Number.isFinite(longitude)||!Number.isFinite(latitude)||Math.abs(longitude)>180||Math.abs(latitude)>90)throw Error('Invalid US city: '+geoid);
       const adcode='world:USA:city-us'+kind+geoid;if(existing.has(adcode))throw Error('Duplicate US city: '+adcode);existing.add(adcode);
       return {adcode,name,nameEn:name,officialName:name,aliases:[name,county,state].filter(Boolean),country:'美国',countryCode:'USA',province:regions.get(parentRegionId).name,provinceCode:parentRegionId,parentRegionId,parentId:parentRegionId,county,center:[longitude,latitude],level:'city',source:'US Census Bureau',sourceId:geoid,catalogKind:kind==='town'?'census-town':'census-place'};
-    });
-    return {...worldCities,cities:[...worldCities.cities,...added],usCoverage:supplement.coverage};
+    };
+    const added=supplement.rows.map(decode),retired=retiredRows.map(decode);
+    return {...worldCities,cities:[...worldCities.cities.filter(p=>!retiredIds.has(String(p.adcode))),...added],legacyCities:[...(worldCities.legacyCities||[]),...worldCities.cities.filter(p=>retiredIds.has(String(p.adcode))),...retired],usCoverage:supplement.coverage};
   }
   function catalog(chinaIndex,worldIndex,legacy=[],reversal,worldCities,prefectureMigration){
     const countries=new Map(worldIndex.countries.map(p=>[p.countryCode,p]));
