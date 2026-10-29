@@ -22,7 +22,7 @@ const row=note=>({visited:true,date:'2018-05-06',note,updatedAt:'2026-10-29T00:0
 const CA='world:USA:US-CA',TX='world:USA:US-TX',COUNTRY='world:USA';
 const fixtureId=i=>'world:USA:city-usplace'+(6990000+i);
 
-function harness(records={}){
+function harness(records={},catalogue=model,cityData=worldCities){
   const elements=new Map(),opened=[];
   function el(selector){
     if(!elements.has(selector)){
@@ -35,8 +35,8 @@ function harness(records={}){
     }
     return elements.get(selector);
   }
-  const context={R,ShanheCityCatalog:C,$:el,model,worldCities,records,regionSelection:null,
-    citySearch:C.createSearch(model.features,R),openCity:id=>opened.push(id),focusRegion:()=>{},
+  const context={R,ShanheCityCatalog:C,$:el,model:catalogue,worldCities:cityData,records,regionSelection:null,
+    citySearch:C.createSearch(catalogue.features,R),openCity:id=>opened.push(id),focusRegion:()=>{},
     visited:feature=>context.records[R.id(feature)]?.visited===true};
   vm.createContext(context);vm.runInContext(helpers+regionSource,context);
   return {context,el,opened,open:id=>context.openWorldRegion(id),
@@ -130,6 +130,78 @@ test('small-country pickers retain the complete city selection without showing p
   assert.equal(h.ids().length,7);
   assert.equal(h.el('#region-search-field').hidden,true);
   assert.equal(h.el('#region-pagination').hidden,true);
+});
+
+const currentCities=R.withCitySupplement(originalCities,read('us-cities.json'),worldIndex);
+const currentModel=R.catalog(read('china-prefecture-index.json'),worldIndex,[],null,currentCities);
+const HI='world:USA:US-HI',HONOLULU='world:USA:city-1159151221',HILO='world:USA:city-1159149209';
+
+test('production Hawaii picker explains the formal-city scope without offering former CDPs as new visits',()=>{
+  const records={[HI]:row('原州记录'),[HONOLULU]:row('旧檀香山记录')},before=structuredClone(records);
+  const h=harness(records,currentModel,currentCities);h.open(HI);
+  assert.deepEqual(h.ids(),[]);
+  assert.match(h.el('#region-intro').textContent,/暂无可选的正式建制城市或城镇/);
+  assert.match(h.el('#region-cities').innerHTML,/已有居民点足迹仍可.*查看和编辑/);
+  assert.doesNotMatch(h.el('#region-intro').textContent,/没有.*常住城市/);
+  assert.equal(h.el('#region-pagination').hidden,true);
+  assert.equal(h.el('#region-search-field').hidden,true);
+  assert.equal(h.el('#region-legacy').hidden,false);
+  h.search('Honolulu');assert.deepEqual(h.ids(),[],'a saved CDP cannot return to the state picker');
+  h.el('#region-legacy').onclick();assert.equal(h.opened.at(-1),HI);
+  assert.deepEqual(records,before);
+});
+
+test('production homepage only exposes retired CDPs as the current member saved history',()=>{
+  const h=harness({},currentModel,currentCities);
+  Object.assign(h.context,{features:currentModel.features,landmarkCatalog:null,landmarkStore:null,listLimit:60,
+    visits:()=>R.recordsWithFeatures(h.context.records,currentModel),
+    isWorldLegacy:feature=>feature.properties.legacyKind==='world-region',isCountryLegacy:feature=>feature.properties.legacyKind==='world-country',
+    dateString:value=>value?value.replaceAll('-','.'):'待补充'});
+  vm.runInContext(extract('function renderList(){','function resetList()'),h.context);
+  h.el('#city-search').value='Honolulu';h.el('#country-filter').value='USA';h.el('#province-filter').value='all';h.el('#status-filter').value='all';
+  h.context.renderList();assert.deepEqual(h.el('#city-list').querySelectorAll('[data-city]'),[]);
+  h.context.records={[HONOLULU]:row('本成员的原檀香山记录')};h.context.renderList();
+  assert.deepEqual(h.el('#city-list').querySelectorAll('[data-city]').map(button=>button.dataset.city),[HONOLULU]);
+  assert.match(h.el('#city-list').innerHTML,/已从地图移除，记录保留/);
+  h.el('#status-filter').value='unvisited';h.context.renderList();assert.deepEqual(h.el('#city-list').querySelectorAll('[data-city]'),[]);
+  h.el('#status-filter').value='all';h.context.records={};h.context.renderList();
+  assert.deepEqual(h.el('#city-list').querySelectorAll('[data-city]'),[],'switching to a child without that history hides it');
+});
+
+test('production retired-city editor keeps old dates and notes but cannot locate or create a removed CDP',()=>{
+  const records={[HONOLULU]:row('旧檀香山记忆\n第二行')},before=structuredClone(records),h=harness(records,currentModel,currentCities);
+  Object.assign(h.context,{detailBusy:false,selected:null,detailContext:null,detailBase:{},
+    cloud:{canEdit:()=>true,context:()=>({memberId:'self'}),getState:()=>({records:h.context.records,guest:true})},
+    visits:()=>R.recordsWithFeatures(h.context.records,currentModel),isWorldLegacy:feature=>feature.properties.legacyKind==='world-region',
+    isCountryLegacy:feature=>feature.properties.legacyKind==='world-country',toast:()=>assert.fail('valid saved history is editable')});
+  vm.runInContext(openCitySource,h.context);h.context.openCity(HONOLULU);
+  assert.equal(h.el('#city-dialog').open,true);
+  assert.equal(h.el('#detail-date').value,'2018-05-06');
+  assert.equal(h.el('#detail-note').value,'旧檀香山记忆\n第二行');
+  assert.equal(h.el('#detail-show-map').hidden,true);
+  assert.equal(h.el('#legacy-city-choice').hidden,true);
+  assert.match(h.el('#detail-province').textContent,/旧足迹仍可查看、编辑和导出/);
+  h.el('#city-dialog').close();h.context.records={};h.context.openCity(HONOLULU);
+  assert.equal(h.el('#city-dialog').open,false,'an unsaved removed ID cannot create a new visit');
+  assert.deepEqual(records,before);
+});
+
+test('production CSV export includes each member retired CDP names, IDs, dates and original notes',async()=>{
+  const members=[{[HONOLULU]:row('甲的旧记录,带逗号\n第二行')},{[HILO]:row('乙的旧记录 "保留"')}];
+  const before=structuredClone(members),h=harness(members[0],currentModel,currentCities),blobs=[],downloads=[];
+  Object.assign(h.context,{allVisits:()=>R.recordsWithFeatures(h.context.records,currentModel),Blob,
+    URL:{createObjectURL(blob){blobs.push(blob);return 'blob:test';},revokeObjectURL(){}},
+    document:{createElement(){return {click(){downloads.push(this.download);}};}},setTimeout:callback=>callback(),toast:()=>{}});
+  vm.runInContext(extract("$('#export-btn').onclick=()=>{",'function showInfo(html)'),h.context);
+  for(const records of members){h.context.records=records;h.el('#export-btn').onclick();}
+  assert.equal(downloads.length,2);
+  const first=await blobs[0].text(),second=await blobs[1].text();
+  assert.ok(first.includes(currentModel.legacyById.get(HONOLULU).properties.name));
+  assert.ok(first.includes('"'+HONOLULU+'"'));assert.ok(first.includes('"2018-05-06"'));
+  assert.ok(first.includes('"甲的旧记录,带逗号\n第二行"'));
+  assert.ok(second.includes('"'+HILO+'"'));assert.ok(second.includes('"乙的旧记录 ""保留"""'));
+  assert.equal(first.includes(HILO),false);assert.equal(second.includes(HONOLULU),false);
+  assert.deepEqual(members,before);
 });
 
 // Minimal data-join adapter: run the actual point renderer, recording the data
