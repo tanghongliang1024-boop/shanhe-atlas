@@ -41,6 +41,12 @@ Data API 的 Exposed schemas 应包含 public，**不包含 shanhe_private**。�
 
 点击“保存到云端”默认打开登录页，新用户可以切换注册。注册需两次输入相同密码，成功后关闭注册窗口并明确提示邮箱验证。保存意图与填写的邮箱绑定；单纯切换账号不会把上一个账号或其他邮箱的草稿上传。
 
+网页提供“输入邮箱验证码”入口，使用 `verifyOtp({ email, token, type: 'email' })` 验证注册邮件中的验证码；返回真实会话、匹配邮箱及服务端邮箱确认时间后才显示成功。验证码不进入 URL、存储或日志。注册后仅记住待验证邮箱，供刷新后继续；验证码验证和密码登录均保留原有游客转存与账号隔离保护。
+
+在 Authentication → Emails → Confirm sign up 中，将主题设置为“山河足迹 · 邮箱验证码”，正文使用本目录的 [confirm-signup.html](confirm-signup.html)。本项目 Email OTP length 为 8，expiration 为 3600 秒；模板与网页输入规则必须和这两项配置一致。模板仅包含 `{{ .Token }}` 与不带凭据的 `{{ .SiteURL }}?auth=verify` 入口，打开页面不自动验证、不自动发信，避免邮箱链接预读消耗验证码。旧邮件的验证链接仍兼容，过期或失败时会显示提示。[Supabase 邮件模板与 OTP](https://supabase.com/docs/guides/auth/auth-email-templates#email-prefetching)
+
+先部署并确认新版网页可用，再更新邮件模板。无需更改邮箱确认开关、密码规则、数据库或 RLS。真实验收须由邮箱持有人使用最新验证码，并核对后台 `email_confirmed_at` 与实际登录状态；本地模拟和自动化测试不代表真实投递已完成。
+
 前端配置只含项目 URL 和 publishable key。service_role、secret key、数据库密码、SMTP 密码和 Android 签名私钥都不得进入网页或公开源码。
 
 ## 版本保护与本机草稿
