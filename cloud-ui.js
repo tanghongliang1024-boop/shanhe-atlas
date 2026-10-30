@@ -3,7 +3,7 @@
   root.createShanheCloud=function({getLocalRecords,onRecords,onAccountChange,notify,hasOpenEditor,regionMigration,cityMigration,prefectureMigration,companion}){
     const $=s=>document.querySelector(s),config=root.SHANHE_CLOUD_CONFIG||{};
     const dialog=$('#cloud-dialog'),message=$('#cloud-message'),form=$('#cloud-auth-form');
-    const INTENT_KEY='shanhe-cloud-transfer-v2',LEGACY_INTENT_KEY='shanhe-cloud-transfer-v1';
+    const INTENT_KEY='shanhe-cloud-transfer-v2',LEGACY_INTENT_KEY='shanhe-cloud-transfer-v1',PENDING_EMAIL_KEY='shanhe-pending-email-v1';
     let storage;try{storage=root.localStorage;}catch(_){}
     const prefectureTargets=new Set(Object.values(prefectureMigration?.mappings||{}).filter(item=>item.verified===true).map(item=>item.targetId));
     const legacyRegionMigration=regionMigration&&prefectureMigration?{...regionMigration,mappings:Object.fromEntries(Object.entries(regionMigration.mappings).filter(([from])=>!prefectureTargets.has(from)))}:regionMigration;
@@ -15,12 +15,15 @@
     const guest=root.createGuestArchiveStore({storage,migrateLegacyRecords:migrateLegacy,migratePrefectureRecords:migratePrefecture});
     let provider,store,user=null,mode='login',authBusy=false,sessionKnown=false,signupSubmitted=false;
     let authSerial=0,sessionGeneration=0,dialogGeneration=0,recoveryUserId=null,sessionLoad=Promise.resolve();
-    let resendAfter=0;
+    let resendAfter=0,pendingEmail='',verificationRevision=0,verificationRequest=null;
     let transferTask=null,transferAttempt=null,transferMessage='',transferError=false;
     const readyConfig=typeof config.url==='string'&&/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(config.url)&&typeof config.publishableKey==='string'&&config.publishableKey.startsWith('sb_publishable_');
     const state=()=>user&&store?store.getState():guest.getState();
     const say=(text,error=false)=>{message.textContent=text;message.dataset.error=String(error);};
     const normalizeEmail=email=>String(email||'').trim().toLowerCase();
+    function readPendingEmail(){try{const value=JSON.parse(storage?.getItem(PENDING_EMAIL_KEY)||'null');return value?.version===1&&/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value.email)?normalizeEmail(value.email):'';}catch(_){return '';}}
+    function rememberPendingEmail(email){pendingEmail=normalizeEmail(email);try{storage?.setItem(PENDING_EMAIL_KEY,JSON.stringify({version:1,email:pendingEmail}));}catch(_){} }
+    function clearPendingEmail(email){if(pendingEmail&&pendingEmail===normalizeEmail(email)){pendingEmail='';signupSubmitted=false;try{storage?.removeItem(PENDING_EMAIL_KEY);}catch(_){} }}
     const count=records=>Object.values(records).filter(r=>r?.visited===true).length;
     const localCount=()=>count(getLocalRecords());
     const sameSession=(generation,id)=>generation===sessionGeneration&&id===(user?.id||null);
@@ -57,10 +60,10 @@
       const pending=count(temporary.records),matches=intent&&intent.email===normalizeEmail(user?.email);
       const labels={loading:'正在读取云端足迹',ready:'云端存档已读取',saving:'正在保存到云端…',saved:'已保存到云端',conflict:'云端有更新，暂未保存',error:signed?'云端连接需要重试':'本机临时存档需要重试'};
       $('#cloud-banner').dataset.status=s.status;
-      $('#cloud-heading').textContent=signed?(labels[s.status]||'云端存档'):signupSubmitted?'注册提交成功，请验证邮箱':'先去插旗，慢慢收藏山河';
-      $('#cloud-description').textContent=s.error?.message||(signed?(transferError?transferMessage:'同一邮箱登录，即可在手机和电脑继续记录。'):signupSubmitted?'请到邮箱打开验证链接，再登录。临时足迹仍保留在此浏览器；若已注册，可直接登录。':'足迹临时保存在此浏览器。想换设备继续时，再保存到云端。');
+      $('#cloud-heading').textContent=signed?(labels[s.status]||'云端存档'):pendingEmail||signupSubmitted?'注册已提交，邮箱尚待验证':'先去插旗，慢慢收藏山河';
+      $('#cloud-description').textContent=s.error?.message||(signed?(transferError?transferMessage:'同一邮箱登录，即可在手机和电脑继续记录。'):pendingEmail||signupSubmitted?'请查看最新验证邮件，回到这里输入 8 位验证码。临时足迹仍保留在此浏览器；已验证的账号可直接登录。':'足迹临时保存在此浏览器。想换设备继续时，再保存到云端。');
       $('#cloud-account-btn').textContent=signed?'我的存档':'保存到云端';
-      $('#cloud-banner-action').textContent=signed?'管理存档':'保存到云端';
+      $('#cloud-banner-action').textContent=signed?'管理存档':pendingEmail?'输入验证码':'保存到云端';
       $('#cloud-signed-in').hidden=!signed||mode==='recover';
       $('#cloud-auth-area').hidden=signed&&mode!=='recover';
       $('#cloud-account-email').textContent=user?.email||'已登录';
@@ -72,6 +75,8 @@
       $('#cloud-resend').hidden=signed||mode==='recover';
       $('#cloud-resend').disabled=authBusy||!provider||Date.now()<resendAfter;
       $('#cloud-resend').textContent=Date.now()<resendAfter?'请稍候再发送验证邮件':'重新发送验证邮件';
+      $('#cloud-verify-entry').hidden=signed||mode==='recover'||mode==='verify';
+      $('#cloud-verify-entry').disabled=authBusy;
       $('#cloud-status-inline').textContent=signed?(s.error?.message||labels[s.status]||'云端存档'):'';
       $('#cloud-transfer-area').hidden=!signed||(!pending&&!matches&&!transferMessage);
       $('#cloud-transfer-status').textContent=transferMessage||(pending?`此浏览器还有 ${pending} 条临时足迹。${intent&&!matches?'它们尚未转存到当前账号。':'可以一起保存到云端。'}`:'临时足迹已转存。');
@@ -85,35 +90,44 @@
       $('#cloud-password').value='';$('#cloud-password-confirm').value='';
       $('#cloud-password-confirm').setCustomValidity('');$('#cloud-password-confirm').removeAttribute('aria-invalid');
     }
+    function clearVerificationCode(){const field=$('#cloud-code');field.value='';field.setCustomValidity('');field.removeAttribute('aria-invalid');}
     function setMode(next){
-      mode=next;
+      mode=next;verificationRevision++;clearVerificationCode();
       $('#cloud-login-tab').setAttribute('aria-pressed',String(next==='login'));
       $('#cloud-signup-tab').setAttribute('aria-pressed',String(next==='signup'));
       $('#cloud-tabs').hidden=next==='recover';
       $('#cloud-email-field').hidden=next==='recover';$('#cloud-email').required=next!=='recover';$('#cloud-email').disabled=next==='recover';
-      $('#cloud-password-field').hidden=next==='reset';$('#cloud-password').required=next!=='reset';$('#cloud-password').disabled=next==='reset';
+      const passwordMode=!['reset','verify'].includes(next);
+      $('#cloud-password-field').hidden=!passwordMode;$('#cloud-password').required=passwordMode;$('#cloud-password').disabled=!passwordMode;
+      $('#cloud-code-field').hidden=next!=='verify';$('#cloud-code').required=next==='verify';$('#cloud-code').disabled=next!=='verify';
       $('#cloud-password').minLength=next==='login'?1:8;
       $('#cloud-password').autocomplete=next==='login'?'current-password':'new-password';
       const confirm=next==='signup'||next==='recover';
       $('#cloud-confirm-field').hidden=!confirm;$('#cloud-password-confirm').required=confirm;$('#cloud-password-confirm').disabled=!confirm;
-      $('#cloud-title').textContent=next==='signup'?'把这一路，保存到云端':next==='reset'?'找回你的云端存档':next==='recover'?'设置新密码':'继续收藏你的山河';
-      $('#cloud-submit').textContent=next==='signup'?'注册并保存到云端':next==='reset'?'发送密码重置邮件':next==='recover'?'保存新密码':'登录并保存到云端';
-      $('#cloud-forgot').hidden=next!=='login';$('#cloud-back-login').hidden=!['reset','recover'].includes(next);
+      $('#cloud-title').textContent=next==='signup'?'把这一路，保存到云端':next==='reset'?'找回你的云端存档':next==='recover'?'设置新密码':next==='verify'?'验证你的邮箱':'继续收藏你的山河';
+      $('#cloud-submit').textContent=next==='signup'?'注册并保存到云端':next==='reset'?'发送密码重置邮件':next==='recover'?'保存新密码':next==='verify'?'验证邮箱并登录':'登录并保存到云端';
+      $('#cloud-forgot').hidden=next!=='login';$('#cloud-back-login').hidden=!['reset','recover','verify'].includes(next);
       clearPasswords();say('');paint();
     }
     function open(){if(!user&&mode!=='recover')setMode('login');paint();if(!provider)say('云端服务暂时无法连接。你仍可在地图记录，足迹会临时保存在此浏览器。',true);if(!dialog.open){dialogGeneration++;dialog.showModal();}}
-    $('#cloud-account-btn').onclick=open;$('#cloud-banner-action').onclick=open;
+    function openVerification(){if(authBusy||user||mode==='recover')return;setMode('verify');if(!$('#cloud-email').value&&pendingEmail)$('#cloud-email').value=pendingEmail;if(!dialog.open){dialogGeneration++;dialog.showModal();}if(!provider)say('云端服务暂时无法连接，请检查网络后重试。临时足迹仍保留。',true);}
+    $('#cloud-account-btn').onclick=open;$('#cloud-banner-action').onclick=()=>!user&&pendingEmail?openVerification():open();
+    $('#cloud-verify-entry').onclick=openVerification;
     $('#cloud-close').onclick=()=>dialog.close();
-    dialog.addEventListener('close',()=>{dialogGeneration++;clearPasswords();if(mode!=='recover')setMode('login');});
+    dialog.addEventListener('close',()=>{dialogGeneration++;clearPasswords();clearVerificationCode();if(mode!=='recover')setMode('login');});
     $('#cloud-login-tab').onclick=()=>{if(!authBusy)setMode('login');};
     $('#cloud-signup-tab').onclick=()=>{if(!authBusy)setMode('signup');};
     $('#cloud-forgot').onclick=()=>{if(!authBusy)setMode('reset');};
     $('#cloud-back-login').onclick=()=>{if(!authBusy)setMode('login');};
     for(const id of ['#cloud-password','#cloud-password-confirm'])$(id).addEventListener('input',()=>{$('#cloud-password-confirm').setCustomValidity('');$('#cloud-password-confirm').removeAttribute('aria-invalid');});
+    $('#cloud-email').addEventListener('input',()=>{verificationRevision++;clearVerificationCode();});
+    $('#cloud-code').addEventListener('input',()=>{$('#cloud-code').setCustomValidity('');$('#cloud-code').removeAttribute('aria-invalid');});
     function authError(error){
       const code=String(error?.code||'').toLowerCase();
       if(code==='local_intent_failed')return '无法保留临时足迹的转存请求，请检查浏览器存储权限后重试。原足迹仍保留。';
-      if(['invalid_credentials','email_not_confirmed'].includes(code))return code==='email_not_confirmed'?'邮箱尚未验证成功。若已经点过链接，可点击“重新发送验证邮件”，再打开最新邮件中的链接。临时足迹仍保留在此浏览器。':'邮箱或密码不正确，请检查后重试。';
+      if(['verification_code_invalid','otp_expired','invalid_otp','token_expired'].includes(code))return '验证码不正确、已过期或已使用。请核对邮箱和最新邮件中的 8 位验证码，或重新发送验证邮件。';
+      if(code==='verification_incomplete')return '邮箱验证尚未完成，服务器未返回已确认的登录状态。请尝试登录；若仍提示未验证，请重新发送验证邮件。';
+      if(['invalid_credentials','email_not_confirmed'].includes(code))return code==='email_not_confirmed'?'邮箱尚未验证成功。可点击“输入邮箱验证码”；旧邮件没有验证码时，请重新发送验证邮件。临时足迹仍保留在此浏览器。':'邮箱或密码不正确，请检查后重试。';
       if(/rate|over_email/.test(code))return '请求过于频繁，请稍后再试。';
       if(/weak_password/.test(code))return '请使用至少 8 位的更强密码。';
       if(/email_address_not_authorized|email_provider_disabled/.test(code))return '邮件服务暂未配置完成，请联系网站管理员。';
@@ -129,7 +143,7 @@
       try{
         await provider.resendConfirmation(email,new URL('./',location.href).href);
         resendAfter=Date.now()+60000;root.setTimeout?.(()=>paint(),60000);
-        if(current())say('已提交重发请求，请到 '+email+' 查看最新验证邮件，也请检查垃圾邮箱。请尽快打开最新链接；完成验证后再登录。');
+        if(current()){rememberPendingEmail(email);setMode('verify');field.value=email;say('已提交重发请求，请到 '+email+' 查看最新验证邮件，也请检查垃圾邮箱。在这里输入邮件中的 8 位验证码；有效期为 1 小时。');}
       }catch(error){if(current())say(authError(error),true);}
       finally{if(serial===authSerial){authBusy=false;paint();}}
     };
@@ -145,7 +159,7 @@
       if(!failed&&(callback.recovery||recovery||mode==='recover'))return;
       if(!failed&&!remaining.hasCode&&!remaining.hasToken&&signedIn&&user){notify?.('邮箱链接验证成功，已登录 '+user.email+'。');return;}
       if(!dialog.open){dialogGeneration++;dialog.showModal();}
-      const text=failed&&callback.recovery?'密码重置链接已失效或未完成。请点击“忘记密码”重新获取重置邮件。':callback.expired?'验证链接已失效或已使用。请先尝试登录；若仍提示邮箱未验证，请重新发送验证邮件，并打开最新邮件中的链接。':failed?'邮箱链接验证未完成。请重新发送验证邮件并打开最新链接，或稍后重试。':user?'未能确认这次邮箱链接的验证结果。当前登录的是 '+user.email+'；若要使用另一个账号，请先退出再登录。':'验证链接已打开，但没有完成自动登录。请用注册邮箱和密码登录；若仍提示邮箱未验证，可重新发送验证邮件。';
+      const text=failed&&callback.recovery?'密码重置链接已失效或未完成。请点击“忘记密码”重新获取重置邮件。':callback.expired?'验证链接已失效或已使用。请先尝试登录；若仍提示邮箱未验证，请重新发送验证邮件，再点击“输入邮箱验证码”完成验证。':failed?'邮箱链接验证未完成。请重新发送验证邮件，输入最新邮件中的验证码，或稍后重试。':user?'未能确认这次邮箱链接的验证结果。当前登录的是 '+user.email+'；若要使用另一个账号，请先退出再登录。':'验证链接已打开，但没有完成自动登录。请用注册邮箱和密码登录；若仍提示邮箱未验证，可重新发送验证邮件。';
       say(text,true);notify?.(text);paint();
     }
     async function finishIntent(intent,generation,id){
@@ -203,8 +217,9 @@
     async function applySession(next,event){
       const changed=(next?.id||null)!==(user?.id||null);
       sessionKnown=true;user=next||null;
+      if(user)clearPendingEmail(user.email);
       if(changed){
-        signupSubmitted=false;
+        signupSubmitted=false;clearVerificationCode();
         sessionGeneration++;recoveryUserId=null;transferTask=null;transferAttempt=null;transferMessage='';transferError=false;
         say('');
         if(mode==='recover'){authSerial++;authBusy=false;setMode('login');}
@@ -221,7 +236,12 @@
     }
     form.onsubmit=async event=>{
       event.preventDefault();if(authBusy||!provider)return;
-      const action=mode,email=normalizeEmail($('#cloud-email').value),password=$('#cloud-password').value;
+      const action=mode,email=normalizeEmail($('#cloud-email').value),password=$('#cloud-password').value,code=$('#cloud-code').value.replace(/\s/g,'');
+      if(action==='verify'){
+        const field=$('#cloud-code');field.value=code;
+        if(!/^\d{8}$/.test(code)){field.setCustomValidity('请输入最新邮件中的 8 位数字验证码。');field.setAttribute('aria-invalid','true');say('请输入最新邮件中的 8 位数字验证码。',true);field.reportValidity();return;}
+        field.setCustomValidity('');field.removeAttribute('aria-invalid');
+      }
       if(action==='signup'||action==='recover'){
         const confirmation=$('#cloud-password-confirm');
         if(!confirmation.value||confirmation.value!==password){confirmation.setCustomValidity('请再次输入相同的密码。');confirmation.setAttribute('aria-invalid','true');say('两次密码需要一致，请重新确认。',true);confirmation.reportValidity();return;}
@@ -229,7 +249,8 @@
       }
       if(!form.reportValidity())return;
       if(action==='signup')signupSubmitted=false;
-      authBusy=true;const serial=++authSerial,recoveryGeneration=sessionGeneration,recoveringAccount=recoveryUserId,submittedDialogGeneration=dialogGeneration;
+      authBusy=true;const serial=++authSerial,recoveryGeneration=sessionGeneration,recoveringAccount=recoveryUserId,submittedDialogGeneration=dialogGeneration,submittedVerificationRevision=verificationRevision;
+      const verificationViewCurrent=()=>serial===authSerial&&submittedDialogGeneration===dialogGeneration&&submittedVerificationRevision===verificationRevision&&mode==='verify'&&normalizeEmail($('#cloud-email').value)===email;
       const closeSignup=notice=>{if(dialog.open&&submittedDialogGeneration===dialogGeneration){dialog.close();notify?.(notice);}};
       say('正在处理…');paint();const redirect=new URL('./',location.href).href;
       try{
@@ -244,11 +265,13 @@
           recoveryUserId=null;setMode('login');say('密码已更新，可以继续使用云端存档。');
         }else{
           await companion?.rememberIntent(email);
-          if(serial!==authSerial||sessionGeneration!==recoveryGeneration)return;
-          await rememberIntent(email,()=>serial===authSerial&&sessionGeneration===recoveryGeneration);
-          if(serial!==authSerial||sessionGeneration!==recoveryGeneration)return;
-          const result=await(action==='signup'?provider.signUp(email,password,redirect):provider.signIn(email,password));
+          if(serial!==authSerial||sessionGeneration!==recoveryGeneration||(action==='verify'&&!verificationViewCurrent()))return;
+          await rememberIntent(email,()=>serial===authSerial&&sessionGeneration===recoveryGeneration&&(action!=='verify'||verificationViewCurrent()));
+          if(serial!==authSerial||sessionGeneration!==recoveryGeneration||(action==='verify'&&!verificationViewCurrent()))return;
+          if(action==='verify')verificationRequest={serial,email};
+          const result=await(action==='signup'?provider.signUp(email,password,redirect):action==='verify'?provider.verifyEmailCode(email,code):provider.signIn(email,password));
           if(serial!==authSerial)return;
+          if(action==='verify'&&!verificationViewCurrent())return;
           if(result.user){
             if(sessionGeneration!==recoveryGeneration&&user?.id!==result.user.id)return;
             await applySession(result.user,'SIGNED_IN');
@@ -256,17 +279,20 @@
               if(action!=='signup'||submittedDialogGeneration===dialogGeneration)say(transferMessage||(state().ready?'已登录，可以继续记录云端足迹。':'已登录，读取云端存档后可重试转存。'),transferError);
               if(action==='signup'){
                 closeSignup('注册成功，已登录。'+(transferError?'临时足迹仍保留，请在“我的存档”中重试转存。':!state().ready?'云端存档尚未读取，请稍后重试。':''));
+              }else if(action==='verify'&&verificationViewCurrent()){
+                closeSignup('邮箱验证成功，已登录。'+(transferError?'临时足迹仍保留，请在“我的存档”中重试转存。':!state().ready?'云端存档尚未读取，请稍后重试。':''));
               }
             }
           }else if(sessionGeneration===recoveryGeneration){
             if(action==='signup'){
-              signupSubmitted=true;
-              closeSignup('注册提交成功，请到邮箱完成验证。临时足迹仍保留。');
+              signupSubmitted=true;rememberPendingEmail(email);
+              closeSignup('注册提交成功，请查看邮箱中的验证码，点击“输入验证码”完成验证。临时足迹仍保留。');
+            }else if(action==='verify'){say(authError({code:'VERIFICATION_INCOMPLETE'}),true);
             }else say('请到邮箱完成验证，并在此浏览器打开验证链接。临时足迹会保留，验证后转存到这个邮箱的账号；已有账号可切换到登录。');
           }
         }
-      }catch(error){if(serial===authSerial&&recoveryGeneration===sessionGeneration&&(action!=='signup'||submittedDialogGeneration===dialogGeneration))say(authError(error),true);}
-      finally{if(serial===authSerial){authBusy=false;clearPasswords();paint();}}
+      }catch(error){if(serial===authSerial&&recoveryGeneration===sessionGeneration&&(action!=='signup'||submittedDialogGeneration===dialogGeneration)&&(action!=='verify'||verificationViewCurrent()))say(authError(error),true);}
+      finally{if(verificationRequest?.serial===serial)verificationRequest=null;if(serial===authSerial){authBusy=false;clearPasswords();if(action==='verify')clearVerificationCode();paint();}}
     };
     $('#cloud-transfer-retry').onclick=async()=>{
       if(!user||authBusy||state().busy||transferTask)return;
@@ -303,19 +329,30 @@
     };
     function changed(){publish();}
     async function start(){
-      setMode('login');publish();
-      if(!readyConfig||!root.supabase?.createClient)return;
+      pendingEmail=readPendingEmail();setMode('login');publish();
+      const wantsVerification=new URL(location.href).searchParams.get('auth')==='verify';
+      if(!readyConfig||!root.supabase?.createClient){if(wantsVerification&&!readAuthCallback().present)openVerification();return;}
       const callback=readAuthCallback();let callbackSignedIn=false,callbackRecovery=false;
       try{
         const client=root.supabase.createClient(config.url,config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',storageKey:'shanhe-cloud-auth-v1'}});
         provider=createSupabaseArchiveProvider(client,{url:config.url,publishableKey:config.publishableKey});
         if(companion)Promise.resolve(companion.start(client)).catch(()=>notify?.('景点云端暂时未能连接，请在名胜打卡中重试。'));
         store=createCloudArchiveStore({transport:provider.transport,onChange:changed});
-        provider.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN')callbackSignedIn=true;if(event==='PASSWORD_RECOVERY')callbackRecovery=true;setTimeout(()=>{applySession(session.user,event).catch(()=>{say('读取云端存档失败，请重试。',true);paint();});},0);});
+        provider.onAuthStateChange((event,session)=>{
+          // verifyOtp emits SIGNED_IN before its result is validated. Only the
+          // provider's confirmed, matching response may adopt this account.
+          if(verificationRequest&&event==='SIGNED_IN'&&normalizeEmail(session.user?.email)===verificationRequest.email)return;
+          if(verificationRequest&&event==='SIGNED_OUT')verificationRevision++;
+          if(event==='SIGNED_IN')callbackSignedIn=true;if(event==='PASSWORD_RECOVERY')callbackRecovery=true;
+          setTimeout(()=>{applySession(session.user,event).catch(()=>{say('读取云端存档失败，请重试。',true);paint();});},0);
+        });
         const initialized=await client.auth?.initialize?.();
         const initial=await provider.getSession();if(!sessionKnown)await applySession(initial.user,'INITIAL_SESSION');paint();
         showAuthCallback(callback,initialized?.error,callbackSignedIn,callbackRecovery);
-      }catch(_){if(callback.present)showAuthCallback(callback,true,false,callbackRecovery);else{say('云端连接失败。仍可先记录临时足迹，稍后再试。',true);paint();}}
+        if(wantsVerification&&!callback.present&&mode!=='recover'){
+          if(!user)openVerification();else{open();say('当前已登录 '+user.email+'。如需验证另一个邮箱，请先退出当前账号。');}
+        }
+      }catch(_){if(callback.present)showAuthCallback(callback,true,false,callbackRecovery);else{if(wantsVerification)openVerification();say('云端连接失败。仍可先记录临时足迹，稍后再试。',true);paint();}}
     }
     root.addEventListener('focus',async()=>{
       if(hasOpenEditor()||dialog.open)return;
@@ -326,6 +363,7 @@
       if(event.key===root.SHANHE_GUEST_STORAGE_KEY||event.key===root.SHANHE_PREVIOUS_GUEST_STORAGE_KEY||event.key===root.SHANHE_LEGACY_GUEST_STORAGE_KEY||event.key===root.SHANHE_OLDER_GUEST_STORAGE_KEY||event.key===root.SHANHE_OLDEST_GUEST_STORAGE_KEY||event.key===null){await guest.refresh();if(!user)publish();else paint();}
       if(event.key===INTENT_KEY||event.key===LEGACY_INTENT_KEY){transferAttempt=null;paint();if(user&&!hasOpenEditor())await transferPending();}
       if(event.key==='shanhe-atlas-v1')paint();
+      if(event.key===PENDING_EMAIL_KEY){pendingEmail=readPendingEmail();paint();}
     });
     return {
       start,open,getState:state,canEdit:()=>state().ready&&!state().busy&&!transferTask,

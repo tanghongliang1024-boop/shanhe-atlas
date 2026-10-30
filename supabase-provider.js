@@ -9,7 +9,9 @@
     INVALID_RESPONSE: '云端返回的数据无效，请稍后重试。',
     INVALID_REVISION: '存档版本无效，请刷新云端存档后重试。',
     INVALID_CREDENTIALS: '邮箱或密码不正确，请检查后重试。',
-    EMAIL_NOT_CONFIRMED: '请先点击邮箱中的确认链接，再登录。',
+    EMAIL_NOT_CONFIRMED: '请先使用邮箱验证码完成验证，再登录。',
+    VERIFICATION_CODE_INVALID: '验证码不正确或已过期，请检查最新邮件中的验证码。',
+    VERIFICATION_INCOMPLETE: '邮箱验证尚未完成，请重新获取验证码后重试。',
     EMAIL_ADDRESS_NOT_AUTHORIZED: '邮件服务暂未配置完成，请联系网站管理员。',
     EMAIL_PROVIDER_DISABLED: '邮件服务暂未配置完成，请联系网站管理员。',
     RATE_LIMITED: '操作过于频繁，请稍后重试。',
@@ -35,6 +37,7 @@
     if (Object.hasOwn(MESSAGES, code)) return problem(code);
     if (code === 'invalid_credentials' || code === 'invalid_login_credentials') return problem('INVALID_CREDENTIALS');
     if (code === 'email_not_confirmed') return problem('EMAIL_NOT_CONFIRMED');
+    if (code === 'otp_expired') return problem('VERIFICATION_CODE_INVALID');
     if (code === 'email_address_not_authorized') return problem('EMAIL_ADDRESS_NOT_AUTHORIZED');
     if (code === 'email_provider_disabled') return problem('EMAIL_PROVIDER_DISABLED');
     if (code === 'weak_password') return problem('WEAK_PASSWORD');
@@ -47,8 +50,13 @@
   function publicSession(session) {
     const user = session?.user;
     return {
-      user: user && typeof user.id === 'string' && user.id
-        ? { id: user.id, email: typeof user.email === 'string' ? user.email : '' }
+      // This app only supports confirmed email accounts. The SDK can persist
+      // a structurally valid session before our verification method resolves;
+      // keep unconfirmed sessions out of every read, event and archive write.
+      user: user && typeof user.id === 'string' && user.id.trim() &&
+        typeof user.email === 'string' && user.email.trim() &&
+        typeof user.email_confirmed_at === 'string' && Number.isFinite(Date.parse(user.email_confirmed_at))
+        ? { id: user.id, email: user.email }
         : null
     };
   }
@@ -164,6 +172,22 @@
         await request(() => client.auth.resend({
           type: 'signup', email, options: { emailRedirectTo: redirectTo }
         }));
+      },
+      async verifyEmailCode(email, code) {
+        const expectedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+        const data = await request(() => client.auth.verifyOtp({ email: expectedEmail, token: code, type: 'email' }));
+        const verifiedSession = data?.session, verifiedUser = verifiedSession?.user;
+        // A user object alone does not establish a session, and confirmed_at
+        // can refer to a phone. Only accept the server's email confirmation
+        // for the address submitted in this verification attempt.
+        if (!expectedEmail || typeof verifiedSession?.access_token !== 'string' || !verifiedSession.access_token.trim() ||
+            typeof verifiedUser?.id !== 'string' || !verifiedUser.id.trim() ||
+            typeof verifiedUser.email !== 'string' || verifiedUser.email.trim().toLowerCase() !== expectedEmail ||
+            typeof verifiedUser.email_confirmed_at !== 'string' || !Number.isFinite(Date.parse(verifiedUser.email_confirmed_at)) ||
+            (data.user && (data.user.id !== verifiedUser.id || typeof data.user.email !== 'string' || data.user.email.trim().toLowerCase() !== expectedEmail))) {
+          throw problem('VERIFICATION_INCOMPLETE');
+        }
+        return { user: { id: verifiedUser.id, email: expectedEmail } };
       },
       async sendPasswordReset(email, redirectTo) {
         await request(() => client.auth.resetPasswordForEmail(email, { redirectTo }));

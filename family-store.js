@@ -65,7 +65,13 @@
     const canEdit=()=>!state.guest&&state.ready&&!state.busy;
     function notify(){try{options.onChange?.(getState());}catch(_){}}
     function setError(cause,fallback,ready=state.ready){const e=safeError(cause,fallback);state={...state,ready,busy:false,error:{code:e.code,message:e.message},status:'error'};notify();return failure(e.code,e.message);}
-    function userId(session){return typeof session?.user?.id==='string'&&session.user.id?session.user.id:null;}
+    function userId(session){
+      const user=session?.user;
+      // This store also receives raw SDK events. Match the primary archive's
+      // confirmed-email gate before adopting an identity or taking its token.
+      return typeof user?.id==='string'&&user.id.trim()&&typeof user.email==='string'&&user.email.trim()&&
+        typeof user.email_confirmed_at==='string'&&Number.isFinite(Date.parse(user.email_confirmed_at))?user.id:null;
+    }
     function adoptIdentity(session){
       const id=userId(session);sessionKnown=true;
       if(id===state.userId)return false;
