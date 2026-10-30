@@ -82,7 +82,7 @@ function makeDocument() {
     querySelectorAll(selector) { return selector.split(',').map(id => document.querySelector(id.trim())).filter(Boolean); }
   };
   const form = elements.get('cloud-auth-form');
-  form.checkValidity = () => ['cloud-email', 'cloud-password', 'cloud-password-confirm'].every(id => !elements.has(id) || elements.get(id).checkValidity());
+  form.checkValidity = () => ['cloud-email', 'cloud-password', 'cloud-password-confirm', 'cloud-code'].every(id => !elements.has(id) || elements.get(id).checkValidity());
   form.reportValidity = form.checkValidity;
   return { document, elements };
 }
@@ -94,7 +94,7 @@ function createHarness(options = {}) {
   const events = new Map(), scheduled = [], timers = [];
   let now = Date.now();
   class TestDate extends Date { static now() { return now; } }
-  const calls = { signUp: [], signIn: [], resend: [], reset: [], read: [], write: [], password: [], notifications: [], accountChanges: 0, views: [] };
+  const calls = { signUp: [], signIn: [], resend: [], verify: [], reset: [], read: [], write: [], password: [], notifications: [], accountChanges: 0, views: [] };
   const remote = new Map(Object.entries(options.remote || {}));
   let currentUser = options.initialUser || null, observer;
   const provider = {
@@ -132,6 +132,13 @@ function createHarness(options = {}) {
     async resendConfirmation(email, redirect) {
       calls.resend.push({ email, redirect });
       return options.onResend ? options.onResend(email, redirect) : {};
+    },
+    async verifyEmailCode(email, code) {
+      calls.verify.push({email, code});
+      if(options.emitDuringVerify)observer('SIGNED_IN',{user:options.verifyUser||user('account-a',email)});
+      if(options.onVerify)return options.onVerify(email,code);
+      currentUser=options.verifyUser||user('account-a',email);
+      return {user:currentUser};
     },
     async sendPasswordReset(email, redirect) { calls.reset.push({ email, redirect }); },
     async updatePassword(password, id) { calls.password.push({ password, id }); }
@@ -377,7 +384,7 @@ test('signup awaiting email verification closes the form, announces success, and
   assert.deepEqual(JSON.parse(h.storage.getItem('shanhe-cloud-transfer-v2')).snapshot.records, draft);
   assert.equal(h.calls.write.length, 0);
   await h.cloud.refresh();
-  assert.match(h.el('cloud-heading').textContent, /注册提交成功.*验证邮箱/);
+  assert.match(h.el('cloud-heading').textContent, /注册已提交.*尚待验证/);
   assert.match(h.el('cloud-description').textContent, /临时足迹仍保留/);
 });
 
@@ -1158,4 +1165,112 @@ test('a late resend response cannot overwrite a new email, reopened form, or sig
     assert.deepEqual(h.calls.signUp, []); assert.deepEqual(h.calls.password, []); assert.deepEqual(h.calls.write, []);
     if (change === 'account') { assert.equal(h.cloud.getState().userId, 'account-b'); assert.equal(h.el('cloud-resend').hidden, true); }
   }
+});
+
+const PENDING_EMAIL_KEY='shanhe-pending-email-v1';
+async function openCodeForm(h,email='a@example.com',code='12345678'){
+  await h.click('cloud-account-btn');h.el('cloud-email').value=email;await h.click('cloud-verify-entry');h.el('cloud-code').value=code;
+}
+
+test('email verification entry needs only email and an eight-digit code, with no automatic send',async()=>{
+  const h=createHarness();await h.cloud.start();await openCodeForm(h);
+  assert.equal(h.el('cloud-dialog').open,true);assert.equal(h.el('cloud-title').textContent,'验证你的邮箱');
+  assert.equal(h.el('cloud-password').disabled,true);assert.equal(h.el('cloud-password-confirm').disabled,true);
+  assert.equal(h.el('cloud-code').disabled,false);assert.equal(h.el('cloud-code').required,true);
+  assert.equal(h.el('cloud-code').autocomplete,'one-time-code');assert.equal(h.el('cloud-submit').textContent,'验证邮箱并登录');
+  assert.deepEqual(h.calls.resend,[]);assert.deepEqual(h.calls.verify,[]);assert.deepEqual(h.calls.signUp,[]);
+  for(const code of ['', '1234567','123456789','1234ABCD']){
+    h.el('cloud-code').value=code;await h.submit();assert.equal(h.calls.verify.length,0);assert.match(h.el('cloud-message').textContent,/8 位数字/);
+  }
+  h.el('cloud-code').value='1234 5678';await h.submit();assert.deepEqual(h.calls.verify,[{email:'a@example.com',code:'12345678'}]);
+});
+
+test('successful signup closes its form and restores only the pending email after reload',async()=>{
+  const h=createHarness();await h.cloud.start();await h.click('cloud-account-btn');await h.click('cloud-signup-tab');h.fill('A@Example.com');await h.submit();
+  assert.equal(h.el('cloud-dialog').open,false);assert.equal(h.el('cloud-banner-action').textContent,'输入验证码');
+  assert.deepEqual(JSON.parse(h.storage.getItem(PENDING_EMAIL_KEY)),{version:1,email:'a@example.com'});
+  assert.doesNotMatch(h.storage.getItem(PENDING_EMAIL_KEY),/password|token|code/);
+  const reloaded=createHarness({storage:h.storage});await reloaded.cloud.start();assert.equal(reloaded.el('cloud-dialog').open,false);
+  await reloaded.click('cloud-banner-action');assert.equal(reloaded.el('cloud-code-field').hidden,false);assert.equal(reloaded.el('cloud-email').value,'a@example.com');
+  assert.equal(reloaded.el('cloud-code').value,'');assert.deepEqual(reloaded.calls.resend,[]);
+  await reloaded.click('cloud-close');await reloaded.click('cloud-account-btn');assertLoginMode(reloaded);
+});
+
+test('harmless verification URL opens code entry on another device without submitting anything',async()=>{
+  const h=createHarness({href:'https://example.com/shanhe-atlas/?auth=verify'});await h.cloud.start();await h.flush();
+  assert.equal(h.el('cloud-dialog').open,true);assert.equal(h.el('cloud-code-field').hidden,false);assert.equal(h.el('cloud-email').value,'');
+  assert.equal(h.el('cloud-message').dataset.error,'false');assert.deepEqual(h.calls.verify,[]);assert.deepEqual(h.calls.resend,[]);assert.deepEqual(h.calls.write,[]);
+  const signed=createHarness({href:'https://example.com/shanhe-atlas/?auth=verify',initialUser:user()});await signed.cloud.start();
+  assert.equal(signed.cloud.getState().userId,'account-a');assert.match(signed.el('cloud-message').textContent,/当前已登录/);assert.deepEqual(signed.calls.verify,[]);
+});
+
+test('verification URL cannot override failed callback or password recovery',async()=>{
+  const failed=createHarness({href:'https://example.com/shanhe-atlas/?auth=verify&error_code=otp_expired'});await failed.cloud.start();
+  assertLoginMode(failed);assert.match(failed.el('cloud-message').textContent,/验证链接已失效/);
+  const recovering=createHarness({href:'https://example.com/shanhe-atlas/?auth=verify&code=fake&type=recovery',onInitialize({emit,location}){
+    location.href='https://example.com/shanhe-atlas/?auth=verify';emit('PASSWORD_RECOVERY',user());return {error:null};
+  }});await recovering.cloud.start();await recovering.flush();assert.equal(recovering.el('cloud-title').textContent,'设置新密码');assert.equal(recovering.el('cloud-code').disabled,true);
+});
+
+test('resend moves to code entry with the same email and clears old codes while preserving send cooldown',async()=>{
+  const h=createHarness();await h.cloud.start();await openCodeForm(h,'a@example.com','87654321');await h.click('cloud-resend');
+  assert.equal(h.el('cloud-code-field').hidden,false);assert.equal(h.el('cloud-code').value,'');assert.equal(h.el('cloud-email').value,'a@example.com');
+  assert.match(h.el('cloud-message').textContent,/最新验证邮件.*8 位验证码/);assert.equal(h.el('cloud-resend').disabled,true);
+  assert.equal(JSON.parse(h.storage.getItem(PENDING_EMAIL_KEY)).email,'a@example.com');assert.deepEqual(h.calls.verify,[]);
+});
+
+test('code confirmation adopts only the provider-confirmed account and transfers region and landmark intent once',async()=>{
+  const gate=deferred(),intents=[],h=createHarness({emitDuringVerify:true,onVerify:()=>gate.promise,companion:{start(){},async rememberIntent(email){intents.push(email);}}});
+  await h.cloud.start();const draft={'110000':row('验证码确认后的足迹')};await saveGuest(h,draft);await openCodeForm(h);await h.click('cloud-resend');h.el('cloud-code').value='12345678';
+  const pending=h.submit();await h.flush();assert.equal(h.calls.verify.length,1);assert.deepEqual(intents,['a@example.com']);
+  assert.equal(h.cloud.getState().guest,true);assert.deepEqual(h.calls.write,[]);assert.equal(h.el('cloud-dialog').open,true);
+  await h.submit();assert.equal(h.calls.verify.length,1,'duplicate submit blocked');
+  gate.resolve({user:user()});await pending;await h.flush();
+  assert.equal(h.cloud.getState().userId,'account-a');assert.equal(h.el('cloud-dialog').open,false);
+  assert.match(h.calls.notifications.at(-1),/邮箱验证成功.*已登录/);assert.equal(h.calls.write.length,1);assert.deepEqual(h.remote.get('account-a').records,draft);
+  assert.deepEqual(h.storedGuest().records,{});assert.equal(h.storage.getItem(PENDING_EMAIL_KEY),null);assert.equal(h.el('cloud-code').value,'');
+  assert.doesNotMatch([...h.storage.data.values()].join(' '),/12345678/);
+});
+
+test('wrong, expired, incomplete, and network verification failures keep drafts and never adopt SDK premature SIGNED_IN',async()=>{
+  for(const code of ['VERIFICATION_CODE_INVALID','otp_expired','VERIFICATION_INCOMPLETE','RATE_LIMITED','AUTH_FAILED']){
+    const h=createHarness({emitDuringVerify:true,onVerify:async()=>{throw {code,message:'RAW_OTP_SECRET'};}});
+    await h.cloud.start();const draft={'110000':row('失败后保留')};await saveGuest(h,draft);await openCodeForm(h);await h.submit();await h.flush();
+    assert.equal(h.el('cloud-dialog').open,true);assert.equal(h.el('cloud-message').dataset.error,'true');assert.equal(h.cloud.getState().guest,true);
+    assert.deepEqual(h.storedGuest().records,draft);assert.deepEqual(h.calls.write,[]);assert.deepEqual(h.calls.notifications,[]);
+    assert.doesNotMatch(h.el('cloud-message').textContent,/RAW_OTP_SECRET|验证成功/);assert.equal(h.el('cloud-code').value,'');assert.equal(h.el('cloud-submit').disabled,false);
+  }
+});
+
+test('a late verification result cannot replace edited email, reopened form, or another account',async()=>{
+  for(const change of ['email','dialog','account','signout'])for(const reject of [false,true]){
+    const gate=deferred(),h=createHarness({onVerify:()=>gate.promise});await h.cloud.start();await openCodeForm(h);const pending=h.submit();await h.flush();
+    if(change==='email'){h.el('cloud-email').value='b@example.com';await h.el('cloud-email').dispatch('input');}
+    else if(change==='dialog'){await h.click('cloud-close');await h.click('cloud-account-btn');}
+    else {await h.emit(change==='account'?'SIGNED_IN':'SIGNED_OUT',change==='account'?user('account-b','b@example.com'):null);await h.flush();}
+    const before=h.el('cloud-message').textContent;
+    if(reject)gate.reject({code:'VERIFICATION_CODE_INVALID'});else gate.resolve({user:user()});await pending;await h.flush();
+    assert.equal(h.el('cloud-message').textContent,before,change);assert.deepEqual(h.calls.notifications,[],change);assert.deepEqual(h.calls.write,[],change);
+    assert.equal(h.cloud.getState().userId,change==='account'?'account-b':null,change);
+  }
+});
+
+test('codes are cleared on email edit, mode change, close and account switch, never persisted',async()=>{
+  const h=createHarness();await h.cloud.start();await openCodeForm(h);await h.el('cloud-email').dispatch('input');assert.equal(h.el('cloud-code').value,'');
+  h.el('cloud-code').value='12345678';await h.click('cloud-back-login');assert.equal(h.el('cloud-code').value,'');assertLoginMode(h);
+  await openCodeForm(h);await h.click('cloud-close');assert.equal(h.el('cloud-code').value,'');
+  await openCodeForm(h);await h.emit('SIGNED_IN',user('account-b','b@example.com'));await h.flush();assert.equal(h.el('cloud-code').value,'');
+  assert.doesNotMatch([...h.storage.data.values()].join(' '),/12345678/);
+});
+
+test('pending email is retained across another account session and cleared only by the matching confirmed account',async()=>{
+  const storage=memoryStorage({[PENDING_EMAIL_KEY]:JSON.stringify({version:1,email:'a@example.com'})});
+  const other=createHarness({storage,initialUser:user('account-b','b@example.com')});await other.cloud.start();assert.ok(storage.getItem(PENDING_EMAIL_KEY));
+  await other.emit('SIGNED_IN',user());await other.flush();assert.equal(storage.getItem(PENDING_EMAIL_KEY),null);
+});
+
+test('verified login remains explicit when cloud transfer fails and never claims unsaved drafts were saved',async()=>{
+  const h=createHarness();await h.cloud.start();h.provider.failWrites=1;const draft={'110000':row('云端待重试')};await saveGuest(h,draft);await openCodeForm(h);await h.submit();
+  assert.equal(h.cloud.getState().userId,'account-a');assert.equal(h.el('cloud-dialog').open,false);assert.match(h.calls.notifications.at(-1),/邮箱验证成功.*已登录.*临时足迹仍保留/);
+  assert.deepEqual(h.storedGuest().records,draft);assert.doesNotMatch(h.calls.notifications.at(-1),/已保存到云端/);
 });

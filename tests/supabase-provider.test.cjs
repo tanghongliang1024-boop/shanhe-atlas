@@ -7,7 +7,7 @@ const vm = require('node:vm');
 const { createSupabaseArchiveProvider } = require('../supabase-provider.js');
 
 const session = id => ({
-  user: { id, email: `${id}@example.test`, user_metadata: { secret: 'metadata' } },
+  user: { id, email: `${id}@example.test`, email_confirmed_at: '2026-10-22T06:00:00Z', user_metadata: { secret: 'metadata' } },
   access_token: `private-access-token-${id}`, refresh_token: 'private-refresh-token'
 });
 const records = { '110000': { visited: true, date: '2026-10-21', note: '旅行记忆' } };
@@ -31,6 +31,7 @@ function mockClient() {
       async signInWithPassword(...args) { calls.push(['signInWithPassword', ...args]); return mock.authResponse; },
       async signUp(...args) { calls.push(['signUp', ...args]); return mock.authResponse; },
       async resend(...args) { calls.push(['resend', ...args]); return mock.authResponse; },
+      async verifyOtp(...args) { calls.push(['verifyOtp', ...args]); return mock.authResponse; },
       async resetPasswordForEmail(...args) { calls.push(['resetPasswordForEmail', ...args]); return mock.authResponse; },
       async updateUser(...args) { calls.push(['updateUser', ...args]); return mock.authResponse; },
       async signOut(...args) { calls.push(['signOut', ...args]); return { error: null }; }
@@ -80,6 +81,27 @@ test('anonymous and mismatched sessions cannot read or write another account', a
     await assert.rejects(provider.transport.read('alice'), { code });
     await assert.rejects(provider.transport.write('alice', { records, expectedRevision: 0 }), { code });
     assert.deepEqual(client.calls, [['getSession'], ['getSession']]);
+  }
+});
+
+test('unconfirmed persisted sessions cannot become an application account or access archives through any event', async () => {
+  for (const confirmation of [undefined, null, '', true, 'not-a-date']) {
+    const client = mockClient();
+    client.session.user.email_confirmed_at = confirmation;
+    client.session.user.confirmed_at = '2026-10-22T06:00:00Z';
+    client.session.user.phone_confirmed_at = '2026-10-22T06:00:00Z';
+    client.session.user.user_metadata.email_verified = true;
+    client.authResponse = { data: { session: client.session }, error: null };
+    const provider = createSupabaseArchiveProvider(client), observed = [];
+    assert.deepEqual(await provider.getSession(), { user: null });
+    assert.deepEqual(await provider.signIn('alice@example.test', 'example-password'), { user: null });
+    const stop = provider.onAuthStateChange((...event) => observed.push(event));
+    for (const event of ['INITIAL_SESSION', 'SIGNED_IN', 'TOKEN_REFRESHED', 'PASSWORD_RECOVERY']) client.emit(event, client.session);
+    assert.deepEqual(observed, ['INITIAL_SESSION', 'SIGNED_IN', 'TOKEN_REFRESHED', 'PASSWORD_RECOVERY'].map(event => [event, { user: null }]));
+    await assert.rejects(provider.transport.read('alice'), { code: 'AUTH_REQUIRED' });
+    await assert.rejects(provider.transport.write('alice', { records, expectedRevision: 0 }), { code: 'AUTH_REQUIRED' });
+    assert.equal(client.calls.some(call => ['from', 'rpc'].includes(call[0])), false);
+    stop();
   }
 });
 
@@ -241,6 +263,107 @@ test('confirmation resend sanitizes SDK errors, thrown failures and malformed re
     });
     assert.deepEqual(client.session, before, 'failed resend must not replace or clear another signed-in session');
     assert.deepEqual(client.calls.map(call => call[0]), ['resend'], 'no signup, password reset, signout, archive read or write fallback');
+  }
+});
+
+test('email code verification uses the email OTP contract and returns only the confirmed matching identity', async () => {
+  const client = mockClient();
+  const confirmed = session('alice');
+  confirmed.user.email = 'ALICE@example.test';
+  confirmed.user.email_confirmed_at = '2026-10-30T01:00:00Z';
+  client.authResponse = { data: { session: confirmed, user: confirmed.user }, error: null };
+  const provider = createSupabaseArchiveProvider(client);
+  assert.deepEqual(await provider.verifyEmailCode('  Alice@example.test  ', '12345678'), {
+    user: { id: 'alice', email: 'alice@example.test' }
+  });
+  assert.deepEqual(client.calls, [['verifyOtp', {
+    email: 'alice@example.test', token: '12345678', type: 'email'
+  }]], 'verification must not send another email, set a password, or access archives');
+});
+
+test('incorrect and expired email codes have a fixed safe message even when the SDK returns 403', async () => {
+  for (const detail of ['wrong private-code', 'expired private-code']) {
+    const client = mockClient();
+    client.authResponse = { data: null, error: { code: 'otp_expired', status: 403, message: detail, token: 'private-code' } };
+    await assert.rejects(createSupabaseArchiveProvider(client).verifyEmailCode('alice@example.test', '12345678'), error => {
+      assert.equal(error.code, 'VERIFICATION_CODE_INVALID');
+      assert.equal(error.message, '验证码不正确或已过期，请检查最新邮件中的验证码。');
+      assert.deepEqual(Object.keys(error), ['code']);
+      assert.equal(error.cause, undefined);
+      assert.doesNotMatch(String(error) + JSON.stringify(error), /private|12345678/);
+      return true;
+    });
+    assert.deepEqual(client.calls.map(call => call[0]), ['verifyOtp']);
+  }
+});
+
+test('email verification rejects missing sessions, tokens and email confirmation instead of trusting a user flag', async () => {
+  const confirmed = session('alice');
+  confirmed.user.email_confirmed_at = '2026-10-30T01:00:00Z';
+  const candidates = [
+    null,
+    { user: confirmed.user, session: null },
+    { user: confirmed.user, email_confirmed: true },
+    { session: { user: confirmed.user } },
+    { session: { ...confirmed, access_token: '' } },
+    { session: { ...confirmed, access_token: '   ' } },
+    { session: { ...confirmed, user: { ...confirmed.user, email_confirmed_at: undefined } } },
+    { session: { ...confirmed, user: { ...confirmed.user, email_confirmed_at: null, confirmed_at: '2026-10-30T01:00:00Z' } } },
+    { session: { ...confirmed, user: { ...confirmed.user, email_confirmed_at: true } } },
+    { session: { ...confirmed, user: { ...confirmed.user, email_confirmed_at: 'not-a-date' } } },
+    { session: { ...confirmed, user: { ...confirmed.user, id: '' } } },
+    { session: { ...confirmed, user: { id: 'alice', email: 'alice@example.test', user_metadata: { email_verified: true }, phone_confirmed_at: '2026-10-30T01:00:00Z' } } }
+  ];
+  for (const data of candidates) {
+    const client = mockClient();
+    client.authResponse = { data, error: null };
+    await assert.rejects(createSupabaseArchiveProvider(client).verifyEmailCode('alice@example.test', '12345678'), {
+      code: 'VERIFICATION_INCOMPLETE', message: '邮箱验证尚未完成，请重新获取验证码后重试。'
+    });
+    assert.deepEqual(client.calls.map(call => call[0]), ['verifyOtp'], 'an old current session cannot fill missing verification evidence');
+  }
+});
+
+test('email verification rejects a stale response for another address or inconsistent SDK user identity', async () => {
+  const confirmed = session('alice');
+  confirmed.user.email_confirmed_at = '2026-10-30T01:00:00Z';
+  for (const data of [
+    { session: { ...confirmed, user: { ...confirmed.user, email: 'bob@example.test' } } },
+    { session: confirmed, user: { ...confirmed.user, email: 'bob@example.test' } },
+    { session: confirmed, user: { ...confirmed.user, id: 'bob' } }
+  ]) {
+    const client = mockClient();
+    let finish;
+    client.auth.verifyOtp = async payload => {
+      client.calls.push(['verifyOtp', payload]);
+      return new Promise(resolve => { finish = resolve; });
+    };
+    const verification = createSupabaseArchiveProvider(client).verifyEmailCode('alice@example.test', '12345678');
+    client.session = session('bob');
+    finish({ data, error: null });
+    await assert.rejects(verification, { code: 'VERIFICATION_INCOMPLETE' });
+    assert.equal(client.session.user.id, 'bob', 'verification failure must not sign out or mutate another account');
+    assert.deepEqual(client.calls.map(call => call[0]), ['verifyOtp']);
+  }
+});
+
+test('email verification sanitizes unexpected SDK and network errors and preserves rate limit handling', async () => {
+  for (const [mode, expected] of [['error', 'AUTH_FAILED'], ['throw', 'AUTH_FAILED'], ['rate', 'RATE_LIMITED'], ['malformed', 'INVALID_RESPONSE']]) {
+    const client = mockClient();
+    client.auth.verifyOtp = async payload => {
+      client.calls.push(['verifyOtp', payload]);
+      const error = { code: mode === 'rate' ? 'over_request_rate_limit' : 'unexpected_failure', message: 'private-token private-password', details: 'private-email' };
+      if (mode === 'throw') throw error;
+      return mode === 'malformed' ? null : { data: null, error };
+    };
+    await assert.rejects(createSupabaseArchiveProvider(client).verifyEmailCode('alice@example.test', '12345678'), error => {
+      assert.equal(error.code, expected);
+      assert.deepEqual(Object.keys(error), ['code']);
+      assert.equal(error.cause, undefined);
+      assert.doesNotMatch(String(error) + JSON.stringify(error), /private|12345678/);
+      return true;
+    });
+    assert.deepEqual(client.calls.map(call => call[0]), ['verifyOtp']);
   }
 });
 
