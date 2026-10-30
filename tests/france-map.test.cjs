@@ -7,6 +7,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const R = require('../region-model.js');
 const F = require('../family-map-model.js');
+const {createLoader} = require('../map-data-loader.js');
 const read = name => JSON.parse(fs.readFileSync(path.join(__dirname, '../assets', name), 'utf8'));
 const originalWorld = read('geo/world.geo.json').features;
 const franceParts = read('geo/world-france-parts.geo.json').features;
@@ -69,15 +70,17 @@ test('France display parts preserve all 21 original polygons and cover exactly i
 test('production map initialization replaces only France and leaves every other feature untouched', async () => {
   // Execute the short production asset-loading block rather than reimplementing its merge.
   const start = appSource.indexOf('const [wg,');
-  const end = appSource.indexOf('if(tg.outline)', start);
+  const end = appSource.indexOf('shapes=world;', start);
   assert.ok(start >= 0 && end > start, 'map-loading block remains identifiable');
   const loaded = new Map();
-  const result = await vm.runInNewContext('(async()=>{let world,provinces;' + appSource.slice(start,end) + 'return {world,provinces};})()', {
-    R, jsonFile: async filename => {
+  const loader = createLoader({fetch: async url => {
+      const filename = url.split('?')[0];
       const data = read(filename.replace(/^assets\//, ''));
       loaded.set(filename, data);
-      return data;
-    }
+      return {ok:true,status:200,json:async()=>data};
+  }});
+  const result = await vm.runInNewContext('(async()=>{let world;' + appSource.slice(start,end) + 'return {world};})()', {
+    R, overview:loader.overview()
   });
   assert.ok(loaded.has('assets/geo/world-france-parts.geo.json'));
   const input = loaded.get('assets/geo/world.geo.json').features;
