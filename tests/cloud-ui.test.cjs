@@ -145,6 +145,7 @@ function createHarness(options = {}) {
   };
   const location = { href: options.href || 'https://example.com/shanhe-atlas/' };
   const window = {
+    ShanheAnalytics: options.analytics,
     SHANHE_CLOUD_CONFIG: { url: 'https://test-project.supabase.co', publishableKey: 'sb_publishable_test' },
     supabase: { createClient() { return { auth: { async initialize() {
       return options.onInitialize ? options.onInitialize({ location, emit(event, next) { currentUser = next; observer(event, { user: next }); } }) : { error: null };
@@ -205,6 +206,64 @@ async function saveGuest(h, records) {
   assert.equal(result.ok, true);
   assert.equal(result.guest, true);
 }
+
+test('visit analytics waits for a definitive initial session and receives a boolean only', async () => {
+  for (const initialUser of [null, user('private-account-id', 'private@example.com')]) {
+    const gate = deferred(), analyticsCalls = [];
+    const h = createHarness({ initialUser, onGetSession: () => gate.promise,
+      analytics: { setAuthState(...args) { analyticsCalls.push(args); } } });
+    assert.deepEqual(analyticsCalls, [], 'constructing or showing local drafts is not proof of a guest session');
+    const starting = h.cloud.start();
+    await h.flush();
+    assert.deepEqual(analyticsCalls, [], 'a slow session lookup must remain unknown');
+    gate.resolve({ user: initialUser });
+    await starting;
+    assert.deepEqual(analyticsCalls, [[Boolean(initialUser)]]);
+    assert.doesNotMatch(JSON.stringify(analyticsCalls), /private-account-id|private@example.com/);
+    assert.equal(Boolean(h.cloud.getState().guest), !initialUser);
+  }
+});
+
+test('failed session discovery never classifies the page as an unregistered or guest visitor', async () => {
+  const analyticsCalls = [];
+  const h = createHarness({ onGetSession: async () => { throw new Error('offline'); },
+    analytics: { setAuthState(...args) { analyticsCalls.push(args); } } });
+  await h.cloud.start();
+  assert.deepEqual(analyticsCalls, []);
+  await saveGuest(h, { '110000': row('offline draft remains editable') });
+});
+
+test('analytics exceptions cannot interrupt authenticated reads, guest saves, login, or cloud saves', async () => {
+  const analytics = { setAuthState() { throw new Error('analytics unavailable'); } };
+  const existing = { '310000': row('existing cloud memory') };
+  const signed = createHarness({ analytics, initialUser: user(), remote: { 'account-a': { records: existing, revision: 3 } } });
+  await signed.cloud.start();
+  assert.deepEqual(signed.cloud.getState().records, existing);
+  assert.equal(signed.cloud.getState().ready, true);
+  const h = createHarness({ analytics });
+  await h.cloud.start();
+  await saveGuest(h, { '110000': row('draft') });
+  await h.click('cloud-account-btn');h.fill();await h.submit();await h.flush();
+  assert.equal(h.cloud.getState().userId, 'account-a');
+  assert.equal(h.cloud.getState().ready, true);
+  const result = await h.cloud.save({ '110000': row('changed after login') }, h.cloud.context());
+  assert.equal(result.ok, true);
+  assert.equal(h.remote.get('account-a').records['110000'].note, 'changed after login');
+});
+
+test('premature verification SIGNED_IN is not exposed as confirmed analytics state', async () => {
+  const gate = deferred(), analyticsCalls = [];
+  const h = createHarness({ emitDuringVerify: true, onVerify: () => gate.promise,
+    analytics: { setAuthState(...args) { analyticsCalls.push(args); } } });
+  await h.cloud.start();
+  assert.deepEqual(analyticsCalls, [[false]]);
+  await openCodeForm(h);
+  const pending = h.submit();await h.flush();
+  assert.deepEqual(analyticsCalls, [[false]], 'the SDK event must not leak the unvalidated account');
+  gate.resolve({ user: user('private-confirmed-id', 'a@example.com') });
+  await pending;await h.flush();
+  assert.deepEqual(analyticsCalls, [[false], [true]]);
+});
 
 function assertLoginMode(h) {
   assert.equal(h.el('cloud-login-tab').getAttribute('aria-pressed'), 'true');
