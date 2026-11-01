@@ -4,3 +4,5 @@
 
 /* Timeline editing uses the same member-specific detail forms as the map. */
 .timeline-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.timeline-kind{font-size:10px;color:#65785c;background:#f0f5ec;border-radius:5px;padding:2px 6px}.timeline-heading{display:flex;align-items:center;gap:12px;justify-content:space-between}.timeline-heading h4{min-width:0;overflow-wrap:anywhere}.timeline-edit{flex:none;min-height:44px;padding:6px 10px;border-radius:7px;color:var(--green);font-size:12px;white-space:nowrap}.timeline-edit:hover{background:#edf3e8}.timeline-edit:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+.analytics-footer-button{padding:6px 8px;color:var(--green);text-decoration:underline;min-height:44px}.analytics-setting{display:flex;gap:12px;align-items:center;min-height:48px;font-size:13px;line-height:1.6;cursor:pointer}.analytics-setting input{flex:none;width:18px;height:18px;accent-color:var(--green)}#analytics-status{color:var(--green)}#analytics-dialog{max-width:calc(100vw - 28px)}

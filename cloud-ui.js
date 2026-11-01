@@ -217,6 +217,9 @@
     async function applySession(next,event){
       const changed=(next?.id||null)!==(user?.id||null);
       sessionKnown=true;user=next||null;
+      // Only share a confirmed login boolean. Analytics must never receive the
+      // account identifier or prevent authentication if its own code fails.
+      try{root.ShanheAnalytics?.setAuthState(Boolean(user));}catch(_){}
       if(user)clearPendingEmail(user.email);
       if(changed){
         signupSubmitted=false;clearVerificationCode();
