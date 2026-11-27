@@ -10,7 +10,8 @@
     function load(path,priority){
       if(cache.has(path))return cache.get(path);
       // Retain the existing asset URLs so previously cached maps remain useful.
-      const version=path.split('?')[0]===GEO+'china-legacy-metadata.json'?'20261030-startup':'20261029-us-incorporated';
+      const asset=path.split('?')[0];
+      const version=asset===GEO+'world-cities.json'?'20261127-japan-cities':asset===GEO+'china-legacy-metadata.json'?'20261030-startup':'20261029-us-incorporated';
       const url=path+(path.includes('?')?'&':'?')+'v='+version;
       const pending=Promise.resolve().then(()=>request(url,{priority})).then(response=>{
         if(!response.ok)throw new Error('无法读取地图资源（HTTP '+response.status+'）：'+path);

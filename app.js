@@ -154,7 +154,7 @@ $('#flag-mode').onclick=()=>setMode('flag');$('#fill-mode').onclick=()=>setMode(
 function scopeName(s=scope){return s.kind==='world'?'世界':s.kind==='china'?'中国':s.kind==='province'?provinces.find(f=>R.id(f)===s.code)?.properties.name:model.countries.get(s.code)?.name;}
 function paintNavigation(){
   $('#map-heading').textContent=scopeName()+'旅行地图';
-  $('#map-description').textContent=scope.kind==='world'?'选择国家继续探索，或搜索你的下一站':scope.kind==='china'?'全国直接按地市展示 · 点击城市记录，放大查看更多名称':scope.kind==='province'&&scope.code==='710000'?'选择台湾22个县市，记录第一次到访':scope.kind==='country'?(scope.code==='USA'?'全国城市与城镇 · 点州查找，放大查看更多地点':scope.code==='ARE'?'七个酋长国 · 点击首府城市记录足迹':model.countries.get(scope.code)?.detailPath?'保留省州边界 · 点击城市插旗，或点地块选城市':'保留国家轮廓 · 点击城市插旗，或点国土选城市'):'点击一个地区，记录第一次到访';
+  $('#map-description').textContent=scope.kind==='world'?'选择国家继续探索，或搜索你的下一站':scope.kind==='china'?'全国直接按地市展示 · 点击城市记录，放大查看更多名称':scope.kind==='province'&&scope.code==='710000'?'选择台湾22个县市，记录第一次到访':scope.kind==='country'?(scope.code==='USA'?'全国城市与城镇 · 点州查找，放大查看更多地点':scope.code==='JPN'?'47个都道府县 · 119个城市与城镇，点地块选城市':scope.code==='ARE'?'七个酋长国 · 点击首府城市记录足迹':model.countries.get(scope.code)?.detailPath?'保留省州边界 · 点击城市插旗，或点地块选城市':'保留国家轮廓 · 点击城市插旗，或点国土选城市'):'点击一个地区，记录第一次到访';
   $('#map-breadcrumb').innerHTML='<button data-scope="world">世界</button>'+(scope.kind==='china'||scope.kind==='province'?'<span>›</span><button data-scope="china">中国</button>':'')+(scope.kind==='province'||scope.kind==='country'?'<span>›</span><strong>'+esc(scopeName())+'</strong>':'');
   $('#map-breadcrumb').querySelectorAll('[data-scope]').forEach(b=>b.onclick=()=>navigate({kind:b.dataset.scope}));
   $('#world-shortcut').classList.toggle('active',scope.kind==='world');$('#china-shortcut').classList.toggle('active',scope.kind==='china'||scope.kind==='province');
@@ -241,7 +241,20 @@ $('#focus-taiwan').onclick=()=>navigate({kind:'province',code:'710000'});
 window.ShanheAtlas={backMap:()=>{if(currentView!=='map'||scope.kind==='world')return false;navigate(scope.kind==='province'?{kind:'china'}:{kind:'world'});return true;}};
 function focusRegion(id){const f=shapes.find(x=>R.id(x)===String(id));if(!f)return;const [[x0,y0],[x1,y1]]=d3.geoPath(projection).bounds(f),k=Math.max(1,Math.min(192,Math.min((phoneLayout.matches?720:800)/Math.max(1,x1-x0),(mapHeight-(phoneLayout.matches?400:250))/Math.max(1,y1-y0))));svg.transition().duration(300).call(zoom.transform,d3.zoomIdentity.translate(500-k*(x0+x1)/2,mapHeight/2-(phoneLayout.matches?90:0)-k*(y0+y1)/2).scale(k));}
 $('#map-region-focus').onchange=()=>{const id=$('#map-region-focus').value;if(scope.kind==='china'&&id)return navigate({kind:'province',code:id});if(id)focusRegion(id);else svg.transition().duration(250).call(zoom.transform,d3.zoomIdentity);};
-$('#detail-show-map').onclick=async()=>{const f=selected;if(!f)return;$('#city-dialog').close();goView('map');const country=R.countryOf(f),next=country==='CHN'?{kind:'province',code:String(f.properties.provinceCode)}:(f.properties.level==='city'||f.properties.level==='admin1'||isWorldLegacy(f)||isCountryLegacy(f))?{kind:'country',code:country}:{kind:'world'};const pending=navigate(next),request=mapRequest;await pending;if(request!==mapRequest||scope.kind!==next.kind||scope.code!==next.code)return;const region=f.properties.parentRegionId||R.id(f);$('#map-region-focus').value=region;if(country==='USA'&&f.properties.level==='city'){cityFocusId=R.id(f);const point=projection(f.properties.center),k=32;svg.transition().duration(300).call(zoom.transform,d3.zoomIdentity.translate(500-k*point[0],mapHeight/2-k*point[1]).scale(k));}else focusRegion(region);};
+$('#detail-show-map').onclick=async()=>{
+  const f=selected;if(!f)return;$('#city-dialog').close();goView('map');
+  const country=R.countryOf(f),next=country==='CHN'?{kind:'province',code:String(f.properties.provinceCode)}:(f.properties.level==='city'||f.properties.level==='admin1'||isWorldLegacy(f)||isCountryLegacy(f))?{kind:'country',code:country}:{kind:'world'};
+  const pending=navigate(next),request=mapRequest;await pending;
+  if(request!==mapRequest||currentView!=='map'||scope.kind!==next.kind||scope.code!==next.code)return;
+  const region=f.properties.parentRegionId||R.id(f);$('#map-region-focus').value=region;
+  if(next.kind==='country'&&f.properties.level==='city'){
+    // Locate the chosen city itself, including small towns far from a prefecture
+    // centre. Keep its label ahead of nearby city labels after the transition.
+    cityFocusId=R.id(f);const point=projection(f.properties.center),k=country==='USA'?32:12;
+    svg.transition().duration(300).call(zoom.transform,d3.zoomIdentity.translate(500-k*point[0],mapHeight/2-k*point[1]).scale(k));
+  }else focusRegion(region);
+  $('#map-stage').scrollIntoView({behavior:'smooth',block:'center'});
+};
 function localGeometry(f){
   // Center the projection on each country's longitude so date-line islands stay together.
   return f;
@@ -341,7 +354,8 @@ function refreshCityPoints(transform,width){
   if(!citySpatial||!cityPointLayer)return;
   const visibleCities=citySpatial.select({transform,width,mapHeight,limit:phoneLayout.matches?100:250,priorityIds:cityMapPriority,focusId:cityFocusId});
   cityPoints=cityPointLayer.selectAll('g').data(visibleCities,R.id).join(enter=>{const g=enter.append('g').attr('class','world-city-point').attr('tabindex',0).attr('role','button').attr('aria-label',f=>R.displayName(f)+'，记录城市足迹').on('click',(e,f)=>{e.stopPropagation();openCity(R.id(f));}).on('keydown',(e,f)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openCity(R.id(f));}});g.append('circle').attr('class','city-point-hit').attr('r',18);g.append('circle').attr('class','city-point-dot').attr('r',4);return g;}).classed('visited',f=>mapCityVisited.has(R.id(f))).classed('focused',f=>R.id(f)===cityFocusId);
-  cityPointLabels=cityLabelLayer.selectAll('text').data(visibleCities,R.id).join('text').attr('class','world-city-label').attr('x',f=>projection(f.properties.center)[0]).attr('y',f=>projection(f.properties.center)[1]).text(f=>R.displayName(f));
+  const labelCities=cityFocusId?visibleCities.filter(f=>R.id(f)===cityFocusId).concat(visibleCities.filter(f=>R.id(f)!==cityFocusId)):visibleCities;
+  cityPointLabels=cityLabelLayer.selectAll('text').data(labelCities,R.id).join('text').attr('class','world-city-label').attr('x',f=>projection(f.properties.center)[0]).attr('y',f=>projection(f.properties.center)[1]).text(f=>R.displayName(f));
 }
 function updateMapOverlays(){
   if(!svg||!markers||!labels||!projection)return;
@@ -353,6 +367,8 @@ function updateMapOverlays(){
     // Reserve room for this small island's persistent label before other labels.
     occupied.push([x+7*unit,y+2*unit,x+(12+R.displayName(f).length*12)*unit,y+19*unit]);
   });
+  // The locator cancels map scaling, so use the same screen typography as country labels.
+  countryLocators?.selectAll('.country-locator-label').style('font-size',(phone?11:10)+'px').style('stroke-width',3*width/1000+'px');
   landmarkMap?.update({scope,projection,mapHeight,width,transform});
   const flagScale=scope.kind==='china'?Math.min(1,.72+.2*(k-1)):1;
   markers.selectAll('g').attr('transform',f=>'translate('+projection(f.properties.center)+') scale('+(1000/width)*flagScale/k+') translate('+((f.flagOffset||0)-11)+',0)');
@@ -414,7 +430,7 @@ $('#export-btn').onclick=()=>{
 function showInfo(html){$('#info-body').innerHTML=html;$('#info-dialog').showModal();}
 $('#close-info').onclick=()=>$('#info-dialog').close();
 $('#help-btn').onclick=()=>showInfo('<h2>从一面小旗开始</h2><p>家庭旅行：登录后在页面顶部管理成员，一个邮箱最多记录 4 人。选择当前记录人为他单独保存；勾选显示成员，可同时查看不同颜色的旗子和各自的旅行统计。共同到访的地点并排显示，取消一个人的到访不会影响其他成员。原有记录归在“我”名下。</p><p>① 无需注册，先选择国家或中国省份，进入详细地图；也可以直接搜索城市或州省名称。</p><p>② 海外地图支持按城市记录。已有省州细分的国家保留省州地块；新增覆盖的欧洲国家保留国界。点击城市圆点，或点击地块选择城市；填写首次到访日期和旅行记忆，保存足迹。总览上的数字小旗表示该区域的足迹数量。</p><p>③ 足迹临时保存在此浏览器。想长期保存或换设备继续时，点击“保存到云端”，用邮箱注册或登录；注册需两次输入相同密码并验证邮箱。</p><p>登录后的修改直接保存到云端，以成功提示为准。本机与云端同一地区内容不同的草稿会保留，避免覆盖。你也可以导出 CSV 留存。</p><p>大陆（含海南）改回地市级。旧县区足迹归到所属地市；地市已有记录时保留它，没有记录时取日期最早的一条完整记录。其他县区日期和笔记留在城市详情的历史记录里，不重复插旗或计数。取消城市到访后，历史记录不会重新生成旗子。台湾恢复22县市，港澳整体标记。海外旧省州足迹按已核实的首府归档，日期、笔记与更新时间原样保留；目标已有记录或首府无法唯一确定时，旧记录完整保留供整理。新增欧洲城市后，原有国家级足迹仍按原名保留，不自动改成某个城市。旧分区足迹回到所属县市，日期与笔记保持不变；同一县市有多条记录时，其余内容单独保留在“我的足迹”中。</p>');
-$('#coverage-btn').onclick=()=>showInfo('<h2>地图数据与范围</h2><p>中国共 '+chinaIndex.features.length+' 个可标记地区，大陆（含海南）按地市、自治州、地区及盟等单位标记，四个直辖市各为一个城市；没有上级地市的省直辖单位沿用独立记录。台湾保持22个县市，香港、澳门各为整体。</p><p>世界总览包含 '+worldIndex.countries.length+' 个国家和地区边界要素，其中 '+worldIndex.detailCountries.length+' 个旅行目的地保留州省边界，并按其中的城市或主要居民点记录足迹。每个区域提供代表城市，热门旅行省州补充更多旅游城市；无人离岛不虚构城市，新加坡共用同一个城市记录。欧洲各国及跨洲旅行目的地至少提供5个真实城市或城镇，摩纳哥、梵蒂冈等单城单位保留一个；新增覆盖国家保留原国界并添加城市点。其余国家和地区可整体标记。</p><p>美国城市目录采用50州及华盛顿特区的数据，只收录正式建制城市与法定城镇，不包含统计居民点；夏威夷州在此口径下暂无可选地点，已有居民点足迹作为历史记录保留。来源口径、版本及数量见 <a href="assets/geo/us-cities-sources.md" target="_blank" rel="noopener">美国城市目录说明</a>。未有核实中文名的地点使用官方英文名称。同名地点按州区分，必要时附县名。</p><p>Natural Earth · U.S. Census Bureau · © OpenStreetMap contributors。新加坡保留社区发展理事会辖区，新西兰含部分岛屿；具体范围、版本、许可证与开放数据下载见 <a href="assets/geo/world-data-sources.md" target="_blank" rel="noopener">世界地图数据说明</a>、<a href="assets/geo/world-cities-sources.md" target="_blank" rel="noopener">海外城市与来源</a>、<a href="assets/geo/china-data-sources.md" target="_blank" rel="noopener">中国地图数据说明</a>。</p><p>边界以各数据源所载版本为准，用于个人旅行记录。旧记录迁移依据见 <a href="assets/geo/china-prefecture-migration-map.json" target="_blank" rel="noopener">县区归市对应关系</a>。</p>');
+$('#coverage-btn').onclick=()=>showInfo('<h2>地图数据与范围</h2><p>中国共 '+chinaIndex.features.length+' 个可标记地区，大陆（含海南）按地市、自治州、地区及盟等单位标记，四个直辖市各为一个城市；没有上级地市的省直辖单位沿用独立记录。台湾保持22个县市，香港、澳门各为整体。</p><p>世界总览包含 '+worldIndex.countries.length+' 个国家和地区边界要素，其中 '+worldIndex.detailCountries.length+' 个旅行目的地保留州省边界，并按其中的城市或主要居民点记录足迹。每个区域提供代表城市，热门旅行省州补充更多旅游城市；无人离岛不虚构城市，新加坡共用同一个城市记录。欧洲各国及跨洲旅行目的地至少提供5个真实城市或城镇，摩纳哥、梵蒂冈等单城单位保留一个；新增覆盖国家保留原国界并添加城市点。其余国家和地区可整体标记。</p><p>美国城市目录采用50州及华盛顿特区的数据，只收录正式建制城市与法定城镇，不包含统计居民点；夏威夷州在此口径下暂无可选地点，已有居民点足迹作为历史记录保留。来源口径、版本及数量见 <a href="assets/geo/us-cities-sources.md" target="_blank" rel="noopener">美国城市目录说明</a>。未有核实中文名的地点使用官方英文名称。同名地点按州区分，必要时附县名。</p><p>日本保留47个都道府县地块，提供119个城市与城镇；在原有69个地点基础上补充50个旅行目的地。每座城市或町独立记录首次到访日期和笔记。本次为精选扩充，并非日本全部市町名录。完整名单见 <a href="assets/geo/japan-cities-sources.md" target="_blank" rel="noopener">日本城市目录说明</a>。</p><p>Natural Earth · U.S. Census Bureau · © OpenStreetMap contributors。新加坡保留社区发展理事会辖区，新西兰含部分岛屿；具体范围、版本、许可证与开放数据下载见 <a href="assets/geo/world-data-sources.md" target="_blank" rel="noopener">世界地图数据说明</a>、<a href="assets/geo/world-cities-sources.md" target="_blank" rel="noopener">海外城市与来源</a>、<a href="assets/geo/china-data-sources.md" target="_blank" rel="noopener">中国地图数据说明</a>。</p><p>边界以各数据源所载版本为准，用于个人旅行记录。旧记录迁移依据见 <a href="assets/geo/china-prefecture-migration-map.json" target="_blank" rel="noopener">县区归市对应关系</a>。</p>');
 async function init(){
   // The outline can be explored before the complete city and migration
   // catalogues arrive. Keep editing/account controls locked until all models
