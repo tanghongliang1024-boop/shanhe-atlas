@@ -38,7 +38,7 @@ test('overview and catalog start independently in parallel using preload-compati
     ['assets/geo/world-france-parts.geo.json?v=20261029-us-incorporated','high']
   ]);
   const names=['china-prefecture-index.json','world-index.json','county-migration-map.json','region-level-reversal-map.json','world-cities.json','world-city-migration-map.json','china-index.json','china-prefecture-migration-map.json','us-cities.json','china-legacy-metadata.json'];
-  assert.deepEqual(requests.slice(2).map(item=>[item.url,item.options.priority]),names.map(name=>['assets/geo/'+name+'?v='+(name==='china-legacy-metadata.json'?'20261030-startup':'20261029-us-incorporated'),'low']));
+  assert.deepEqual(requests.slice(2).map(item=>[item.url,item.options.priority]),names.map(name=>['assets/geo/'+name+'?v='+(name==='world-cities.json'?'20261127-japan-cities':name==='china-legacy-metadata.json'?'20261030-startup':'20261029-us-incorporated'),'low']));
   // Finish the overview first while every catalog request is still pending.
   requests[1].gate.resolve(response({part:'france'}));requests[0].gate.resolve(response({part:'world'}));
   assert.deepEqual(await overview,[{part:'world'},{part:'france'}]);
